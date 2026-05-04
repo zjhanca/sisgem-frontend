@@ -9,7 +9,7 @@ import Carrito   from './pages/Carrito'
 
 import AdminLayout from './components/AdminLayout'
 import Dashboard   from './pages/admin/Dashboard'
-import Marcas from './pages/admin/Marcas'
+import Marcas      from './pages/admin/Marcas'
 import Productos   from './pages/admin/Productos'
 import Categorias  from './pages/admin/Categorias'
 import Proveedores from './pages/admin/Proveedores'
@@ -34,8 +34,13 @@ function RutaProtegida({ children }) {
 }
 
 function RutaAdmin({ children }) {
-  const { usuario } = useAuth()
-  if (!usuario || usuario.rol_id !== 1) return <Navigate to="/" replace />
+  const { usuario, cargando } = useAuth()
+  if (cargando) return (
+    <div className="min-h-screen flex items-center justify-center bg-dark-bg">
+      <div className="text-primary text-sm">cargando...</div>
+    </div>
+  )
+  if (!usuario || +usuario.rol_id !== 1) return <Navigate to="/" replace />
   return children
 }
 
@@ -54,7 +59,7 @@ function Rutas() {
         </RutaProtegida>
       }>
         <Route index                element={<Dashboard />} />
-        <Route path="marcas" element={<Marcas />} />
+        <Route path="marcas"        element={<Marcas />} />
         <Route path="productos"     element={<Productos />} />
         <Route path="categorias"    element={<Categorias />} />
         <Route path="proveedores"   element={<Proveedores />} />
