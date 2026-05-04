@@ -12,8 +12,7 @@ export function ThemeProvider({ children }) {
     localStorage.setItem('sisgem_tema', tema)
   }, [tema])
 
-  const toggleTema = () =>
-    setTema(prev => prev === 'dark' ? 'light' : 'dark')
+  const toggleTema = () => setTema(prev => prev === 'dark' ? 'light' : 'dark')
 
   return (
     <ThemeContext.Provider value={{ tema, toggleTema }}>

@@ -10,7 +10,8 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('sisgem_token')
     const user = localStorage.getItem('sisgem_usuario')
     if (token && user) {
-      setUsuario(JSON.parse(user))
+      try { setUsuario(JSON.parse(user)) }
+      catch { localStorage.removeItem('sisgem_token'); localStorage.removeItem('sisgem_usuario') }
     }
     setCargando(false)
   }, [])

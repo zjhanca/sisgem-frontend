@@ -1,22 +1,21 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
 import Tabla from '../../components/Tabla'
 import Modal from '../../components/Modal'
 import toast from 'react-hot-toast'
-import { Plus, Eye, Download, Trash2, RefreshCw, History, Settings } from 'lucide-react'
+import { Plus, Eye, Download, Trash2, Ban } from 'lucide-react'
+import { formatPrecio, formatFechaHora } from '../../utils/validaciones'
 import { descargarPDF } from '../../utils/reportes'
-import { formatPrecio, formatFechaHora, formatFecha } from '../../utils/validaciones'
  
-export default function Pedidos() {
+export default function Ventas() {
   const qc = useQueryClient()
-  const [modalNuevo, setModalNuevo]         = useState(false)
-  const [modalDetalle, setModalDetalle]     = useState({ abierto: false, pedido: null })
-  const [modalHistorial, setModalHistorial] = useState({ abierto: false, cliente: null })
-  const [modalConfig, setModalConfig]       = useState(false)
-  const [filtroEstado, setFiltroEstado]     = useState('')
-  const [filtroFecha, setFiltroFecha]       = useState({ desde: '', hasta: '' })
-  const [configCancelacion, setConfigCancelacion] = useState({ horas: 24 })
+  const [modalNuevo, setModalNuevo]     = useState(false)
+  const [modalDetalle, setModalDetalle] = useState({ abierto: false, venta: null })
+  const [modalAnular, setModalAnular]   = useState({ abierto: false, venta: null })
+  const [filtroTipo, setFiltroTipo]     = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('')
+  const [filtroBusqueda, setFiltroBusqueda] = useState('')
   const [form, setForm] = useState({ cliente_id: '', tipo_venta: 'mostrador', productos: [] })
   const [prodSel, setProdSel] = useState({ producto_id: '', cantidad: 1 })
  
@@ -36,51 +35,27 @@ export default function Pedidos() {
     queryKey: ['estados-pedido'],
     queryFn: () => api.get('/estados?tipo=pedido').then(r => r.data.datos)
   })
-  const { data: historial = [] } = useQuery({
-    queryKey: ['historial', modalHistorial.cliente?.id],
-    queryFn: () => api.get(`/pedidos?cliente_id=${modalHistorial.cliente?.id}`).then(r => r.data.datos),
-    enabled: !!modalHistorial.cliente?.id
-  })
  
-  const crearPedido = useMutation({
+  const crearVenta = useMutation({
     mutationFn: data => api.post('/pedidos', data),
     onSuccess: () => {
       qc.invalidateQueries(['pedidos'])
       setModalNuevo(false)
       setForm({ cliente_id: '', tipo_venta: 'mostrador', productos: [] })
-      toast.success('pedido creado')
+      toast.success('venta registrada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
-  })
- 
-  const cambiarEstado = useMutation({
-    mutationFn: ({ id, estado_id }) => api.patch(`/pedidos/${id}/estado`, { estado_id }),
-    onSuccess: () => {
-      qc.invalidateQueries(['pedidos'])
-      toast.success('estado actualizado')
-    }
   })
  
   const anular = useMutation({
     mutationFn: id => api.patch(`/pedidos/${id}/estado`, { estado_id: 3 }),
     onSuccess: () => {
       qc.invalidateQueries(['pedidos'])
-      setModalDetalle({ abierto: false, pedido: null })
-      toast.success('pedido anulado')
+      setModalAnular({ abierto: false, venta: null })
+      toast.success('venta anulada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error al anular')
   })
- 
-  const repetirPedido = pedido => {
-    if (!pedido) return
-    setForm({
-      cliente_id: pedido.cliente_id,
-      tipo_venta: pedido.tipo_venta,
-      productos: []
-    })
-    setModalNuevo(true)
-    toast.success('completa los productos del nuevo pedido')
-  }
  
   const agregarProducto = () => {
     if (!prodSel.producto_id) { toast.error('selecciona un producto'); return }
@@ -106,7 +81,7 @@ export default function Pedidos() {
   const quitarProducto = idx =>
     setForm({ ...form, productos: form.productos.filter((_, i) => i !== idx) })
  
-  const totalPedido = form.productos.reduce(
+  const totalVenta = form.productos.reduce(
     (s, p) => s + p.precio_unitario * p.cantidad, 0
   )
  
@@ -114,48 +89,43 @@ export default function Pedidos() {
     e.preventDefault()
     if (!form.cliente_id)       { toast.error('selecciona un cliente'); return }
     if (!form.productos.length) { toast.error('agrega al menos un producto'); return }
-    crearPedido.mutate(form)
+    crearVenta.mutate(form)
   }
- 
-  const descargarComprobante = id =>
-    descargarPDF(`/reportes/pedido/${id}`, `comprobante-${id}.pdf`)
  
   const descargarReporte = () => {
     const params = new URLSearchParams()
-    if (filtroEstado)       params.append('estado_id', filtroEstado)
-    if (filtroFecha.desde)  params.append('desde', filtroFecha.desde)
-    if (filtroFecha.hasta)  params.append('hasta', filtroFecha.hasta)
-    descargarPDF(`/reportes/pedidos?${params}`, 'reporte-pedidos.pdf')
+    if (filtroTipo)   params.append('tipo_venta', filtroTipo)
+    if (filtroEstado) params.append('estado_id', filtroEstado)
+    descargarPDF(`/reportes/ventas?${params}`, 'reporte-ventas.pdf')
   }
  
-  const pedidosFiltrados = pedidos.filter(p => {
+  const ventasFiltradas = pedidos.filter(p => {
+    if (filtroTipo && p.tipo_venta !== filtroTipo) return false
     if (filtroEstado && p.estado_id !== +filtroEstado) return false
-    if (filtroFecha.desde && new Date(p.fecha_pedido) < new Date(filtroFecha.desde)) return false
-    if (filtroFecha.hasta && new Date(p.fecha_pedido) > new Date(filtroFecha.hasta + 'T23:59:59')) return false
+    if (filtroBusqueda && !`${p.id} ${p.cliente} ${p.tipo_venta}`
+      .toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
     return true
   })
- 
-  const puedeAnular = pedido => {
-    if (!pedido || pedido.estado_id === 3) return false
-    const horas = configCancelacion.horas
-    const diff = (new Date() - new Date(pedido.fecha_pedido)) / (1000 * 60 * 60)
-    return diff <= horas
-  }
  
   const columnas = [
     { key: 'id',         label: '#' },
     { key: 'cliente',    label: 'Cliente' },
-    { key: 'tipo_venta', label: 'Tipo' },
-    { key: 'total',      label: 'Total', render: r => formatPrecio(r.total) },
-    { key: 'estado_id',  label: 'Estado',
+    { key: 'tipo_venta', label: 'Tipo',
       render: r => (
-        <select value={r.estado_id}
-          onChange={e => cambiarEstado.mutate({ id: r.id, estado_id: +e.target.value })}
-          className="text-xs bg-transparent border-none outline-none cursor-pointer
-            text-light-text dark:text-dark-text"
-          onClick={e => e.stopPropagation()}>
-          {estados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-        </select>
+        <span className={`badge ${r.tipo_venta === 'domicilio'
+          ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
+          : 'bg-primary/20 text-green-700 dark:text-primary'}`}>
+          {r.tipo_venta}
+        </span>
+      )
+    },
+    { key: 'total', label: 'Total', render: r => formatPrecio(r.total) },
+    { key: 'estado', label: 'Estado',
+      render: r => (
+        <span className={r.estado_id === 3 ? 'badge-anulado' :
+          r.estado_id === 2 ? 'badge-proceso' : 'badge-pendiente'}>
+          {r.estado}
+        </span>
       )
     },
     { key: 'fecha_pedido', label: 'Fecha', render: r => formatFechaHora(r.fecha_pedido) },
@@ -164,62 +134,66 @@ export default function Pedidos() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">pedidos</h1>
-        <div className="flex gap-2 flex-wrap">
-          <button onClick={() => setModalConfig(true)} className="btn-ghost" title="configurar cancelacion">
-            <Settings size={14} />
-          </button>
+        <h1 className="page-title">ventas</h1>
+        <div className="flex gap-2">
           <button onClick={descargarReporte} className="btn-outline">
             <Download size={14} /> reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
-            <Plus size={14} /> nuevo
+            <Plus size={14} /> nueva venta
           </button>
         </div>
       </div>
  
       {/* filtros */}
       <div className="flex gap-2 mb-4 flex-wrap">
+        <input value={filtroBusqueda}
+          onChange={e => setFiltroBusqueda(e.target.value)}
+          placeholder="buscar por cliente o #..."
+          className="campo-input w-48 text-xs" />
+        <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}
+          className="campo-input w-36 text-xs">
+          <option value="">todos los tipos</option>
+          <option value="mostrador">mostrador</option>
+          <option value="domicilio">domicilio</option>
+        </select>
         <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}
           className="campo-input w-36 text-xs">
           <option value="">todos los estados</option>
           {estados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
         </select>
-        <input type="date" value={filtroFecha.desde}
-          onChange={e => setFiltroFecha({ ...filtroFecha, desde: e.target.value })}
-          className="campo-input w-36 text-xs" />
-        <input type="date" value={filtroFecha.hasta}
-          onChange={e => setFiltroFecha({ ...filtroFecha, hasta: e.target.value })}
-          className="campo-input w-36 text-xs" />
-        {(filtroEstado || filtroFecha.desde || filtroFecha.hasta) && (
-          <button onClick={() => { setFiltroEstado(''); setFiltroFecha({ desde: '', hasta: '' }) }}
+        {(filtroTipo || filtroEstado || filtroBusqueda) && (
+          <button
+            onClick={() => { setFiltroTipo(''); setFiltroEstado(''); setFiltroBusqueda('') }}
             className="btn-ghost text-xs text-red-400">
-            limpiar filtros
+            limpiar
           </button>
         )}
       </div>
  
-      <Tabla columnas={columnas} datos={pedidosFiltrados}
+      <Tabla columnas={columnas} datos={ventasFiltradas} sinBusqueda
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, pedido: fila })}
-            className="btn-ghost" title="ver detalle">
+          <button onClick={() => setModalDetalle({ abierto: true, venta: fila })}
+            className="btn-ghost" title="ver detalles">
             <Eye size={14} />
           </button>
-          <button onClick={() => descargarComprobante(fila.id)}
+          <button
+            onClick={() => descargarPDF(`/reportes/pedido/${fila.id}`, `comprobante-${fila.id}.pdf`)}
             className="btn-ghost" title="descargar comprobante">
             <Download size={14} />
           </button>
-          <button
-            onClick={() => setModalHistorial({ abierto: true, cliente: { id: fila.cliente_id, nombre: fila.cliente } })}
-            className="btn-ghost" title="historial del cliente">
-            <History size={14} />
-          </button>
+          {fila.estado_id !== 3 && (
+            <button onClick={() => setModalAnular({ abierto: true, venta: fila })}
+              className="btn-ghost hover:text-red-400" title="anular venta">
+              <Ban size={14} />
+            </button>
+          )}
         </>)}
       />
  
-      {/* modal nuevo pedido */}
+      {/* modal nueva venta */}
       <Modal abierto={modalNuevo} onCerrar={() => setModalNuevo(false)}
-        titulo="nuevo pedido" ancho="max-w-xl">
+        titulo="registrar venta" ancho="max-w-xl">
         <form onSubmit={handleCrear} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -234,7 +208,7 @@ export default function Pedidos() {
               </select>
             </div>
             <div>
-              <label className="campo-label">tipo venta</label>
+              <label className="campo-label">tipo de venta</label>
               <select value={form.tipo_venta}
                 onChange={e => setForm({ ...form, tipo_venta: e.target.value })}
                 className="campo-input">
@@ -288,7 +262,7 @@ export default function Pedidos() {
                 <div className="flex justify-between text-xs font-medium pt-1
                   border-t border-gray-200 dark:border-dark-border">
                   <span className="text-light-text dark:text-dark-text">total</span>
-                  <span className="text-primary">{formatPrecio(totalPedido)}</span>
+                  <span className="text-primary">{formatPrecio(totalVenta)}</span>
                 </div>
               </div>
             )}
@@ -300,65 +274,67 @@ export default function Pedidos() {
                 text-gray-500 dark:text-dark-text/60 rounded-lg hover:border-primary/40">
               cancelar
             </button>
-            <button type="submit" disabled={crearPedido.isPending} className="btn-primary">
-              {crearPedido.isPending ? 'creando...' : 'crear pedido'}
+            <button type="submit" disabled={crearVenta.isPending} className="btn-primary">
+              {crearVenta.isPending ? 'registrando...' : 'registrar venta'}
             </button>
           </div>
         </form>
       </Modal>
  
-      {/* modal detalle */}
+      {/* modal detalles */}
       <Modal abierto={modalDetalle.abierto}
-        onCerrar={() => setModalDetalle({ abierto: false, pedido: null })}
-        titulo={`pedido #${modalDetalle.pedido?.id}`}>
-        {modalDetalle.pedido && (
-          <div className="space-y-4">
+        onCerrar={() => setModalDetalle({ abierto: false, venta: null })}
+        titulo={`venta #${modalDetalle.venta?.id}`}>
+        {modalDetalle.venta && (
+          <div className="space-y-3 text-sm">
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
                 <p className="campo-label">cliente</p>
                 <p className="text-light-text dark:text-dark-text font-medium">
-                  {modalDetalle.pedido.cliente}
+                  {modalDetalle.venta.cliente}
                 </p>
               </div>
               <div>
-                <p className="campo-label">tipo venta</p>
-                <p className="text-light-text dark:text-dark-text">
-                  {modalDetalle.pedido.tipo_venta}
-                </p>
+                <p className="campo-label">tipo de venta</p>
+                <span className={`badge ${modalDetalle.venta.tipo_venta === 'domicilio'
+                  ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
+                  : 'bg-primary/20 text-green-700 dark:text-primary'}`}>
+                  {modalDetalle.venta.tipo_venta}
+                </span>
               </div>
               <div>
                 <p className="campo-label">estado</p>
-                <span className="badge-pendiente">{modalDetalle.pedido.estado}</span>
+                <span className={modalDetalle.venta.estado_id === 3 ? 'badge-anulado' :
+                  modalDetalle.venta.estado_id === 2 ? 'badge-proceso' : 'badge-pendiente'}>
+                  {modalDetalle.venta.estado}
+                </span>
               </div>
               <div>
                 <p className="campo-label">total</p>
                 <p className="text-primary font-semibold text-sm">
-                  {formatPrecio(modalDetalle.pedido.total)}
+                  {formatPrecio(modalDetalle.venta.total)}
                 </p>
               </div>
               <div className="col-span-2">
                 <p className="campo-label">fecha</p>
                 <p className="text-light-text dark:text-dark-text">
-                  {formatFechaHora(modalDetalle.pedido.fecha_pedido)}
+                  {formatFechaHora(modalDetalle.venta.fecha_pedido)}
                 </p>
               </div>
             </div>
- 
             <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-              <button onClick={() => descargarComprobante(modalDetalle.pedido.id)}
+              <button
+                onClick={() => descargarPDF(`/reportes/pedido/${modalDetalle.venta.id}`, `comprobante-${modalDetalle.venta.id}.pdf`)}
                 className="btn-outline text-xs">
                 <Download size={12} /> comprobante
               </button>
-              <button onClick={() => repetirPedido(modalDetalle.pedido)}
-                className="btn-outline text-xs">
-                <RefreshCw size={12} /> repetir pedido
-              </button>
-              {puedeAnular(modalDetalle.pedido) && (
-                <button onClick={() => anular.mutate(modalDetalle.pedido.id)}
-                  disabled={anular.isPending}
-                  className="px-3 py-1.5 text-xs border border-red-400/40 text-red-400
-                    rounded-lg hover:bg-red-400/10 transition-colors disabled:opacity-50">
-                  {anular.isPending ? 'anulando...' : 'anular pedido'}
+              {modalDetalle.venta.estado_id !== 3 && (
+                <button onClick={() => {
+                  setModalDetalle({ abierto: false, venta: null })
+                  setModalAnular({ abierto: true, venta: modalDetalle.venta })
+                }} className="px-3 py-1.5 text-xs border border-red-400/40 text-red-400
+                  rounded-lg hover:bg-red-400/10 transition-colors">
+                  anular venta
                 </button>
               )}
             </div>
@@ -366,69 +342,29 @@ export default function Pedidos() {
         )}
       </Modal>
  
-      {/* modal historial */}
-      <Modal abierto={modalHistorial.abierto}
-        onCerrar={() => setModalHistorial({ abierto: false, cliente: null })}
-        titulo={`historial - ${modalHistorial.cliente?.nombre || ''}`}
-        ancho="max-w-xl">
-        <div className="space-y-2 max-h-96 overflow-y-auto">
-          {historial.length === 0 && (
-            <p className="text-xs text-center text-gray-400 dark:text-dark-text/40 py-6">
-              sin pedidos anteriores
-            </p>
-          )}
-          {historial.map(p => (
-            <div key={p.id}
-              className="flex items-center justify-between p-3 rounded-lg
-                border border-gray-200 dark:border-dark-border text-xs">
-              <div>
-                <p className="font-medium text-light-text dark:text-dark-text">
-                  pedido #{p.id}
-                </p>
-                <p className="text-gray-400 dark:text-dark-text/50 mt-0.5">
-                  {formatFecha(p.fecha_pedido)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-primary font-medium">{formatPrecio(p.total)}</p>
-                <span className="badge-pendiente mt-1">{p.estado}</span>
-              </div>
-              <button onClick={() => {
-                repetirPedido(p)
-                setModalHistorial({ abierto: false, cliente: null })
-              }} className="btn-ghost ml-2" title="repetir este pedido">
-                <RefreshCw size={13} />
-              </button>
-            </div>
-          ))}
-        </div>
-      </Modal>
- 
-      {/* modal configurar cancelacion */}
-      <Modal abierto={modalConfig} onCerrar={() => setModalConfig(false)}
-        titulo="configurar tiempo de cancelacion" ancho="max-w-sm">
+      {/* modal confirmar anular */}
+      <Modal abierto={modalAnular.abierto}
+        onCerrar={() => setModalAnular({ abierto: false, venta: null })}
+        titulo="confirmar anulacion" ancho="max-w-sm">
         <div className="space-y-4">
-          <p className="text-xs text-gray-500 dark:text-dark-text/60">
-            define el tiempo maximo en horas que tiene un cliente para cancelar un pedido.
+          <p className="text-sm text-light-text dark:text-dark-text">
+            estas seguro que deseas anular la venta
+            <span className="font-medium text-primary"> #{modalAnular.venta?.id}</span> de
+            <span className="font-medium"> {modalAnular.venta?.cliente}</span> por
+            <span className="font-medium text-primary"> {formatPrecio(modalAnular.venta?.total)}</span>?
+            esta accion no se puede deshacer.
           </p>
-          <div>
-            <label className="campo-label">horas maximas para cancelar</label>
-            <input type="number" min="1" max="72" value={configCancelacion.horas}
-              onChange={e => setConfigCancelacion({ horas: +e.target.value })}
-              className="campo-input" />
-            <p className="text-xs text-gray-400 dark:text-dark-text/40 mt-1">
-              actualmente: {configCancelacion.horas} hora{configCancelacion.horas !== 1 ? 's' : ''}
-            </p>
-          </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => setModalConfig(false)}
+            <button onClick={() => setModalAnular({ abierto: false, venta: null })}
               className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border
                 text-gray-500 dark:text-dark-text/60 rounded-lg hover:border-primary/40">
               cancelar
             </button>
-            <button onClick={() => { setModalConfig(false); toast.success('configuracion guardada') }}
-              className="btn-primary">
-              guardar
+            <button onClick={() => anular.mutate(modalAnular.venta.id)}
+              disabled={anular.isPending}
+              className="px-4 py-1.5 text-sm bg-red-500 hover:bg-red-600
+                text-white rounded-lg transition-colors disabled:opacity-50">
+              {anular.isPending ? 'anulando...' : 'anular venta'}
             </button>
           </div>
         </div>
