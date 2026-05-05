@@ -28,7 +28,7 @@ function useCarrito() {
 export default function Catalogo() {
   const { tema, toggleTema }  = useTema()
   const { agregar, total }    = useCarrito()
-  const [busqueda, setBusqueda]       = useState('')
+  const [busqueda, setBusqueda]             = useState('')
   const [categoriaActiva, setCategoriaActiva] = useState('')
   const [productoDetalle, setProductoDetalle] = useState(null)
 
@@ -37,20 +37,16 @@ export default function Catalogo() {
     queryFn: () => api.get('/catalogo').then(r => r.data.datos)
   })
 
-  const { data: categorias = [] } = useQuery({
-    queryKey: ['categorias'],
-    queryFn: () => api.get('/categorias').then(r => r.data.datos.filter(c => c.estado))
-  })
+  // extraer categorias directamente del catalogo sin llamar a /categorias
+  const categorias = [...new Map(
+    items
+      .filter(i => i.categoria_id && i.categoria)
+      .map(i => [i.categoria_id, { id: i.categoria_id, nombre: i.categoria, estado: true }])
+  ).values()]
 
-  // productos destacados: los 4 con mayor precio
   const destacados = [...items]
     .sort((a, b) => parseFloat(b.precio) - parseFloat(a.precio))
     .slice(0, 4)
-
-  // marcas = categorias que tienen productos en catalogo
-  const marcasEnCatalogo = categorias.filter(cat =>
-    items.some(item => item.categoria_id === cat.id)
-  )
 
   const filtrados = items.filter(item => {
     const coincideBusqueda = !busqueda ||
@@ -114,7 +110,8 @@ export default function Catalogo() {
               <p className="text-sm text-dark-text/60 mb-4">
                 encuentra todo lo que necesitas en un solo lugar
               </p>
-              <button onClick={() => document.getElementById('productos-section')?.scrollIntoView({ behavior: 'smooth' })}
+              <button
+                onClick={() => document.getElementById('productos-section')?.scrollIntoView({ behavior: 'smooth' })}
                 className="btn-primary text-sm">
                 ver productos
               </button>
@@ -161,16 +158,15 @@ export default function Catalogo() {
           </div>
         )}
 
-        {/* marcas / categorias */}
-        {marcasEnCatalogo.length > 0 && (
+        {/* categorias */}
+        {categorias.length > 0 && (
           <div>
             <h2 className="text-sm font-medium text-light-text dark:text-dark-text mb-3 flex items-center gap-2">
               <span className="w-1 h-4 bg-primary rounded-full inline-block" />
               categorias que manejamos
             </h2>
             <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setCategoriaActiva('')}
+              <button onClick={() => setCategoriaActiva('')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs
                   border transition-colors ${!categoriaActiva
                     ? 'bg-primary text-dark-bg border-primary'
@@ -178,7 +174,7 @@ export default function Catalogo() {
                   }`}>
                 <Tag size={11} /> todas
               </button>
-              {marcasEnCatalogo.map(cat => (
+              {categorias.map(cat => (
                 <button key={cat.id}
                   onClick={() => setCategoriaActiva(
                     categoriaActiva === cat.id ? '' : cat.id
@@ -200,14 +196,13 @@ export default function Catalogo() {
           <h2 className="text-sm font-medium text-light-text dark:text-dark-text mb-3 flex items-center gap-2">
             <span className="w-1 h-4 bg-primary rounded-full inline-block" />
             {categoriaActiva
-              ? `${marcasEnCatalogo.find(c => c.id === +categoriaActiva)?.nombre || 'productos'}`
+              ? categorias.find(c => c.id === +categoriaActiva)?.nombre || 'productos'
               : 'todos los productos'}
             <span className="text-xs text-gray-400 dark:text-dark-text/40 font-normal">
               ({filtrados.length})
             </span>
           </h2>
 
-          {/* busqueda mobile */}
           <div className="relative mb-4 sm:hidden">
             <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
             <input value={busqueda} onChange={e => setBusqueda(e.target.value)}
@@ -270,7 +265,7 @@ export default function Catalogo() {
         </div>
       </div>
 
-      {/* modal detalle producto */}
+      {/* modal detalle */}
       {productoDetalle && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setProductoDetalle(null)}>
