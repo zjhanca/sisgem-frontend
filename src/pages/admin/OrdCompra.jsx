@@ -4,128 +4,102 @@ import api from '../../services/api'
 import Tabla from '../../components/Tabla'
 import Modal from '../../components/Modal'
 import toast from 'react-hot-toast'
-import { Plus, Eye, Download, Trash2, Ban } from 'lucide-react'
-import { descargarPDF } from '../../utils/reportes'
+import { Plus, Eye, Download, Trash2, CheckCircle, Search, Scan } from 'lucide-react'
 import { formatPrecio, formatFecha } from '../../utils/validaciones'
+import { descargarPDF } from '../../utils/reportes'
+ 
+const formVacio = { proveedor_id: '', productos: [] }
  
 export default function OrdCompra() {
   const qc = useQueryClient()
-  const [modal, setModal]           = useState(false)
+  const [modalNuevo, setModalNuevo]     = useState(false)
   const [modalDetalle, setModalDetalle] = useState({ abierto: false, orden: null })
-  const [modalEditar, setModalEditar]   = useState({ abierto: false, orden: null })
-  const [modalAnular, setModalAnular]   = useState({ abierto: false, orden: null })
-  const [filtroBusqueda, setFiltroBusqueda] = useState('')
-  const [filtroEstado, setFiltroEstado]     = useState('')
-  const [form, setForm]     = useState({ proveedor_id: '', productos: [] })
-  const [formEdit, setFormEdit] = useState({ estado_id: '' })
-  const [prodSel, setProdSel] = useState({ producto_id: '', cantidad: 1, costo_unitario: '' })
+  const [form, setForm]       = useState(formVacio)
+  const [filtroEstado, setFiltroEstado] = useState('')
+  const [prodBusqueda, setProdBusqueda] = useState('')
+  const [prodsFiltrados, setProdsFiltrados] = useState([])
+  const [itemForm, setItemForm] = useState({ producto_id: '', costo_unitario: '', cantidad: 1 })
  
-  const { data: ordenes = [] } = useQuery({
-    queryKey: ['ordenes'],
-    queryFn: () => api.get('/ordenes').then(r => r.data.datos)
-  })
-  const { data: proveedores = [] } = useQuery({
-    queryKey: ['proveedores'],
-    queryFn: () => api.get('/proveedores').then(r => r.data.datos.filter(p => p.estado))
-  })
-  const { data: productos = [] } = useQuery({
-    queryKey: ['productos'],
-    queryFn: () => api.get('/productos').then(r => r.data.datos.filter(p => p.estado))
-  })
-  const { data: estados = [] } = useQuery({
-    queryKey: ['estados-compra'],
-    queryFn: () => api.get('/estados?tipo=compra').then(r => r.data.datos)
-  })
+  const { data: ordenes = [] } = useQuery({ queryKey: ['ordenes'], queryFn: () => api.get('/ordenes').then(r => r.data.datos) })
+  const { data: proveedores = [] } = useQuery({ queryKey: ['proveedores'], queryFn: () => api.get('/proveedores').then(r => r.data.datos.filter(p => p.estado)) })
+  const { data: productos = [] } = useQuery({ queryKey: ['productos'], queryFn: () => api.get('/productos').then(r => r.data.datos.filter(p => p.estado)) })
+  const { data: estados = [] } = useQuery({ queryKey: ['estados-compra'], queryFn: () => api.get('/estados?tipo=compra').then(r => r.data.datos) })
  
   const crear = useMutation({
     mutationFn: data => api.post('/ordenes', data),
-    onSuccess: () => {
-      qc.invalidateQueries(['ordenes'])
-      setModal(false)
-      setForm({ proveedor_id: '', productos: [] })
-      toast.success('orden de compra creada')
-    },
+    onSuccess: () => { qc.invalidateQueries(['ordenes']); setModalNuevo(false); setForm(formVacio); toast.success('orden creada') },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
  
   const cambiarEstado = useMutation({
     mutationFn: ({ id, estado_id }) => api.patch(`/ordenes/${id}/estado`, { estado_id }),
-    onSuccess: () => {
-      qc.invalidateQueries(['ordenes'])
-      setModalEditar({ abierto: false, orden: null })
-      toast.success('estado actualizado')
-    },
+    onSuccess: () => { qc.invalidateQueries(['ordenes']); qc.invalidateQueries(['productos']); toast.success('estado actualizado — stock actualizado si se aprobo') },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
  
-  const anular = useMutation({
-    mutationFn: id => api.patch(`/ordenes/${id}/estado`, { estado_id: 12 }),
-    onSuccess: () => {
-      qc.invalidateQueries(['ordenes'])
-      setModalAnular({ abierto: false, orden: null })
-      toast.success('orden anulada')
-    },
-    onError: err => toast.error(err.response?.data?.mensaje || 'error al anular')
-  })
- 
-  const agregarProducto = () => {
-    if (!prodSel.producto_id || !prodSel.costo_unitario) {
-      toast.error('completa producto y costo'); return
-    }
-    const prod = productos.find(p => p.id === +prodSel.producto_id)
-    const existe = form.productos.find(p => p.producto_id === +prodSel.producto_id)
-    if (existe) {
-      setForm({ ...form, productos: form.productos.map(p =>
-        p.producto_id === +prodSel.producto_id
-          ? { ...p, cantidad: p.cantidad + +prodSel.cantidad } : p
-      )})
-    } else {
-      setForm({ ...form, productos: [...form.productos, {
-        producto_id: +prodSel.producto_id,
-        cantidad: +prodSel.cantidad,
-        costo_unitario: +prodSel.costo_unitario,
-        nombre: prod?.nombre
-      }]})
-    }
-    setProdSel({ producto_id: '', cantidad: 1, costo_unitario: '' })
+  const buscarProducto = texto => {
+    if (!texto) { setProdsFiltrados([]); return }
+    const t = texto.toLowerCase()
+    setProdsFiltrados(productos.filter(p =>
+      p.nombre.toLowerCase().includes(t) || (p.codigo_barras && p.codigo_barras.includes(t))
+    ).slice(0, 8))
   }
  
-  const quitarProducto = idx =>
-    setForm({ ...form, productos: form.productos.filter((_, i) => i !== idx) })
+  const buscarPorCodigo = async codigo => {
+    if (!codigo) return
+    try {
+      const { data } = await api.get(`/productos/barcode/${codigo}`)
+      if (data.ok) {
+        setItemForm({ producto_id: data.datos.id, costo_unitario: data.datos.precio, cantidad: 1 })
+        toast.success(`encontrado: ${data.datos.nombre}`)
+      } else toast.error('producto no encontrado')
+    } catch { toast.error('producto no encontrado') }
+  }
  
-  const totalOrden = form.productos.reduce(
-    (s, p) => s + p.costo_unitario * p.cantidad, 0
-  )
+  const agregarItem = () => {
+    if (!itemForm.producto_id) { toast.error('selecciona un producto'); return }
+    if (!itemForm.costo_unitario || +itemForm.costo_unitario <= 0) { toast.error('ingresa el costo'); return }
+    const prod = productos.find(p => p.id === +itemForm.producto_id)
+    const existe = form.productos.find(p => p.producto_id === +itemForm.producto_id)
+    if (existe) { toast.error('producto ya agregado'); return }
+    setForm({ ...form, productos: [...form.productos, {
+      producto_id: +itemForm.producto_id,
+      nombre: prod?.nombre,
+      costo_unitario: +itemForm.costo_unitario,
+      cantidad: +itemForm.cantidad
+    }]})
+    setItemForm({ producto_id: '', costo_unitario: '', cantidad: 1 })
+    setProdBusqueda(''); setProdsFiltrados([])
+  }
+ 
+  const quitarItem = idx => setForm({ ...form, productos: form.productos.filter((_, i) => i !== idx) })
+ 
+  const totalOrden = form.productos.reduce((s, p) => s + p.costo_unitario * p.cantidad, 0)
  
   const handleCrear = e => {
     e.preventDefault()
-    if (!form.proveedor_id)     { toast.error('selecciona un proveedor'); return }
+    if (!form.proveedor_id) { toast.error('selecciona un proveedor'); return }
     if (!form.productos.length) { toast.error('agrega al menos un producto'); return }
     crear.mutate(form)
   }
  
-  const descargarReporte = () => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')
+  const getBadge = nombre => {
+    if (!nombre) return 'badge-pendiente'
+    const n = nombre.toLowerCase()
+    if (n.includes('anula') || n.includes('cancel')) return 'badge-anulado'
+    if (n.includes('aproba') || n.includes('recibi')) return 'badge-activo'
+    if (n.includes('proceso') || n.includes('enviado')) return 'badge-proceso'
+    return 'badge-pendiente'
+  }
  
-  const ordenesFiltradas = ordenes.filter(o => {
-    if (filtroEstado && o.estado_id !== +filtroEstado) return false
-    if (filtroBusqueda && !`${o.id} ${o.proveedor}`
-      .toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
-    return true
-  })
+  const ordenesFiltradas = ordenes.filter(o => !filtroEstado || o.estado_id === +filtroEstado)
  
   const columnas = [
-    { key: 'id',        label: '#' },
-    { key: 'proveedor', label: 'Proveedor' },
-    { key: 'total',     label: 'Total', render: r => formatPrecio(r.total) },
-    { key: 'estado',    label: 'Estado',
-      render: r => (
-        <span className={r.estado_id === 12 ? 'badge-anulado' :
-          r.estado_id === 11 ? 'badge-proceso' : 'badge-pendiente'}>
-          {r.estado || 'pendiente'}
-        </span>
-      )
-    },
-    { key: 'fecha', label: 'Fecha', render: r => formatFecha(r.fecha) },
+    { key: 'id',         label: '#' },
+    { key: 'proveedor',  label: 'Proveedor' },
+    { key: 'total',      label: 'Total', render: r => formatPrecio(r.total) },
+    { key: 'estado',     label: 'Estado', render: r => <span className={getBadge(r.estado)}>{r.estado || '-'}</span> },
+    { key: 'created_at', label: 'Fecha', render: r => formatFecha(r.created_at) },
   ]
  
   return (
@@ -133,129 +107,111 @@ export default function OrdCompra() {
       <div className="page-header">
         <h1 className="page-title">ordenes de compra</h1>
         <div className="flex gap-2">
-          <button onClick={descargarReporte} className="btn-outline">
-            <Download size={14} /> reporte
-          </button>
-          <button onClick={() => setModal(true)} className="btn-primary">
-            <Plus size={14} /> nueva orden
-          </button>
+          <button onClick={() => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')} className="btn-outline">
+            <Download size={14} /> reporte</button>
+          <button onClick={() => setModalNuevo(true)} className="btn-primary"><Plus size={14} /> nueva orden</button>
         </div>
       </div>
  
-      {/* filtros */}
-      <div className="flex gap-2 mb-4 flex-wrap">
-        <input value={filtroBusqueda}
-          onChange={e => setFiltroBusqueda(e.target.value)}
-          placeholder="buscar por proveedor o #..."
-          className="campo-input w-48 text-xs" />
-        <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}
-          className="campo-input w-36 text-xs">
+      <div className="flex gap-2 mb-4">
+        <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-44 text-xs">
           <option value="">todos los estados</option>
           {estados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
         </select>
-        {(filtroEstado || filtroBusqueda) && (
-          <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda('') }}
-            className="btn-ghost text-xs text-red-400">
-            limpiar
-          </button>
-        )}
+        {filtroEstado && <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400">limpiar</button>}
       </div>
  
       <Tabla columnas={columnas} datos={ordenesFiltradas} sinBusqueda
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, orden: fila })}
-            className="btn-ghost" title="ver detalles">
-            <Eye size={14} />
-          </button>
-          <button onClick={() => {
-            setFormEdit({ estado_id: fila.estado_id })
-            setModalEditar({ abierto: true, orden: fila })
-          }} className="btn-ghost" title="cambiar estado">
-            <Download size={14} />
-          </button>
-          {fila.estado_id !== 12 && (
-            <button onClick={() => setModalAnular({ abierto: true, orden: fila })}
-              className="btn-ghost hover:text-red-400" title="anular orden">
-              <Ban size={14} />
-            </button>
-          )}
+          <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost"><Eye size={14} /></button>
+          <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
         </>)}
       />
  
-      {/* modal nueva orden */}
-      <Modal abierto={modal} onCerrar={() => setModal(false)}
-        titulo="nueva orden de compra" ancho="max-w-xl">
+      {/* MODAL NUEVA ORDEN */}
+      <Modal abierto={modalNuevo} onCerrar={() => setModalNuevo(false)} titulo="nueva orden de compra" ancho="max-w-2xl">
         <form onSubmit={handleCrear} className="space-y-3">
           <div>
             <label className="campo-label">proveedor *</label>
-            <select value={form.proveedor_id}
-              onChange={e => setForm({ ...form, proveedor_id: e.target.value })}
-              className="campo-input">
-              <option value="">seleccionar...</option>
-              {proveedores.map(p => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
-              ))}
+            <select value={form.proveedor_id} onChange={e => setForm({ ...form, proveedor_id: e.target.value })} className="campo-input">
+              <option value="">seleccionar proveedor...</option>
+              {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
             </select>
           </div>
  
-          <div className="p-3 rounded-lg border border-gray-200 dark:border-dark-border space-y-2">
-            <p className="text-xs font-medium text-light-text dark:text-dark-text">productos</p>
-            <div className="grid grid-cols-3 gap-2">
-              <select value={prodSel.producto_id}
-                onChange={e => setProdSel({ ...prodSel, producto_id: e.target.value })}
-                className="campo-input text-xs">
-                <option value="">producto...</option>
-                {productos.map(p => (
-                  <option key={p.id} value={p.id}>{p.nombre}</option>
-                ))}
-              </select>
-              <input type="number" min="1" value={prodSel.cantidad}
-                onChange={e => setProdSel({ ...prodSel, cantidad: e.target.value })}
-                className="campo-input text-xs" placeholder="cantidad" />
-              <input type="number" step="0.01" value={prodSel.costo_unitario}
-                onChange={e => setProdSel({ ...prodSel, costo_unitario: e.target.value })}
-                className="campo-input text-xs" placeholder="costo unit" />
+          <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-3">
+            <p className="text-xs font-semibold">agregar productos</p>
+ 
+            {/* buscador */}
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
+                <input value={prodBusqueda}
+                  onChange={e => { setProdBusqueda(e.target.value); buscarProducto(e.target.value) }}
+                  className="campo-input pl-8 text-xs" placeholder="buscar producto por nombre..." />
+                {prodsFiltrados.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card
+                    border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                    {prodsFiltrados.map(p => (
+                      <button key={p.id} type="button"
+                        onClick={() => { setItemForm({ ...itemForm, producto_id: p.id, costo_unitario: p.precio }); setProdBusqueda(p.nombre); setProdsFiltrados([]) }}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between">
+                        <span>{p.nombre}</span>
+                        <span className="text-primary">{formatPrecio(p.precio)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <input placeholder="cod. barras" className="campo-input w-28 text-xs pr-7"
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo(e.target.value); e.target.value = '' }}} />
+                <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
+              </div>
             </div>
-            <button type="button" onClick={agregarProducto}
-              className="btn-outline text-xs w-full justify-center">
-              + agregar producto
-            </button>
+ 
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-1">
+                <label className="campo-label">costo unitario</label>
+                <input type="number" step="0.01" value={itemForm.costo_unitario}
+                  onChange={e => setItemForm({ ...itemForm, costo_unitario: e.target.value })}
+                  className="campo-input text-xs" placeholder="0.00" />
+              </div>
+              <div>
+                <label className="campo-label">cantidad</label>
+                <input type="number" min="1" value={itemForm.cantidad}
+                  onChange={e => setItemForm({ ...itemForm, cantidad: e.target.value })}
+                  className="campo-input text-xs" />
+              </div>
+              <div className="flex items-end">
+                <button type="button" onClick={agregarItem} className="btn-primary w-full justify-center text-xs">
+                  agregar
+                </button>
+              </div>
+            </div>
  
             {form.productos.length > 0 && (
-              <div className="space-y-1 max-h-36 overflow-y-auto">
+              <div className="space-y-1 max-h-40 overflow-y-auto">
                 {form.productos.map((p, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs
-                    p-2 rounded bg-light-bg dark:bg-dark-bg">
-                    <span className="text-light-text dark:text-dark-text">{p.nombre}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-400">
-                        {p.cantidad} x {formatPrecio(p.costo_unitario)}
-                      </span>
-                      <span className="text-primary font-medium">
-                        {formatPrecio(p.costo_unitario * p.cantidad)}
-                      </span>
-                      <button type="button" onClick={() => quitarProducto(i)}
-                        className="text-red-400 hover:text-red-300">
-                        <Trash2 size={12} />
-                      </button>
+                  <div key={i} className="flex justify-between items-center text-xs p-2 rounded bg-light-bg dark:bg-dark-bg">
+                    <span className="flex-1 truncate">{p.nombre}</span>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-gray-400">{p.cantidad}x{formatPrecio(p.costo_unitario)}</span>
+                      <span className="text-primary font-medium">{formatPrecio(p.costo_unitario * p.cantidad)}</span>
+                      <button type="button" onClick={() => quitarItem(i)} className="text-red-400"><Trash2 size={12} /></button>
                     </div>
                   </div>
                 ))}
-                <div className="flex justify-between text-xs font-medium pt-1
-                  border-t border-gray-200 dark:border-dark-border">
-                  <span className="text-light-text dark:text-dark-text">total</span>
-                  <span className="text-primary">{formatPrecio(totalOrden)}</span>
+                <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-200 dark:border-dark-border">
+                  <span>total</span><span className="text-primary">{formatPrecio(totalOrden)}</span>
                 </div>
               </div>
             )}
           </div>
  
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button type="button" onClick={() => setModal(false)}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border
-                text-gray-500 dark:text-dark-text/60 rounded-lg hover:border-primary/40">
-              cancelar
-            </button>
+            <button type="button" onClick={() => setModalNuevo(false)}
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
             <button type="submit" disabled={crear.isPending} className="btn-primary">
               {crear.isPending ? 'creando...' : 'crear orden'}
             </button>
@@ -263,124 +219,43 @@ export default function OrdCompra() {
         </form>
       </Modal>
  
-      {/* modal detalles */}
-      <Modal abierto={modalDetalle.abierto}
-        onCerrar={() => setModalDetalle({ abierto: false, orden: null })}
-        titulo={`orden #${modalDetalle.orden?.id}`}>
+      {/* MODAL DETALLE */}
+      <Modal abierto={modalDetalle.abierto} onCerrar={() => setModalDetalle({ abierto: false, orden: null })}
+        titulo={`orden #${modalDetalle.orden?.id}`} ancho="max-w-lg">
         {modalDetalle.orden && (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <p className="campo-label">proveedor</p>
-                <p className="text-light-text dark:text-dark-text font-medium">
-                  {modalDetalle.orden.proveedor}
-                </p>
-              </div>
-              <div>
-                <p className="campo-label">estado</p>
-                <span className={modalDetalle.orden.estado_id === 12 ? 'badge-anulado' :
-                  modalDetalle.orden.estado_id === 11 ? 'badge-proceso' : 'badge-pendiente'}>
-                  {modalDetalle.orden.estado || 'pendiente'}
-                </span>
-              </div>
-              <div>
-                <p className="campo-label">total</p>
-                <p className="text-primary font-semibold text-sm">
-                  {formatPrecio(modalDetalle.orden.total)}
-                </p>
-              </div>
-              <div>
-                <p className="campo-label">fecha</p>
-                <p className="text-light-text dark:text-dark-text">
-                  {formatFecha(modalDetalle.orden.fecha)}
-                </p>
-              </div>
+              <div><p className="campo-label">proveedor</p><p className="font-medium">{modalDetalle.orden.proveedor}</p></div>
+              <div><p className="campo-label">estado</p>
+                <span className={getBadge(modalDetalle.orden.estado)}>{modalDetalle.orden.estado}</span></div>
+              <div><p className="campo-label">total</p>
+                <p className="text-primary font-bold text-sm">{formatPrecio(modalDetalle.orden.total)}</p></div>
+              <div><p className="campo-label">fecha</p><p>{formatFecha(modalDetalle.orden.created_at)}</p></div>
             </div>
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-              <button onClick={descargarReporte} className="btn-outline text-xs">
-                <Download size={12} /> reporte
-              </button>
-              {modalDetalle.orden.estado_id !== 12 && (
-                <button onClick={() => {
-                  setModalDetalle({ abierto: false, orden: null })
-                  setFormEdit({ estado_id: modalDetalle.orden.estado_id })
-                  setModalEditar({ abierto: true, orden: modalDetalle.orden })
-                }} className="btn-outline text-xs">
-                  cambiar estado
-                </button>
-              )}
-              {modalDetalle.orden.estado_id !== 12 && (
-                <button onClick={() => {
-                  setModalDetalle({ abierto: false, orden: null })
-                  setModalAnular({ abierto: true, orden: modalDetalle.orden })
-                }} className="px-3 py-1.5 text-xs border border-red-400/40 text-red-400
-                  rounded-lg hover:bg-red-400/10 transition-colors">
-                  anular orden
-                </button>
+            <div className="pt-2 border-t border-gray-200 dark:border-dark-border">
+              <p className="campo-label mb-2">cambiar estado</p>
+              <div className="flex flex-wrap gap-2">
+                {estados.map(e => (
+                  <button key={e.id} type="button"
+                    onClick={() => cambiarEstado.mutate({ id: modalDetalle.orden.id, estado_id: e.id })}
+                    className={`flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                      modalDetalle.orden.estado_id === e.id
+                        ? 'bg-primary/20 border-primary text-primary'
+                        : 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'
+                    }`}>
+                    {(e.nombre?.toLowerCase().includes('aproba') || e.nombre?.toLowerCase().includes('recibi')) && <CheckCircle size={11} />}
+                    {e.nombre}
+                  </button>
+                ))}
+              </div>
+              {estados.some(e => e.nombre?.toLowerCase().includes('aproba') || e.nombre?.toLowerCase().includes('recibi')) && (
+                <p className="text-xs text-primary mt-2 italic">
+                  ⚠ Al aprobar/recibir, el stock de los productos se actualizara automaticamente.
+                </p>
               )}
             </div>
           </div>
         )}
-      </Modal>
- 
-      {/* modal cambiar estado */}
-      <Modal abierto={modalEditar.abierto}
-        onCerrar={() => setModalEditar({ abierto: false, orden: null })}
-        titulo={`cambiar estado - orden #${modalEditar.orden?.id}`}
-        ancho="max-w-sm">
-        <div className="space-y-4">
-          <div>
-            <label className="campo-label">nuevo estado</label>
-            <select value={formEdit.estado_id}
-              onChange={e => setFormEdit({ estado_id: e.target.value })}
-              className="campo-input">
-              <option value="">seleccionar...</option>
-              {estados.map(e => (
-                <option key={e.id} value={e.id}>{e.nombre}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => setModalEditar({ abierto: false, orden: null })}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border
-                text-gray-500 dark:text-dark-text/60 rounded-lg hover:border-primary/40">
-              cancelar
-            </button>
-            <button
-              onClick={() => cambiarEstado.mutate({ id: modalEditar.orden.id, estado_id: +formEdit.estado_id })}
-              disabled={cambiarEstado.isPending || !formEdit.estado_id}
-              className="btn-primary">
-              {cambiarEstado.isPending ? 'guardando...' : 'guardar'}
-            </button>
-          </div>
-        </div>
-      </Modal>
- 
-      {/* modal confirmar anular */}
-      <Modal abierto={modalAnular.abierto}
-        onCerrar={() => setModalAnular({ abierto: false, orden: null })}
-        titulo="confirmar anulacion" ancho="max-w-sm">
-        <div className="space-y-4">
-          <p className="text-sm text-light-text dark:text-dark-text">
-            estas seguro que deseas anular la orden
-            <span className="font-medium text-primary"> #{modalAnular.orden?.id}</span> de
-            <span className="font-medium"> {modalAnular.orden?.proveedor}</span>?
-            esta accion no se puede deshacer.
-          </p>
-          <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => setModalAnular({ abierto: false, orden: null })}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border
-                text-gray-500 dark:text-dark-text/60 rounded-lg hover:border-primary/40">
-              cancelar
-            </button>
-            <button onClick={() => anular.mutate(modalAnular.orden.id)}
-              disabled={anular.isPending}
-              className="px-4 py-1.5 text-sm bg-red-500 hover:bg-red-600
-                text-white rounded-lg transition-colors disabled:opacity-50">
-              {anular.isPending ? 'anulando...' : 'anular orden'}
-            </button>
-          </div>
-        </div>
       </Modal>
     </div>
   )

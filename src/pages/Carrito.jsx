@@ -1,392 +1,201 @@
 ﻿import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import {
-  Trash2, Plus, Minus, ArrowLeft,
-  ShoppingCart, MapPin, CreditCard, CheckCircle
-} from 'lucide-react'
-import { formatPrecio } from '../utils/validaciones'
-import { useAuth } from '../context/AuthContext'
+import { useMutation } from '@tanstack/react-query'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-
-function useCarrito() {
-  const [carrito, setCarrito] = useState(() =>
-    JSON.parse(localStorage.getItem('sisgem_carrito') || '[]')
-  )
-  const guardar = items => {
-    setCarrito(items)
-    localStorage.setItem('sisgem_carrito', JSON.stringify(items))
-  }
-  const cambiarCantidad = (id, delta) => {
-    guardar(carrito.map(p =>
-      p.id === id ? { ...p, cantidad: Math.max(1, p.cantidad + delta) } : p
-    ))
-  }
-  const quitar    = id  => guardar(carrito.filter(p => p.id !== id))
-  const vaciar    = ()  => guardar([])
-  const subtotal  = carrito.reduce((s, p) => s + p.precio * p.cantidad, 0)
-  return { carrito, cambiarCantidad, quitar, vaciar, subtotal }
-}
-
-export default function Carrito() {
-  const { carrito, cambiarCantidad, quitar, vaciar, subtotal } = useCarrito()
+import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, Bike, Store } from 'lucide-react'
+import { formatPrecio } from '../utils/validaciones'
+ 
+export default function Carrito({ carrito, setCarrito }) {
   const { usuario } = useAuth()
   const navigate    = useNavigate()
-
-  const [paso, setPaso]             = useState(1) // 1=carrito 2=envio 3=pago 4=confirmado
-  const [tipoEntrega, setTipoEntrega] = useState('mostrador')
-  const [clienteId, setClienteId]   = useState('')
-  const [direccionId, setDireccionId] = useState('')
-  const [tarifaId, setTarifaId]     = useState('')
-  const [metodoPago, setMetodoPago] = useState('efectivo')
-  const [pedidoCreado, setPedidoCreado] = useState(null)
-
-  const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes-checkout'],
-    queryFn: () => api.get('/clientes').then(r => r.data.datos.filter(c => c.estado)),
-    enabled: paso === 2
-  })
-  const { data: direcciones = [] } = useQuery({
-    queryKey: ['dirs-checkout', clienteId],
-    queryFn: () => api.get(`/clientes/${clienteId}/direcciones`).then(r => r.data.datos),
-    enabled: !!clienteId && tipoEntrega === 'domicilio'
-  })
-  const { data: tarifas = [] } = useQuery({
-    queryKey: ['tarifas-checkout'],
-    queryFn: () => api.get('/domicilios/tarifas').then(r => r.data.datos),
-    enabled: tipoEntrega === 'domicilio' && paso === 2
-  })
-
-  const crearPedido = useMutation({
-    mutationFn: data => api.post('/pedidos', data),
-    onSuccess: res => {
-      setPedidoCreado(res.data.pedido_id)
-      vaciar()
-      setPaso(4)
-      toast.success('pedido confirmado')
-    },
-    onError: err => toast.error(err.response?.data?.mensaje || 'error al crear pedido')
-  })
-
-  const tarifa     = tarifas.find(t => t.id === +tarifaId)
-  const costoEnvio = tipoEntrega === 'domicilio' && tarifa ? parseFloat(tarifa.tarifa) : 0
-  const total      = subtotal + costoEnvio
-
-  const handleCheckout = () => {
-    if (!clienteId) { toast.error('selecciona un cliente'); return }
-    if (tipoEntrega === 'domicilio' && !direccionId) {
-      toast.error('selecciona una direccion de envio'); return
-    }
-    const data = {
-      cliente_id: +clienteId,
-      tipo_venta: tipoEntrega,
-      productos: carrito.map(p => ({
-        producto_id:    p.producto_id || p.id,
-        cantidad:       p.cantidad,
-        precio_unitario: parseFloat(p.precio)
-      })),
-    }
-    if (tipoEntrega === 'domicilio' && direccionId) {
-      data.domicilio = {
-        direccion_id:   +direccionId,
-        tarifa_id:      tarifaId ? +tarifaId : null,
-        tarifa_aplicada: costoEnvio
-      }
-    }
-    crearPedido.mutate(data)
+  const [tipoVenta, setTipoVenta] = useState('mostrador')
+  const [notas, setNotas]         = useState('')
+  const [enviando, setEnviando]   = useState(false)
+ 
+  const cambiarCantidad = (id, delta) => {
+    setCarrito(prev => prev.map(p => p.id === id
+      ? { ...p, cantidad: Math.max(1, p.cantidad + delta) } : p
+    ))
   }
-
-  // paso 4: confirmado
-  if (paso === 4) return (
-    <div className="min-h-screen flex items-center justify-center bg-light-bg dark:bg-dark-bg px-4">
-      <div className="w-full max-w-sm text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
-          <CheckCircle size={32} className="text-primary" />
-        </div>
-        <h1 className="text-xl font-bold text-light-text dark:text-dark-text">
-          pedido confirmado
-        </h1>
-        <p className="text-sm text-gray-400 dark:text-dark-text/50">
-          tu pedido <span className="text-primary font-medium">#{pedidoCreado}</span> fue
-          registrado exitosamente.
-        </p>
-        <div className="flex gap-3 justify-center">
-          <Link to="/" className="btn-outline">
-            seguir comprando
-          </Link>
-          {usuario && (
-            <Link to="/admin/pedidos" className="btn-primary">
-              ver pedidos
-            </Link>
-          )}
-        </div>
+ 
+  const quitar = id => setCarrito(prev => prev.filter(p => p.id !== id))
+ 
+  const total = carrito.reduce((s, p) => s + p.precio * p.cantidad, 0)
+ 
+  const handlePedido = async () => {
+    if (!usuario) {
+      toast.error('debes iniciar sesion para hacer un pedido')
+      navigate('/login')
+      return
+    }
+    if (!carrito.length) { toast.error('el carrito esta vacio'); return }
+    setEnviando(true)
+    try {
+      const { data } = await api.post('/pedidos', {
+        tipo_venta: tipoVenta,
+        notas: notas || null,
+        productos: carrito.map(p => ({
+          producto_id: p.id,
+          cantidad: p.cantidad,
+          precio_unitario: p.precio
+        }))
+      })
+      if (data.ok) {
+        setCarrito([])
+        toast.success(`pedido #${data.pedido_id} creado correctamente`)
+        navigate('/perfil')
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.mensaje || 'error al crear el pedido')
+    } finally { setEnviando(false) }
+  }
+ 
+  if (carrito.length === 0) {
+    return (
+      <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex flex-col items-center justify-center px-4">
+        <ShoppingCart size={60} className="text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold text-light-text dark:text-dark-text mb-2">tu carrito esta vacio</h2>
+        <p className="text-gray-400 text-sm mb-6">agrega productos para continuar</p>
+        <Link to="/productos" className="btn-primary">ver productos</Link>
       </div>
-    </div>
-  )
-
-  // carrito vacio
-  if (!carrito.length && paso === 1) return (
-    <div className="min-h-screen flex flex-col items-center justify-center
-      bg-light-bg dark:bg-dark-bg px-4">
-      <ShoppingCart size={48} className="text-gray-300 dark:text-dark-text/20 mb-4" />
-      <p className="text-gray-400 dark:text-dark-text/50 text-sm mb-4">
-        tu carrito esta vacio
-      </p>
-      <Link to="/" className="btn-primary">ver catalogo</Link>
-    </div>
-  )
-
+    )
+  }
+ 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
       <div className="max-w-2xl mx-auto px-4 py-6">
-
         {/* header */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => paso > 1 ? setPaso(paso - 1) : navigate('/')}
-            className="btn-ghost">
-            <ArrowLeft size={16} />
-          </button>
-          <h1 className="text-lg font-medium text-light-text dark:text-dark-text">
-            {paso === 1 ? 'carrito' : paso === 2 ? 'datos de envio' : 'confirmar pedido'}
-          </h1>
+          <Link to="/productos" className="p-2 rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/40 transition-colors">
+            <ArrowLeft size={16} className="text-gray-500" />
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold text-light-text dark:text-dark-text">mi carrito</h1>
+            <p className="text-xs text-gray-400">{carrito.length} productos</p>
+          </div>
         </div>
-
-        {/* indicador de pasos */}
-        <div className="flex items-center gap-2 mb-6">
-          {[
-            { n: 1, label: 'carrito' },
-            { n: 2, label: 'envio' },
-            { n: 3, label: 'confirmar' }
-          ].map((s, i) => (<>
-            <div key={s.n} className="flex items-center gap-1">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
-                transition-colors ${paso >= s.n
-                  ? 'bg-primary text-dark-bg'
-                  : 'bg-gray-200 dark:bg-dark-border text-gray-400 dark:text-dark-text/40'
+ 
+        {/* tipo de venta */}
+        <div className="mb-4">
+          <label className="campo-label mb-2 block">tipo de entrega</label>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { val: 'mostrador', label: 'Mostrador', icon: Store, desc: 'recoger en tienda' },
+              { val: 'domicilio', label: 'Domicilio', icon: Bike,  desc: 'entrega a casa' }
+            ].map(op => (
+              <button key={op.val} type="button" onClick={() => setTipoVenta(op.val)}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                  tipoVenta === op.val
+                    ? op.val === 'domicilio'
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : 'border-primary bg-primary/10'
+                    : 'border-gray-200 dark:border-dark-border'
                 }`}>
-                {s.n}
-              </div>
-              <span className={`text-xs hidden sm:block ${paso >= s.n
-                ? 'text-light-text dark:text-dark-text'
-                : 'text-gray-400 dark:text-dark-text/40'}`}>
-                {s.label}
-              </span>
-            </div>
-            {i < 2 && (
-              <div className={`flex-1 h-px ${paso > s.n
-                ? 'bg-primary' : 'bg-gray-200 dark:bg-dark-border'}`} />
-            )}
-          </>))}
+                <op.icon size={18} className={tipoVenta === op.val
+                  ? op.val === 'domicilio' ? 'text-blue-500' : 'text-primary'
+                  : 'text-gray-400'} />
+                <div>
+                  <p className={`text-sm font-medium ${tipoVenta === op.val
+                    ? op.val === 'domicilio' ? 'text-blue-500' : 'text-primary'
+                    : 'text-light-text dark:text-dark-text'}`}>{op.label}</p>
+                  <p className="text-xs text-gray-400">{op.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
-
-        {/* paso 1: carrito */}
-        {paso === 1 && (
-          <>
-            <div className="space-y-2 mb-4">
-              {carrito.map(item => (
-                <div key={item.id} className="card flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-light-text dark:text-dark-text truncate">
-                      {item.nombre}
-                    </p>
-                    <p className="text-xs text-primary">{formatPrecio(item.precio)}</p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={() => cambiarCantidad(item.id, -1)} className="btn-ghost p-1">
-                      <Minus size={12} />
-                    </button>
-                    <span className="w-8 text-center text-sm font-medium
-                      text-light-text dark:text-dark-text">
-                      {item.cantidad}
-                    </span>
-                    <button onClick={() => cambiarCantidad(item.id, 1)} className="btn-ghost p-1">
-                      <Plus size={12} />
-                    </button>
-                  </div>
-                  <span className="text-sm font-medium text-light-text dark:text-dark-text
-                    w-20 text-right shrink-0">
-                    {formatPrecio(item.precio * item.cantidad)}
-                  </span>
-                  <button onClick={() => quitar(item.id)}
-                    className="btn-ghost text-red-400 hover:text-red-300 shrink-0">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="card space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400 dark:text-dark-text/50">
-                  {carrito.reduce((s, p) => s + p.cantidad, 0)} productos
-                </span>
-                <span className="text-light-text dark:text-dark-text font-medium">
-                  {formatPrecio(subtotal)}
-                </span>
-              </div>
-              <button onClick={() => setPaso(2)}
-                className="btn-primary w-full justify-center py-2">
-                continuar
-              </button>
-              <button onClick={() => { vaciar(); toast.success('carrito vaciado') }}
-                className="w-full text-xs text-red-400 hover:text-red-300 transition-colors py-1">
-                vaciar carrito
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* paso 2: datos de envio */}
-        {paso === 2 && (
-          <div className="space-y-4">
-            <div className="card space-y-3">
-              <p className="text-sm font-medium text-light-text dark:text-dark-text">
-                tipo de entrega
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { val: 'mostrador', label: 'recoger en tienda', icon: ShoppingCart },
-                  { val: 'domicilio', label: 'domicilio',         icon: MapPin }
-                ].map(op => (
-                  <button key={op.val} type="button"
-                    onClick={() => setTipoEntrega(op.val)}
-                    className={`flex items-center gap-2 p-3 rounded-lg border text-sm
-                      transition-colors ${tipoEntrega === op.val
-                        ? 'bg-primary/10 border-primary text-primary'
-                        : 'border-gray-200 dark:border-dark-border text-gray-500 dark:text-dark-text/60'
-                      }`}>
-                    <op.icon size={14} />
-                    {op.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="card space-y-3">
-              <p className="text-sm font-medium text-light-text dark:text-dark-text">
-                datos del cliente
-              </p>
-              <div>
-                <label className="campo-label">cliente *</label>
-                <select value={clienteId}
-                  onChange={e => { setClienteId(e.target.value); setDireccionId('') }}
-                  className="campo-input">
-                  <option value="">seleccionar cliente...</option>
-                  {clientes.map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre} {c.apellido}</option>
-                  ))}
-                </select>
-              </div>
-
-              {tipoEntrega === 'domicilio' && clienteId && (
-                <>
-                  <div>
-                    <label className="campo-label">direccion de envio *</label>
-                    <select value={direccionId}
-                      onChange={e => setDireccionId(e.target.value)}
-                      className="campo-input">
-                      <option value="">seleccionar direccion...</option>
-                      {direcciones.map(d => (
-                        <option key={d.id} value={d.id}>
-                          {d.direccion} {d.ciudad ? `- ${d.ciudad}` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    {direcciones.length === 0 && (
-                      <p className="campo-error">este cliente no tiene direcciones registradas</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="campo-label">tarifa de domicilio</label>
-                    <select value={tarifaId}
-                      onChange={e => setTarifaId(e.target.value)}
-                      className="campo-input">
-                      <option value="">seleccionar tarifa...</option>
-                      {tarifas.map(t => (
-                        <option key={t.id} value={t.id}>
-                          {t.ciudad} - {formatPrecio(t.tarifa)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </>
+ 
+        {/* productos */}
+        <div className="space-y-2 mb-4">
+          {carrito.map(p => (
+            <div key={p.id}
+              className="flex items-center gap-3 p-3 bg-light-card dark:bg-dark-card rounded-xl
+                border border-gray-100 dark:border-dark-border">
+              {p.imagen_url ? (
+                <img src={p.imagen_url} alt={p.nombre}
+                  className="w-14 h-14 object-cover rounded-lg shrink-0"
+                  onError={e => e.target.style.display='none'} />
+              ) : (
+                <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center text-xl shrink-0">🛒</div>
               )}
-            </div>
-
-            <button onClick={() => {
-              if (!clienteId) { toast.error('selecciona un cliente'); return }
-              if (tipoEntrega === 'domicilio' && !direccionId) {
-                toast.error('selecciona una direccion'); return
-              }
-              setPaso(3)
-            }} className="btn-primary w-full justify-center py-2">
-              continuar
-            </button>
-          </div>
-        )}
-
-        {/* paso 3: confirmar */}
-        {paso === 3 && (
-          <div className="space-y-4">
-            <div className="card space-y-2">
-              <p className="text-sm font-medium text-light-text dark:text-dark-text mb-3">
-                resumen del pedido
-              </p>
-              {carrito.map(item => (
-                <div key={item.id} className="flex justify-between text-xs">
-                  <span className="text-gray-500 dark:text-dark-text/60">
-                    {item.nombre} x{item.cantidad}
-                  </span>
-                  <span className="text-light-text dark:text-dark-text">
-                    {formatPrecio(item.precio * item.cantidad)}
-                  </span>
-                </div>
-              ))}
-              {costoEnvio > 0 && (
-                <div className="flex justify-between text-xs pt-1
-                  border-t border-gray-200 dark:border-dark-border">
-                  <span className="text-gray-500 dark:text-dark-text/60">domicilio</span>
-                  <span className="text-light-text dark:text-dark-text">
-                    {formatPrecio(costoEnvio)}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between font-medium pt-2
-                border-t border-gray-200 dark:border-dark-border">
-                <span className="text-light-text dark:text-dark-text">total</span>
-                <span className="text-primary text-lg">{formatPrecio(total)}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-light-text dark:text-dark-text truncate">{p.nombre}</p>
+                <p className="text-primary font-bold">{formatPrecio(p.precio)}</p>
               </div>
-            </div>
-
-            <div className="card space-y-3">
-              <p className="text-sm font-medium text-light-text dark:text-dark-text">
-                metodo de pago
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {['efectivo', 'transferencia', 'tarjeta', 'nequi', 'daviplata'].map(m => (
-                  <button key={m} type="button"
-                    onClick={() => setMetodoPago(m)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs
-                      transition-colors ${metodoPago === m
-                        ? 'bg-primary/10 border-primary text-primary'
-                        : 'border-gray-200 dark:border-dark-border text-gray-500 dark:text-dark-text/60'
-                      }`}>
-                    <CreditCard size={12} />
-                    {m}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1">
+                  <button onClick={() => cambiarCantidad(p.id, -1)}
+                    className="w-7 h-7 rounded-lg border border-gray-200 dark:border-dark-border flex items-center justify-center
+                      hover:border-primary/40 transition-colors">
+                    <Minus size={11} className="text-gray-500" />
                   </button>
-                ))}
+                  <span className="w-8 text-center text-sm font-medium text-light-text dark:text-dark-text">
+                    {p.cantidad}
+                  </span>
+                  <button onClick={() => cambiarCantidad(p.id, 1)}
+                    className="w-7 h-7 rounded-lg border border-gray-200 dark:border-dark-border flex items-center justify-center
+                      hover:border-primary/40 transition-colors">
+                    <Plus size={11} className="text-gray-500" />
+                  </button>
+                </div>
+                <span className="text-sm font-semibold text-primary w-16 text-right">
+                  {formatPrecio(p.precio * p.cantidad)}
+                </span>
+                <button onClick={() => quitar(p.id)}
+                  className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-400/10 transition-colors">
+                  <Trash2 size={14} className="text-red-400" />
+                </button>
               </div>
             </div>
-
-            <button onClick={handleCheckout}
-              disabled={crearPedido.isPending}
-              className="btn-primary w-full justify-center py-2.5 text-base">
-              {crearPedido.isPending ? 'procesando...' : `confirmar pedido - ${formatPrecio(total)}`}
-            </button>
+          ))}
+        </div>
+ 
+        {/* notas */}
+        <div className="mb-4">
+          <label className="campo-label">notas / observaciones (opcional)</label>
+          <textarea value={notas} onChange={e => setNotas(e.target.value)}
+            rows={2} className="campo-input resize-none"
+            placeholder="instrucciones especiales para tu pedido..." />
+        </div>
+ 
+        {/* resumen */}
+        <div className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4 mb-4">
+          <div className="flex justify-between text-sm text-gray-500 dark:text-dark-text/60 mb-1">
+            <span>subtotal ({carrito.reduce((s, p) => s + p.cantidad, 0)} items)</span>
+            <span>{formatPrecio(total)}</span>
           </div>
+          {tipoVenta === 'domicilio' && (
+            <div className="flex justify-between text-sm text-gray-500 dark:text-dark-text/60 mb-1">
+              <span>domicilio</span>
+              <span className="text-xs text-gray-400">se calcula al confirmar</span>
+            </div>
+          )}
+          <div className="flex justify-between font-bold text-base border-t border-gray-200 dark:border-dark-border pt-2 mt-2">
+            <span className="text-light-text dark:text-dark-text">total</span>
+            <span className="text-primary">{formatPrecio(total)}</span>
+          </div>
+        </div>
+ 
+        {/* boton pedido */}
+        {!usuario ? (
+          <div className="space-y-2">
+            <p className="text-xs text-center text-gray-400">debes iniciar sesion para confirmar tu pedido</p>
+            <Link to="/login" className="btn-primary w-full justify-center py-3">iniciar sesion</Link>
+            <Link to="/register" className="w-full py-3 text-sm text-center border border-primary/40 text-primary rounded-xl hover:bg-primary/5 transition-colors block">
+              crear cuenta nueva
+            </Link>
+          </div>
+        ) : (
+          <button onClick={handlePedido} disabled={enviando}
+            className="btn-primary w-full justify-center py-3 text-sm disabled:opacity-50">
+            {enviando ? 'enviando pedido...' : `confirmar pedido · ${formatPrecio(total)}`}
+          </button>
         )}
       </div>
     </div>
   )
 }
+ 
+ 
