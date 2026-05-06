@@ -14,7 +14,6 @@ import Categorias   from './pages/admin/Categorias'
 import Proveedores  from './pages/admin/Proveedores'
 import Clientes     from './pages/admin/Clientes'
 import Pagos        from './pages/admin/Pagos'
-import Abonos       from './pages/admin/Abonos'
 import OrdCompra    from './pages/admin/OrdCompra'
 import Usuarios     from './pages/admin/Usuarios'
 import Roles        from './pages/admin/Roles'
@@ -93,7 +92,7 @@ export default function App() {
           <Route path="proveedores"  element={<Proveedores />} />
           <Route path="clientes"     element={<Clientes />} />
           <Route path="pagos"        element={<Pagos />} />
-          <Route path="abonos"       element={<Abonos />} />
+
           <Route path="ordenes"      element={<OrdCompra />} />
           <Route path="usuarios"     element={<Usuarios />} />
           <Route path="roles"        element={<Roles />} />
