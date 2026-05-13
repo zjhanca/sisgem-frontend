@@ -12,7 +12,6 @@ export default function Tabla({
   const [pagina, setPagina]     = useState(1)
   const [porPag, setPorPag]     = useState(porPagina)
  
-  // filtrar
   const filtrados = useMemo(() => {
     if (!busqueda.trim()) return datos
     const t = busqueda.toLowerCase()
@@ -24,17 +23,14 @@ export default function Tabla({
     )
   }, [datos, busqueda, columnas])
  
-  // paginar
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / porPag))
   const paginaActual = Math.min(pagina, totalPaginas)
   const inicio       = (paginaActual - 1) * porPag
   const filasPagina  = filtrados.slice(inicio, inicio + porPag)
  
-  // resetear página al buscar
   const handleBusqueda = v => { setBusqueda(v); setPagina(1) }
   const handlePorPag   = v => { setPorPag(+v); setPagina(1) }
  
-  // páginas visibles
   const paginasVisibles = () => {
     const rango = []
     const delta = 2
@@ -46,9 +42,9 @@ export default function Tabla({
  
   return (
     <div className="space-y-3">
-      {/* barra superior */}
-      {!sinBusqueda && (
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+      {/* barra superior — siempre visible, busqueda opcional */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        {!sinBusqueda ? (
           <div className="relative">
             <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400 pointer-events-none" />
             <input
@@ -61,15 +57,17 @@ export default function Tabla({
                 focus:border-primary/60 transition-colors w-56"
             />
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <span>{filtrados.length} registros</span>
-            <select value={porPag} onChange={e => handlePorPag(e.target.value)}
-              className="campo-input w-20 text-xs py-1">
-              {[5, 10, 20, 50].map(n => <option key={n} value={n}>{n} / pág</option>)}
-            </select>
-          </div>
+        ) : (
+          <div />
+        )}
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <span>{filtrados.length} registros</span>
+          <select value={porPag} onChange={e => handlePorPag(e.target.value)}
+            className="campo-input w-20 text-xs py-1">
+            {[5, 10, 20, 50].map(n => <option key={n} value={n}>{n} / pág</option>)}
+          </select>
         </div>
-      )}
+      </div>
  
       {/* tabla */}
       <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-dark-border">
@@ -120,7 +118,7 @@ export default function Tabla({
         </table>
       </div>
  
-      {/* paginación */}
+      {/* paginación — siempre visible cuando hay más de 1 página */}
       {totalPaginas > 1 && (
         <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="text-xs text-gray-400 dark:text-dark-text/40">
