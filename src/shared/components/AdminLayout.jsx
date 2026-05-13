@@ -21,7 +21,6 @@ const MENU = [
     items: [
       { to: '/admin/pedidos',    label: 'Pedidos',    icon: ShoppingCart },
       { to: '/admin/ventas',     label: 'Ventas',     icon: BarChart2 },
-      { to: '/admin/domicilios', label: 'Domicilios', icon: Truck },
       { to: '/admin/pagos',      label: 'Pagos',      icon: CreditCard },
     ]
   },
