@@ -765,7 +765,7 @@ export default function Pedidos() {
       <Modal abierto={modalHistorial.abierto} onCerrar={() => setModalHistorial({ abierto: false, cliente: null })}
         titulo={`Historial — ${modalHistorial.cliente?.nombre || ''}`} ancho="max-w-lg">
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {historial.length === 0 && <p className="text-xs text-center text-gray-400 py-6">Sin pedidos</p>}
+          {historial.length === 0 && <p className="text-xs text-center text-gray-400 py-6">Sin pedidos registrados</p>}
           {historial.map(p => (
             <div key={p.id} className="flex justify-between p-3 rounded-lg border border-gray-200 dark:border-dark-border text-xs">
               <div><p className="font-medium">#{p.id}</p><p className="text-gray-400 mt-0.5">{formatFecha(p.fecha_pedido)}</p></div>

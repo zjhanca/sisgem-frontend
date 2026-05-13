@@ -142,8 +142,8 @@ export default function Proveedores() {
               <select value={form.tipo_persona}
                 onChange={e => setForm({ ...form, tipo_persona: e.target.value })}
                 className="campo-input">
-                <option value="juridica">juridica</option>
-                <option value="natural">natural</option>
+                <option value="juridica">Jurídica</option>
+                <option value="natural">Natural</option>
               </select>
             </div>
             <div>
@@ -152,8 +152,8 @@ export default function Proveedores() {
                 onChange={e => setForm({ ...form, tipo_documento: e.target.value })}
                 className="campo-input">
                 <option value="NIT">NIT</option>
-                <option value="CC">cedula</option>
-                <option value="CE">cedula extranjeria</option>
+                <option value="CC">Cédula (CC)</option>
+                <option value="CE">Cédula extranjería (CE)</option>
               </select>
             </div>
             <div>
@@ -168,14 +168,14 @@ export default function Proveedores() {
               <label className="campo-label">contacto</label>
               <input value={form.contacto}
                 onChange={e => setForm({ ...form, contacto: e.target.value })}
-                className="campo-input" placeholder="nombre del contacto" />
+                className="campo-input" placeholder="Nombre del contacto" />
             </div>
             <div className="col-span-2">
               <label className="campo-label">razon social *</label>
               <input value={form.nombre}
                 onChange={e => setForm({ ...form, nombre: e.target.value })}
                 className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`}
-                placeholder="nombre o razon social" />
+                placeholder="Nombre o razón social" />
               {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
             </div>
             <div>
@@ -188,13 +188,13 @@ export default function Proveedores() {
               <label className="campo-label">correo</label>
               <input type="email" value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
-                className="campo-input" placeholder="correo@ejemplo.com" />
+                className="campo-input" placeholder="Correo@ejemplo.com" />
             </div>
             <div className="col-span-2">
               <label className="campo-label">direccion</label>
               <input value={form.direccion}
                 onChange={e => setForm({ ...form, direccion: e.target.value })}
-                className="campo-input" placeholder="direccion del proveedor" />
+                className="campo-input" placeholder="Dirección del proveedor" />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">

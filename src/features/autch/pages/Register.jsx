@@ -132,7 +132,7 @@ export default function Register() {
                 <div>
                   <label className="campo-label">correo electronico *</label>
                   <input type="email" value={form.email} onChange={e => f('email', e.target.value)}
-                    className={`campo-input ${errores.email ? 'border-red-400' : ''}`} placeholder="correo@ejemplo.com" />
+                    className={`campo-input ${errores.email ? 'border-red-400' : ''}`} placeholder="Correo@ejemplo.com" />
                   {errores.email && <p className="campo-error">{errores.email}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-3">

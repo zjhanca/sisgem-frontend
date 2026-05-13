@@ -30,14 +30,12 @@ function RutaAdmin({ children }) {
   if (+usuario.rol_id !== 1) return <Navigate to="/perfil" replace />
   return children
 }
- 
 function RutaCliente({ children }) {
   const { usuario, cargando } = useAuth()
   if (cargando) return null
   if (!usuario) return <Navigate to="/login" replace />
   return children
 }
- 
 export default function AppRoutes() {
   const [carrito, setCarrito] = useState([])
   return (
@@ -68,3 +66,4 @@ export default function AppRoutes() {
     </Routes>
   )
 }
+ 

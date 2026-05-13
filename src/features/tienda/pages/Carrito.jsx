@@ -157,7 +157,7 @@ export default function Carrito({ carrito, setCarrito }) {
           <label className="campo-label">notas / observaciones (opcional)</label>
           <textarea value={notas} onChange={e => setNotas(e.target.value)}
             rows={2} className="campo-input resize-none"
-            placeholder="instrucciones especiales para tu pedido..." />
+            placeholder="Instrucciones especiales para tu pedido..." />
         </div>
  
         {/* resumen */}
@@ -168,7 +168,7 @@ export default function Carrito({ carrito, setCarrito }) {
           </div>
           {tipoVenta === 'domicilio' && (
             <div className="flex justify-between text-sm text-gray-500 dark:text-dark-text/60 mb-1">
-              <span>domicilio</span>
+              <span>Domicilio</span>
               <span className="text-xs text-gray-400">se calcula al confirmar</span>
             </div>
           )}
