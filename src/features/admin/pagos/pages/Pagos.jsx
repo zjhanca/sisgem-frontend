@@ -107,7 +107,7 @@ export default function Pagos() {
         <h1 className="page-title">pagos</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarPDF('/reportes/pagos', 'reporte-pagos.pdf')} className="btn-outline">
-            <Download size={14} /> reporte</button>
+            <Download size={14} /> Reporte</button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary"><Plus size={14} /> nuevo pago</button>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function Pagos() {
               <div className="flex justify-between"><span className="text-gray-400">total pedido</span><span>{formatPrecio(totalPedido)}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">ya pagado</span><span className="text-green-400">{formatPrecio(totalPagado)}</span></div>
               <div className="flex justify-between font-semibold border-t border-gray-200 dark:border-dark-border pt-1">
-                <span>pendiente</span>
+                <span>Pendiente</span>
                 <span className={pagoCompleto ? 'text-green-400' : 'text-primary'}>
                   {pagoCompleto ? '✓ completamente pagado' : formatPrecio(montoPendiente)}
                 </span>

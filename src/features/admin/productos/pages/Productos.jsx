@@ -139,8 +139,8 @@ export default function Productos() {
         <h1 className="page-title">productos</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarPDF('/reportes/productos', 'reporte-productos.pdf')} className="btn-outline">
-            <Download size={14} /> reporte</button>
-          <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> nuevo</button>
+            <Download size={14} /> Reporte</button>
+          <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo</button>
         </div>
       </div>
  
@@ -167,7 +167,7 @@ export default function Productos() {
             <div className="col-span-2">
               <label className="campo-label">nombre *</label>
               <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })}
-                className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`} placeholder="nombre del producto" />
+                className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`} placeholder="Nombre del producto" />
               {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
             </div>
  
@@ -274,7 +274,7 @@ export default function Productos() {
             </div>
             <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-dark-border">
               <button onClick={() => { setModalDetalle({ abierto: false, item: null }); abrirModal(modalDetalle.item) }}
-                className="btn-outline text-xs"><Edit2 size={12} /> editar</button>
+                className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
             </div>
           </div>
         )}

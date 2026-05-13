@@ -201,7 +201,7 @@ export default function PanelCliente() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-light-text dark:text-dark-text">mis direcciones</h2>
-              <button onClick={() => setModalDir(true)} className="btn-primary text-xs"><Plus size={12} /> agregar</button>
+              <button onClick={() => setModalDir(true)} className="btn-primary text-xs"><Plus size={12} /> Agregar</button>
             </div>
             {direcciones.length === 0 && (
               <div className="text-center py-12">

@@ -279,3 +279,4 @@ export default function Home({ carrito, setCarrito }) {
     </div>
   )
 }
+ 

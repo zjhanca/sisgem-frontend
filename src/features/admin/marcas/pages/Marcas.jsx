@@ -102,7 +102,7 @@ export default function Marcas() {
           <div>
             <label className="campo-label">nombre *</label>
             <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })}
-              className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`} placeholder="nombre de la marca" />
+              className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`} placeholder="Nombre de la marca" />
             {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
           </div>
           <div>
@@ -169,7 +169,7 @@ export default function Marcas() {
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
               <button onClick={() => { setModalDetalle({ abierto: false, item: null }); abrirModal(modalDetalle.item) }}
-                className="btn-outline text-xs"><Edit2 size={12} /> editar</button>
+                className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
             </div>
           </div>
         )}
@@ -195,4 +195,3 @@ export default function Marcas() {
     </div>
   )
 }
- 

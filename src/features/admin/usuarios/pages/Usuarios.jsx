@@ -105,7 +105,7 @@ export default function Usuarios() {
     <div>
       <div className="page-header">
         <h1 className="page-title">usuarios</h1>
-        <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> nuevo</button>
+        <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo</button>
       </div>
  
       <Tabla columnas={columnas} datos={usuarios}
@@ -214,7 +214,7 @@ export default function Usuarios() {
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
               <button onClick={() => { setModalDetalle({ abierto: false, item: null }); abrirModal(modalDetalle.item) }}
-                className="btn-outline text-xs"><Edit2 size={12} /> editar</button>
+                className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
             </div>
           </div>
         )}

@@ -153,7 +153,7 @@ export default function Ventas() {
         <h1 className="page-title">ventas</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarPDF('/reportes/ventas', 'reporte-ventas.pdf')} className="btn-outline">
-            <Download size={14} /> reporte</button>
+            <Download size={14} /> Reporte</button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary"><Plus size={14} /> nueva venta</button>
         </div>
       </div>
@@ -214,7 +214,7 @@ export default function Ventas() {
               <div className="relative">
                 <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
                 <input value={clienteBusqueda} onChange={e => setClienteBusqueda(e.target.value)}
-                  className="campo-input pl-8 text-xs" placeholder="buscar cliente por nombre..." />
+                  className="campo-input pl-8 text-xs" placeholder="Buscar cliente por nombre..." />
                 {clienteBusqueda && clientesFiltrados.length > 0 && (
                   <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card
                     border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
@@ -249,7 +249,7 @@ export default function Ventas() {
               <div className="flex-1 relative">
                 <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
                 <input value={prodBusqueda} onChange={e => { setProdBusqueda(e.target.value); buscarProducto(e.target.value) }}
-                  className="campo-input pl-8 text-xs" placeholder="buscar por nombre o código..." />
+                  className="campo-input pl-8 text-xs" placeholder="Buscar por nombre o código..." />
                 {prodsFiltrados.length > 0 && (
                   <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card
                     border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">

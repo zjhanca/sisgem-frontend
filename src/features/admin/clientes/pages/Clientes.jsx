@@ -98,7 +98,7 @@ export default function Clientes() {
         <h1 className="page-title">clientes</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarPDF('/reportes/clientes', 'reporte-clientes.pdf')} className="btn-outline">
-            <Download size={14} /> reporte</button>
+            <Download size={14} /> Reporte</button>
           <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> nuevo cliente</button>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function Clientes() {
             <div>
               <label className="campo-label">correo</label>
               <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                className={`campo-input ${errores.email ? 'border-red-400' : ''}`} placeholder="correo@ejemplo.com" />
+                className={`campo-input ${errores.email ? 'border-red-400' : ''}`} placeholder="Correo@ejemplo.com" />
               {errores.email && <p className="campo-error">{errores.email}</p>}
             </div>
             <div>
@@ -211,7 +211,7 @@ export default function Clientes() {
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
               <button onClick={() => { setModalDetalle({ abierto: false, item: null }); abrirModal(modalDetalle.item) }}
-                className="btn-outline text-xs"><Edit2 size={12} /> editar</button>
+                className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
             </div>
           </div>
         )}

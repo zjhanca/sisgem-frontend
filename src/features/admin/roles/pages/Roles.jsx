@@ -166,7 +166,7 @@ export default function Roles() {
               <div>
                 <label className="campo-label">nombre del rol *</label>
                 <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })}
-                  className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`} placeholder="nombre del rol" />
+                  className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`} placeholder="Nombre del rol" />
                 {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
               </div>
               <div>
@@ -267,7 +267,7 @@ export default function Roles() {
             {!esAdmin(modalDetalle.item.id) && (
               <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
                 <button onClick={() => { setModalDetalle({ abierto: false, item: null }); abrirModal(modalDetalle.item) }}
-                  className="btn-outline text-xs"><Edit2 size={12} /> editar</button>
+                  className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
                 <button onClick={() => { setModalDetalle({ abierto: false, item: null }); abrirModal(modalDetalle.item).then(() => setTab('permisos')) }}
                   className="btn-outline text-xs"><Shield size={12} /> permisos</button>
               </div>
