@@ -6,7 +6,8 @@ import Modal from '@shared/components/Modal'
 import toast from 'react-hot-toast'
 import {
   Plus, Eye, Download, Trash2, History, Settings,
-  Scan, ShoppingCart, Bike, Search, MapPin, CheckCircle, Clock, XCircle
+  Scan, ShoppingCart, Bike, Search, MapPin,
+  CheckCircle, Clock, XCircle, Tag
 } from 'lucide-react'
 import { formatPrecio, formatFechaHora, formatFecha } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
@@ -16,12 +17,13 @@ const formVacio = {
   cliente_id: '', cliente_nombre: '',
   tipo_venta: 'mostrador',
   notas: '', productos: [],
-  // domicilio
   dom_tipo_dir: 'registrada',
   dom_direccion_id: '',
   dom_direccion_manual: '',
   dom_tarifa_id: '',
 }
+ 
+const tarifaVacia = { barrio: '', zona: '', tarifa: '', distancia_km: '' }
  
 const ESTADOS_DOM = [
   { key: 'pendiente', label: 'Pendiente', color: 'yellow', icon: Clock },
@@ -29,9 +31,16 @@ const ESTADOS_DOM = [
   { key: 'anulado',   label: 'Anulado',   color: 'red',    icon: XCircle },
 ]
  
+const TABS = [
+  { id: 'pedidos',    label: 'Pedidos',    icon: ShoppingCart },
+  { id: 'domicilios', label: 'Domicilios', icon: Bike },
+  { id: 'tarifas',    label: 'Tarifas',    icon: Tag },
+]
+ 
 export default function Pedidos() {
   const qc = useQueryClient()
   const barcodeRef = useRef(null)
+  const [tabActivo, setTabActivo] = useState('pedidos')
  
   const [modalNuevo, setModalNuevo]         = useState(false)
   const [modalDetalle, setModalDetalle]     = useState({ abierto: false, pedido: null })
@@ -42,26 +51,29 @@ export default function Pedidos() {
   const [filtroHasta, setFiltroHasta]       = useState('')
   const [filtroBusqueda, setFiltroBusqueda] = useState('')
   const [configCancelacion, setConfigCancelacion] = useState({ horas: 24 })
- 
   const [form, setForm]                       = useState(formVacio)
   const [prodBusqueda, setProdBusqueda]       = useState('')
   const [prodsFiltrados, setProdsFiltrados]   = useState([])
   const [clienteBusqueda, setClienteBusqueda] = useState('')
+  const [formTarifa, setFormTarifa]           = useState(tarifaVacia)
+  const [modalEliminarTarifa, setModalEliminarTarifa] = useState({ abierto: false, item: null })
+  const [filtroDom, setFiltroDom]             = useState('')
+  const [formDomDetalle, setFormDomDetalle]   = useState({ tipo_dir: 'manual', direccion_id: '', direccion_manual: '', tarifa_id: '' })
  
-  // queries
-  const { data: pedidos = [] }  = useQuery({ queryKey: ['pedidos'],        queryFn: () => api.get('/pedidos').then(r => r.data.datos) })
-  const { data: clientes = [] } = useQuery({ queryKey: ['clientes'],       queryFn: () => api.get('/clientes').then(r => r.data.datos.filter(c => c.estado)) })
-  const { data: productos = [] }= useQuery({ queryKey: ['productos'],      queryFn: () => api.get('/productos').then(r => r.data.datos.filter(p => p.estado && p.stock > 0)) })
-  const { data: estados = [] }  = useQuery({ queryKey: ['estados-pedido'], queryFn: () => api.get('/estados?tipo=pedido').then(r => r.data.datos) })
-  const { data: estadosDom = [] }= useQuery({ queryKey: ['estados-dom'],   queryFn: () => api.get('/estados?tipo=domicilio').then(r => r.data.datos) })
-  const { data: tarifas = [] }  = useQuery({ queryKey: ['tarifas'],        queryFn: () => api.get('/domicilios/tarifas').then(r => r.data.datos) })
-  const { data: historial = [] }= useQuery({
+  // ── queries ──
+  const { data: pedidos = [] }   = useQuery({ queryKey: ['pedidos'],        queryFn: () => api.get('/pedidos').then(r => r.data.datos) })
+  const { data: domicilios = [] }= useQuery({ queryKey: ['domicilios'],     queryFn: () => api.get('/domicilios').then(r => r.data.datos) })
+  const { data: clientes = [] }  = useQuery({ queryKey: ['clientes'],       queryFn: () => api.get('/clientes').then(r => r.data.datos.filter(c => c.estado)) })
+  const { data: productos = [] } = useQuery({ queryKey: ['productos'],      queryFn: () => api.get('/productos').then(r => r.data.datos.filter(p => p.estado && p.stock > 0)) })
+  const { data: estados = [] }   = useQuery({ queryKey: ['estados-pedido'], queryFn: () => api.get('/estados?tipo=pedido').then(r => r.data.datos) })
+  const { data: estadosDom = [] }= useQuery({ queryKey: ['estados-dom'],    queryFn: () => api.get('/estados?tipo=domicilio').then(r => r.data.datos) })
+  const { data: tarifas = [], refetch: refetchTarifas } = useQuery({ queryKey: ['tarifas'], queryFn: () => api.get('/domicilios/tarifas').then(r => r.data.datos) })
+  const { data: historial = [] } = useQuery({
     queryKey: ['historial', modalHistorial.cliente?.id],
     queryFn: () => api.get(`/pedidos?cliente_id=${modalHistorial.cliente?.id}`).then(r => r.data.datos),
     enabled: !!modalHistorial.cliente?.id
   })
  
-  // direcciones del cliente seleccionado
   const clienteSelId = form.tipo_cliente === 'registrado' ? form.cliente_id : null
   const { data: direcciones = [] } = useQuery({
     queryKey: ['dirs-dom', clienteSelId],
@@ -69,27 +81,27 @@ export default function Pedidos() {
     enabled: !!clienteSelId
   })
  
-  // domicilio del pedido en detalle
   const { data: domDetalle } = useQuery({
     queryKey: ['dom-pedido', modalDetalle.pedido?.id],
     queryFn: () => api.get(`/domicilios?pedido_id=${modalDetalle.pedido?.id}`).then(r => r.data.datos?.[0] || null),
     enabled: !!modalDetalle.pedido?.id
   })
  
-  // mutations
+  const clienteDetallId = modalDetalle.pedido?.cliente_id_ref
+  const { data: dirsDetalle = [] } = useQuery({
+    queryKey: ['dirs-detalle', clienteDetallId],
+    queryFn: () => api.get(`/clientes/${clienteDetallId}/direcciones`).then(r => r.data.datos),
+    enabled: !!clienteDetallId
+  })
+ 
+  // ── mutations ──
   const crearPedido = useMutation({
     mutationFn: async data => {
-      // 1. crear pedido
       const res = await api.post('/pedidos', {
-        cliente_id: data.cliente_id,
-        cliente_nombre: data.cliente_nombre,
-        tipo_venta: data.tipo_venta,
-        notas: data.notas,
-        productos: data.productos,
+        cliente_id: data.cliente_id, cliente_nombre: data.cliente_nombre,
+        tipo_venta: data.tipo_venta, notas: data.notas, productos: data.productos,
       })
       const pedido_id = res.data.pedido_id || res.data.datos?.id
- 
-      // 2. si es domicilio, crear domicilio automáticamente
       if (data.tipo_venta === 'domicilio' && pedido_id) {
         const tarifa = tarifas.find(t => t.id === +data.dom_tarifa_id)
         await api.post('/domicilios', {
@@ -117,12 +129,12 @@ export default function Pedidos() {
  
   const cambiarEstadoDom = useMutation({
     mutationFn: ({ id, estado_id }) => api.patch(`/domicilios/${id}/estado`, { estado_id }),
-    onSuccess: () => { qc.invalidateQueries(['dom-pedido', modalDetalle.pedido?.id]); toast.success('Estado del domicilio actualizado') }
+    onSuccess: () => { qc.invalidateQueries(['domicilios']); qc.invalidateQueries(['dom-pedido', modalDetalle.pedido?.id]); toast.success('Estado del domicilio actualizado') }
   })
  
   const asignarDomicilio = useMutation({
     mutationFn: data => api.post('/domicilios', data),
-    onSuccess: () => { qc.invalidateQueries(['dom-pedido', modalDetalle.pedido?.id]); toast.success('Domicilio asignado') }
+    onSuccess: () => { qc.invalidateQueries(['dom-pedido', modalDetalle.pedido?.id]); qc.invalidateQueries(['domicilios']); toast.success('Domicilio asignado') }
   })
  
   const anular = useMutation({
@@ -133,12 +145,23 @@ export default function Pedidos() {
     onSuccess: () => { qc.invalidateQueries(['pedidos']); setModalDetalle({ abierto: false, pedido: null }); toast.success('Pedido anulado') }
   })
  
-  // helpers clientes
+  const guardarTarifa = useMutation({
+    mutationFn: data => api.post('/domicilios/tarifas', data),
+    onSuccess: () => { refetchTarifas(); setFormTarifa(tarifaVacia); toast.success('Tarifa guardada') },
+    onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar')
+  })
+ 
+  const eliminarTarifa = useMutation({
+    mutationFn: id => api.delete(`/domicilios/tarifas/${id}`),
+    onSuccess: () => { refetchTarifas(); setModalEliminarTarifa({ abierto: false, item: null }); toast.success('Tarifa eliminada') },
+    onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar')
+  })
+ 
+  // ── helpers productos ──
   const clientesFiltrados = clientes.filter(c =>
     !clienteBusqueda || `${c.nombre} ${c.apellido}`.toLowerCase().includes(clienteBusqueda.toLowerCase())
   ).slice(0, 6)
  
-  // helpers productos
   const buscarProducto = texto => {
     if (!texto) { setProdsFiltrados([]); return }
     const t = texto.toLowerCase()
@@ -169,6 +192,7 @@ export default function Pedidos() {
  
   const quitarProducto = idx => setForm({ ...form, productos: form.productos.filter((_, i) => i !== idx) })
   const totalPedido = form.productos.reduce((s, p) => s + p.precio_unitario * p.cantidad, 0)
+  const setF = (campo, val) => setForm(prev => ({ ...prev, [campo]: val }))
  
   const handleCrear = e => {
     e.preventDefault()
@@ -183,10 +207,8 @@ export default function Pedidos() {
       cliente_id: form.tipo_cliente === 'registrado' ? form.cliente_id : null,
       cliente_nombre: form.tipo_cliente === 'manual' ? form.cliente_nombre : null,
       tipo_venta: form.tipo_venta, notas: form.notas, productos: form.productos,
-      dom_tipo_dir: form.dom_tipo_dir,
-      dom_direccion_id: form.dom_direccion_id,
-      dom_direccion_manual: form.dom_direccion_manual,
-      dom_tarifa_id: form.dom_tarifa_id,
+      dom_tipo_dir: form.dom_tipo_dir, dom_direccion_id: form.dom_direccion_id,
+      dom_direccion_manual: form.dom_direccion_manual, dom_tarifa_id: form.dom_tarifa_id,
     })
   }
  
@@ -205,12 +227,16 @@ export default function Pedidos() {
     return true
   })
  
+  const domFiltrados = domicilios.filter(d => {
+    if (!filtroDom) return true
+    return getKeyEstadoDom(d.estado) === filtroDom
+  })
+ 
   const getBadge = nombre => {
     if (!nombre) return 'badge-pendiente'
     const n = nombre.toLowerCase()
     if (n.includes('anula') || n.includes('cancel')) return 'badge-anulado'
     if (n.includes('entrega') || n.includes('paga')) return 'badge-activo'
-    if (n.includes('proceso')) return 'badge-proceso'
     return 'badge-pendiente'
   }
  
@@ -227,7 +253,21 @@ export default function Pedidos() {
     return estadosDom.find(e => mapa[key]?.some(k => e.nombre?.toLowerCase().includes(k)))?.id
   }
  
-  const columnas = [
+  const handleAsignarDomDetalle = () => {
+    if (formDomDetalle.tipo_dir === 'manual' && !formDomDetalle.direccion_manual.trim()) { toast.error('Ingresa la dirección'); return }
+    if (formDomDetalle.tipo_dir === 'registrada' && !formDomDetalle.direccion_id) { toast.error('Selecciona una dirección'); return }
+    const tarifa = tarifas.find(t => t.id === +formDomDetalle.tarifa_id)
+    asignarDomicilio.mutate({
+      pedido_id: modalDetalle.pedido.id,
+      direccion_id: formDomDetalle.tipo_dir === 'registrada' ? +formDomDetalle.direccion_id : null,
+      direccion_manual: formDomDetalle.tipo_dir === 'manual' ? formDomDetalle.direccion_manual : null,
+      tarifa_id: formDomDetalle.tarifa_id ? +formDomDetalle.tarifa_id : null,
+      tarifa_aplicada: tarifa?.tarifa || 0,
+    })
+  }
+ 
+  // columnas
+  const columnasPedidos = [
     { key: 'id', label: '#' },
     { key: 'cliente', label: 'Cliente' },
     { key: 'tipo_venta', label: 'Tipo',
@@ -248,78 +288,193 @@ export default function Pedidos() {
     { key: 'fecha_pedido', label: 'Fecha', render: r => formatFechaHora(r.fecha_pedido) },
   ]
  
-  // form helpers
-  const setF = (campo, val) => setForm(prev => ({ ...prev, [campo]: val }))
- 
-  // estado domicilio para formulario de asignación en detalle
-  const [formDomDetalle, setFormDomDetalle] = useState({ tipo_dir: 'manual', direccion_id: '', direccion_manual: '', tarifa_id: '' })
-  const clienteDetallId = modalDetalle.pedido?.cliente_id_ref
-  const { data: dirsDetalle = [] } = useQuery({
-    queryKey: ['dirs-detalle', clienteDetallId],
-    queryFn: () => api.get(`/clientes/${clienteDetallId}/direcciones`).then(r => r.data.datos),
-    enabled: !!clienteDetallId
-  })
- 
-  const handleAsignarDomDetalle = () => {
-    if (formDomDetalle.tipo_dir === 'manual' && !formDomDetalle.direccion_manual.trim()) { toast.error('Ingresa la dirección'); return }
-    if (formDomDetalle.tipo_dir === 'registrada' && !formDomDetalle.direccion_id) { toast.error('Selecciona una dirección'); return }
-    const tarifa = tarifas.find(t => t.id === +formDomDetalle.tarifa_id)
-    asignarDomicilio.mutate({
-      pedido_id: modalDetalle.pedido.id,
-      direccion_id: formDomDetalle.tipo_dir === 'registrada' ? +formDomDetalle.direccion_id : null,
-      direccion_manual: formDomDetalle.tipo_dir === 'manual' ? formDomDetalle.direccion_manual : null,
-      tarifa_id: formDomDetalle.tarifa_id ? +formDomDetalle.tarifa_id : null,
-      tarifa_aplicada: tarifa?.tarifa || 0,
-    })
-  }
+  const columnasDom = [
+    { key: 'id', label: '#' },
+    { key: 'pedido_id', label: 'Pedido #' },
+    { key: 'cliente', label: 'Cliente', render: r => r.cliente || 'Ocasional' },
+    { key: 'barrio', label: 'Barrio', render: r => r.barrio || '—' },
+    { key: 'direccion', label: 'Dirección', render: r => (r.direccion || r.direccion_manual || '—').substring(0, 30) },
+    { key: 'tarifa_aplicada', label: 'Tarifa', render: r => formatPrecio(r.tarifa_aplicada || 0) },
+    { key: 'estado', label: 'Estado',
+      render: r => {
+        const key = getKeyEstadoDom(r.estado)
+        const cfg = ESTADOS_DOM.find(e => e.key === key)
+        const Ico = cfg?.icon || Clock
+        return (
+          <div className="flex items-center gap-1.5">
+            <Ico size={13} className={key === 'entregado' ? 'text-green-400' : key === 'anulado' ? 'text-red-400' : 'text-yellow-400'} />
+            <span className="text-xs">{cfg?.label || 'Pendiente'}</span>
+          </div>
+        )
+      }
+    },
+  ]
  
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Pedidos</h1>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2">
           <button onClick={() => setModalConfig(true)} className="btn-ghost"><Settings size={14} /></button>
           <button onClick={() => descargarPDF('/reportes/pedidos', 'reporte-pedidos.pdf')} className="btn-outline"><Download size={14} /> Reporte</button>
-          <button onClick={() => setModalNuevo(true)} className="btn-primary"><Plus size={14} /> Nuevo Pedido</button>
+          {tabActivo === 'pedidos' && (
+            <button onClick={() => setModalNuevo(true)} className="btn-primary"><Plus size={14} /> Nuevo Pedido</button>
+          )}
         </div>
       </div>
  
-      {/* filtros */}
-      <div className="flex gap-2 mb-4 flex-wrap items-end">
-        <div>
-          <p className="campo-label mb-0.5">Buscar</p>
-          <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)} placeholder="# o cliente..." className="campo-input w-36 text-xs" />
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Estado</p>
-          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
-            <option value="">Todos</option>
-            {estados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-          </select>
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Desde</p>
-          <input type="datetime-local" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)} className="campo-input text-xs" />
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Hasta</p>
-          <input type="datetime-local" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)} className="campo-input text-xs" />
-        </div>
-        {(filtroEstado || filtroDesde || filtroHasta || filtroBusqueda) && (
-          <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta(''); setFiltroBusqueda('') }}
-            className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
-        )}
+      {/* ── TABS ── */}
+      <div className="flex gap-1 p-1 bg-light-bg dark:bg-dark-bg rounded-xl mb-4 w-fit">
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTabActivo(t.id)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+              tabActivo === t.id ? 'bg-primary text-dark-bg shadow-sm' : 'text-gray-500 dark:text-dark-text/60 hover:text-primary'
+            }`}>
+            <t.icon size={13} /> {t.label}
+            {t.id === 'domicilios' && domicilios.filter(d => getKeyEstadoDom(d.estado) === 'pendiente').length > 0 && (
+              <span className={`ml-0.5 text-xs px-1.5 py-0.5 rounded-full ${tabActivo === 'domicilios' ? 'bg-dark-bg/20' : 'bg-yellow-500/20 text-yellow-600'}`}>
+                {domicilios.filter(d => getKeyEstadoDom(d.estado) === 'pendiente').length}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
  
-      <Tabla columnas={columnas} datos={pedidosFiltrados} sinBusqueda
-        acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, pedido: fila })} className="btn-ghost"><Eye size={14} /></button>
-          <button onClick={() => descargarPDF(`/reportes/pedido/${fila.id}`, `comprobante-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
-          <button onClick={() => setModalHistorial({ abierto: true, cliente: { id: fila.cliente_id_ref, nombre: fila.cliente } })} className="btn-ghost"><History size={14} /></button>
-        </>)}
-      />
+      {/* ══ TAB PEDIDOS ══ */}
+      {tabActivo === 'pedidos' && (
+        <>
+          <div className="flex gap-2 mb-4 flex-wrap items-end">
+            <div>
+              <p className="campo-label mb-0.5">Buscar</p>
+              <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)} placeholder="# o cliente..." className="campo-input w-36 text-xs" />
+            </div>
+            <div>
+              <p className="campo-label mb-0.5">Estado</p>
+              <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
+                <option value="">Todos</option>
+                {estados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+              </select>
+            </div>
+            <div>
+              <p className="campo-label mb-0.5">Desde</p>
+              <input type="datetime-local" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)} className="campo-input text-xs" />
+            </div>
+            <div>
+              <p className="campo-label mb-0.5">Hasta</p>
+              <input type="datetime-local" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)} className="campo-input text-xs" />
+            </div>
+            {(filtroEstado || filtroDesde || filtroHasta || filtroBusqueda) && (
+              <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta(''); setFiltroBusqueda('') }}
+                className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
+            )}
+          </div>
+          <Tabla columnas={columnasPedidos} datos={pedidosFiltrados} sinBusqueda
+            acciones={fila => (<>
+              <button onClick={() => setModalDetalle({ abierto: true, pedido: fila })} className="btn-ghost"><Eye size={14} /></button>
+              <button onClick={() => descargarPDF(`/reportes/pedido/${fila.id}`, `comprobante-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
+              <button onClick={() => setModalHistorial({ abierto: true, cliente: { id: fila.cliente_id_ref, nombre: fila.cliente } })} className="btn-ghost"><History size={14} /></button>
+            </>)}
+          />
+        </>
+      )}
  
-      {/* ───── MODAL NUEVO PEDIDO ───── */}
+      {/* ══ TAB DOMICILIOS ══ */}
+      {tabActivo === 'domicilios' && (
+        <>
+          <div className="flex gap-2 mb-4">
+            <select value={filtroDom} onChange={e => setFiltroDom(e.target.value)} className="campo-input w-44 text-xs">
+              <option value="">Todos los estados</option>
+              {ESTADOS_DOM.map(e => <option key={e.key} value={e.key}>{e.label}</option>)}
+            </select>
+            {filtroDom && <button onClick={() => setFiltroDom('')} className="btn-ghost text-xs text-red-400">Limpiar</button>}
+          </div>
+          <Tabla columnas={columnasDom} datos={domFiltrados} sinBusqueda
+            acciones={fila => (
+              <div className="flex gap-1">
+                {ESTADOS_DOM.map(({ key, label, icon: Ico, color }) => {
+                  const estado_id = getEstadoDomId(key)
+                  if (!estado_id) return null
+                  const esActual = getKeyEstadoDom(fila.estado) === key
+                  return (
+                    <button key={key} type="button"
+                      onClick={() => cambiarEstadoDom.mutate({ id: fila.id, estado_id })}
+                      title={label}
+                      className={`p-1.5 rounded-lg border transition-colors ${
+                        esActual
+                          ? color === 'green' ? 'bg-green-500/20 border-green-500 text-green-500'
+                            : color === 'red' ? 'bg-red-500/20 border-red-400 text-red-400'
+                            : 'bg-yellow-500/20 border-yellow-500 text-yellow-500'
+                          : 'border-gray-200 dark:border-dark-border text-gray-400 hover:border-primary/40'
+                      }`}>
+                      <Ico size={12} />
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          />
+        </>
+      )}
+ 
+      {/* ══ TAB TARIFAS ══ */}
+      {tabActivo === 'tarifas' && (
+        <div className="space-y-4">
+          {/* lista tarifas */}
+          <Tabla
+            columnas={[
+              { key: 'barrio',       label: 'Barrio' },
+              { key: 'zona',         label: 'Zona',        render: r => r.zona || '—' },
+              { key: 'tarifa',       label: 'Tarifa',      render: r => formatPrecio(r.tarifa) },
+              { key: 'distancia_km', label: 'Distancia',   render: r => r.distancia_km ? `${r.distancia_km} km` : '—' },
+            ]}
+            datos={tarifas}
+            acciones={fila => (
+              <button onClick={() => setModalEliminarTarifa({ abierto: true, item: fila })}
+                className="btn-ghost hover:text-red-400"><Trash2 size={14} /></button>
+            )}
+          />
+ 
+          {/* formulario nueva tarifa */}
+          <div className="p-4 rounded-xl border border-gray-200 dark:border-dark-border bg-light-card dark:bg-dark-card">
+            <p className="text-sm font-semibold text-light-text dark:text-dark-text mb-3">Agregar Tarifa por Barrio</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className="campo-label">Barrio *</label>
+                <input value={formTarifa.barrio} onChange={e => setFormTarifa({ ...formTarifa, barrio: e.target.value })}
+                  className="campo-input text-xs" placeholder="Ej: Laureles" />
+              </div>
+              <div>
+                <label className="campo-label">Zona</label>
+                <input value={formTarifa.zona} onChange={e => setFormTarifa({ ...formTarifa, zona: e.target.value })}
+                  className="campo-input text-xs" placeholder="Ej: Norte" />
+              </div>
+              <div>
+                <label className="campo-label">Tarifa *</label>
+                <input type="number" step="0.01" value={formTarifa.tarifa} onChange={e => setFormTarifa({ ...formTarifa, tarifa: e.target.value })}
+                  className="campo-input text-xs" placeholder="0.00" />
+              </div>
+              <div>
+                <label className="campo-label">Distancia (km)</label>
+                <input type="number" step="0.1" value={formTarifa.distancia_km} onChange={e => setFormTarifa({ ...formTarifa, distancia_km: e.target.value })}
+                  className="campo-input text-xs" placeholder="0.0" />
+              </div>
+            </div>
+            <div className="flex justify-end mt-3">
+              <button onClick={() => {
+                if (!formTarifa.barrio.trim()) { toast.error('El barrio es obligatorio'); return }
+                if (!formTarifa.tarifa || +formTarifa.tarifa <= 0) { toast.error('Ingresa una tarifa válida'); return }
+                guardarTarifa.mutate(formTarifa)
+              }} disabled={guardarTarifa.isPending} className="btn-primary">
+                {guardarTarifa.isPending ? 'Guardando...' : 'Aceptar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+ 
+      {/* ═══ MODALES ═══ */}
+ 
+      {/* Modal Nuevo Pedido */}
       <Modal abierto={modalNuevo}
         onCerrar={() => { setModalNuevo(false); setForm(formVacio); setProdBusqueda(''); setClienteBusqueda('') }}
         titulo="Nuevo Pedido" ancho="max-w-2xl">
@@ -352,22 +507,18 @@ export default function Pedidos() {
               {[{ val: 'registrado', label: 'Cliente Registrado' }, { val: 'manual', label: 'Nombre Manual' }].map(t => (
                 <button key={t.val} type="button"
                   onClick={() => { setF('tipo_cliente', t.val); setF('cliente_id', ''); setF('cliente_nombre', ''); setClienteBusqueda('') }}
-                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                    form.tipo_cliente === t.val ? 'bg-primary text-dark-bg border-primary' : 'border-gray-200 dark:border-dark-border text-gray-500'
-                  }`}>
+                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${form.tipo_cliente === t.val ? 'bg-primary text-dark-bg border-primary' : 'border-gray-200 dark:border-dark-border text-gray-500'}`}>
                   {t.label}
                 </button>
               ))}
             </div>
- 
             {form.tipo_cliente === 'registrado' ? (
               <div className="relative">
                 <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
                 <input value={clienteBusqueda} onChange={e => setClienteBusqueda(e.target.value)}
                   className="campo-input pl-8 text-xs" placeholder="Buscar cliente por nombre..." />
                 {clienteBusqueda && clientesFiltrados.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card
-                    border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                     {clientesFiltrados.map(c => (
                       <button key={c.id} type="button"
                         onClick={() => { setF('cliente_id', c.id); setClienteBusqueda(`${c.nombre} ${c.apellido}`) }}
@@ -379,9 +530,7 @@ export default function Pedidos() {
                   </div>
                 )}
                 {form.cliente_id && (
-                  <p className="text-xs text-primary mt-1">
-                    ✓ {clientes.find(c => c.id === +form.cliente_id)?.nombre} {clientes.find(c => c.id === +form.cliente_id)?.apellido}
-                  </p>
+                  <p className="text-xs text-primary mt-1">✓ {clientes.find(c => c.id === +form.cliente_id)?.nombre} {clientes.find(c => c.id === +form.cliente_id)?.apellido}</p>
                 )}
               </div>
             ) : (
@@ -392,23 +541,19 @@ export default function Pedidos() {
  
           {/* productos */}
           <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-3">
-            <p className="text-xs font-semibold text-light-text dark:text-dark-text">Productos</p>
+            <p className="text-xs font-semibold">Productos</p>
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
                 <input value={prodBusqueda} onChange={e => { setProdBusqueda(e.target.value); buscarProducto(e.target.value) }}
                   className="campo-input pl-8 text-xs" placeholder="Buscar por nombre o código..." />
                 {prodsFiltrados.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card
-                    border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
                     {prodsFiltrados.map(p => (
                       <button key={p.id} type="button" onClick={() => agregarProducto(p)}
-                        className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between items-center">
-                        <div>
-                          <span className="text-light-text dark:text-dark-text">{p.nombre}</span>
-                          {p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}
-                        </div>
-                        <span className="text-primary shrink-0 ml-2">{formatPrecio(p.precio)}</span>
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between">
+                        <div><span>{p.nombre}</span>{p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}</div>
+                        <span className="text-primary">{formatPrecio(p.precio)}</span>
                       </button>
                     ))}
                   </div>
@@ -420,7 +565,6 @@ export default function Pedidos() {
                 <Scan size={13} className="absolute right-2 top-2.5 text-gray-400" />
               </div>
             </div>
- 
             {form.productos.length > 0 && (
               <div className="space-y-1 max-h-40 overflow-y-auto">
                 {form.productos.map((p, i) => (
@@ -428,11 +572,9 @@ export default function Pedidos() {
                     <span className="flex-1 truncate mr-2">{p.nombre}</span>
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => setForm({ ...form, productos: form.productos.map((pp, ii) => ii === i ? { ...pp, cantidad: Math.max(1, pp.cantidad - 1) } : pp) })}
-                          className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5">-</button>
+                        <button type="button" onClick={() => setForm({ ...form, productos: form.productos.map((pp, ii) => ii === i ? { ...pp, cantidad: Math.max(1, pp.cantidad - 1) } : pp) })} className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5">-</button>
                         <span className="w-6 text-center font-medium">{p.cantidad}</span>
-                        <button type="button" onClick={() => setForm({ ...form, productos: form.productos.map((pp, ii) => ii === i ? { ...pp, cantidad: pp.cantidad + 1 } : pp) })}
-                          className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5">+</button>
+                        <button type="button" onClick={() => setForm({ ...form, productos: form.productos.map((pp, ii) => ii === i ? { ...pp, cantidad: pp.cantidad + 1 } : pp) })} className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5">+</button>
                       </div>
                       <span className="text-primary font-medium w-16 text-right">{formatPrecio(p.precio_unitario * p.cantidad)}</span>
                       <button type="button" onClick={() => quitarProducto(i)} className="text-red-400"><Trash2 size={12} /></button>
@@ -440,66 +582,49 @@ export default function Pedidos() {
                   </div>
                 ))}
                 <div className="flex justify-between text-xs font-semibold pt-2 border-t border-gray-200 dark:border-dark-border">
-                  <span>Total</span>
-                  <span className="text-primary text-sm">{formatPrecio(totalPedido)}</span>
+                  <span>Total</span><span className="text-primary text-sm">{formatPrecio(totalPedido)}</span>
                 </div>
               </div>
             )}
           </div>
  
-          {/* ── SECCIÓN DOMICILIO (solo si tipo = domicilio) ── */}
+          {/* sección domicilio */}
           {form.tipo_venta === 'domicilio' && (
             <div className="p-3 rounded-xl border-2 border-blue-400/40 bg-blue-50/30 dark:bg-blue-500/5 space-y-3">
               <div className="flex items-center gap-2">
                 <MapPin size={14} className="text-blue-500" />
                 <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">Información del Domicilio</p>
               </div>
- 
-              {/* dirección */}
               <div>
                 <label className="campo-label">Dirección de Envío</label>
                 {form.tipo_cliente === 'registrado' && form.cliente_id && direcciones.length > 0 && (
                   <div className="flex gap-2 mb-2">
-                    {[{ val: 'registrada', label: 'Dirección Guardada' }, { val: 'manual', label: 'Ingresar Manual' }].map(t => (
-                      <button key={t.val} type="button"
-                        onClick={() => setF('dom_tipo_dir', t.val)}
-                        className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                          form.dom_tipo_dir === t.val ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-200 dark:border-dark-border text-gray-500'
-                        }`}>
+                    {[{ val: 'registrada', label: 'Guardada' }, { val: 'manual', label: 'Manual' }].map(t => (
+                      <button key={t.val} type="button" onClick={() => setF('dom_tipo_dir', t.val)}
+                        className={`px-3 py-1 text-xs rounded-full border transition-colors ${form.dom_tipo_dir === t.val ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-200 dark:border-dark-border text-gray-500'}`}>
                         {t.label}
                       </button>
                     ))}
                   </div>
                 )}
- 
                 {form.dom_tipo_dir === 'registrada' && form.cliente_id && direcciones.length > 0 ? (
                   <select value={form.dom_direccion_id} onChange={e => setF('dom_direccion_id', e.target.value)} className="campo-input text-xs">
                     <option value="">Seleccionar dirección guardada...</option>
-                    {direcciones.map(d => (
-                      <option key={d.id} value={d.id}>{d.direccion}{d.barrio ? ` — ${d.barrio}` : ''}</option>
-                    ))}
+                    {direcciones.map(d => <option key={d.id} value={d.id}>{d.direccion}{d.barrio ? ` — ${d.barrio}` : ''}</option>)}
                   </select>
                 ) : (
                   <input value={form.dom_direccion_manual} onChange={e => setF('dom_direccion_manual', e.target.value)}
                     className="campo-input text-xs" placeholder="Barrio, dirección completa, indicaciones..." />
                 )}
               </div>
- 
-              {/* tarifa por barrio */}
               <div>
                 <label className="campo-label">Tarifa por Barrio</label>
                 <select value={form.dom_tarifa_id} onChange={e => setF('dom_tarifa_id', e.target.value)} className="campo-input text-xs">
                   <option value="">Seleccionar tarifa...</option>
-                  {tarifas.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.barrio || t.zona} — {formatPrecio(t.tarifa)}
-                    </option>
-                  ))}
+                  {tarifas.map(t => <option key={t.id} value={t.id}>{t.barrio}{t.zona ? ` (${t.zona})` : ''} — {formatPrecio(t.tarifa)}</option>)}
                 </select>
                 {form.dom_tarifa_id && (
-                  <p className="text-xs text-blue-500 mt-1 font-medium">
-                    Tarifa: {formatPrecio(tarifas.find(t => t.id === +form.dom_tarifa_id)?.tarifa || 0)}
-                  </p>
+                  <p className="text-xs text-blue-500 mt-1 font-medium">Tarifa: {formatPrecio(tarifas.find(t => t.id === +form.dom_tarifa_id)?.tarifa || 0)}</p>
                 )}
               </div>
             </div>
@@ -522,12 +647,11 @@ export default function Pedidos() {
         </form>
       </Modal>
  
-      {/* ───── MODAL DETALLE ───── */}
+      {/* Modal Detalle */}
       <Modal abierto={modalDetalle.abierto} onCerrar={() => setModalDetalle({ abierto: false, pedido: null })}
         titulo={`Pedido #${modalDetalle.pedido?.id}`} ancho="max-w-lg">
         {modalDetalle.pedido && (
           <div className="space-y-4">
-            {/* info pedido */}
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div><p className="campo-label">Cliente</p><p className="font-medium">{modalDetalle.pedido.cliente}</p></div>
               <div><p className="campo-label">Tipo</p>
@@ -539,81 +663,68 @@ export default function Pedidos() {
               <div><p className="campo-label">Fecha</p><p>{formatFechaHora(modalDetalle.pedido.fecha_pedido)}</p></div>
             </div>
  
-            {/* cambiar estado pedido */}
             <div className="pt-2 border-t border-gray-200 dark:border-dark-border">
               <p className="campo-label mb-1">Estado del Pedido</p>
               <div className="flex flex-wrap gap-1">
                 {estados.map(e => (
                   <button key={e.id} type="button"
                     onClick={() => cambiarEstado.mutate({ id: modalDetalle.pedido.id, estado_id: e.id })}
-                    className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                      modalDetalle.pedido.estado_id === e.id
-                        ? 'bg-primary text-dark-bg border-primary'
-                        : 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'
-                    }`}>
+                    className={`px-3 py-1 text-xs rounded-full border transition-colors ${modalDetalle.pedido.estado_id === e.id ? 'bg-primary text-dark-bg border-primary' : 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'}`}>
                     {e.nombre}
                   </button>
                 ))}
               </div>
             </div>
  
-            {/* ── SECCIÓN DOMICILIO EN DETALLE ── */}
+            {/* domicilio en detalle */}
             {modalDetalle.pedido.tipo_venta === 'domicilio' && (
               <div className="pt-2 border-t border-gray-200 dark:border-dark-border">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin size={13} className="text-blue-500" />
                   <p className="campo-label">Domicilio</p>
                 </div>
- 
                 {domDetalle ? (
-                  // domicilio ya asignado — mostrar info + cambiar estado
                   <div className="space-y-2">
                     <div className="p-3 rounded-lg bg-light-bg dark:bg-dark-bg text-xs space-y-1">
                       <p><span className="text-gray-400">Dirección:</span> {domDetalle.direccion || domDetalle.direccion_manual || '—'}</p>
                       {domDetalle.barrio && <p><span className="text-gray-400">Barrio:</span> {domDetalle.barrio}</p>}
                       {domDetalle.tarifa_aplicada > 0 && <p><span className="text-gray-400">Tarifa:</span> <span className="text-blue-500 font-medium">{formatPrecio(domDetalle.tarifa_aplicada)}</span></p>}
                     </div>
-                    <div>
-                      <p className="campo-label mb-1">Estado del Domicilio</p>
-                      <div className="flex gap-2 flex-wrap">
-                        {ESTADOS_DOM.map(({ key, label, color, icon: Ico }) => {
-                          const estado_id = getEstadoDomId(key)
-                          if (!estado_id) return null
-                          const esActual = getKeyEstadoDom(domDetalle.estado) === key
-                          return (
-                            <button key={key} type="button"
-                              onClick={() => cambiarEstadoDom.mutate({ id: domDetalle.id, estado_id })}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all ${
-                                esActual
-                                  ? color === 'green' ? 'bg-green-500/20 border-green-500 text-green-500'
-                                    : color === 'red'  ? 'bg-red-500/20 border-red-400 text-red-400'
-                                    : 'bg-yellow-500/20 border-yellow-500 text-yellow-500'
-                                  : 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'
-                              }`}>
-                              <Ico size={11} /> {label}
-                            </button>
-                          )
-                        })}
-                      </div>
+                    <p className="campo-label mb-1">Estado del Domicilio</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {ESTADOS_DOM.map(({ key, label, color, icon: Ico }) => {
+                        const estado_id = getEstadoDomId(key)
+                        if (!estado_id) return null
+                        const esActual = getKeyEstadoDom(domDetalle.estado) === key
+                        return (
+                          <button key={key} type="button"
+                            onClick={() => cambiarEstadoDom.mutate({ id: domDetalle.id, estado_id })}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all ${
+                              esActual
+                                ? color === 'green' ? 'bg-green-500/20 border-green-500 text-green-500'
+                                  : color === 'red'  ? 'bg-red-500/20 border-red-400 text-red-400'
+                                  : 'bg-yellow-500/20 border-yellow-500 text-yellow-500'
+                                : 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'
+                            }`}>
+                            <Ico size={11} /> {label}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 ) : (
-                  // domicilio NO asignado — formulario para asignarlo
                   <div className="space-y-2 p-3 rounded-lg border border-dashed border-blue-300 dark:border-blue-500/30 bg-blue-50/30 dark:bg-blue-500/5">
-                    <p className="text-xs text-blue-500 italic">Sin domicilio asignado. Asígnar ahora:</p>
- 
+                    <p className="text-xs text-blue-500 italic">Sin domicilio asignado. Asignar ahora:</p>
                     {clienteDetallId && dirsDetalle.length > 0 && (
-                      <div className="flex gap-2 mb-1">
+                      <div className="flex gap-2">
                         {[{ val: 'registrada', label: 'Guardada' }, { val: 'manual', label: 'Manual' }].map(t => (
-                          <button key={t.val} type="button"
-                            onClick={() => setFormDomDetalle(p => ({ ...p, tipo_dir: t.val }))}
+                          <button key={t.val} type="button" onClick={() => setFormDomDetalle(p => ({ ...p, tipo_dir: t.val }))}
                             className={`px-2.5 py-1 text-xs rounded-full border ${formDomDetalle.tipo_dir === t.val ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-200 text-gray-500'}`}>
                             {t.label}
                           </button>
                         ))}
                       </div>
                     )}
- 
                     {formDomDetalle.tipo_dir === 'registrada' && dirsDetalle.length > 0 ? (
                       <select value={formDomDetalle.direccion_id} onChange={e => setFormDomDetalle(p => ({ ...p, direccion_id: e.target.value }))} className="campo-input text-xs">
                         <option value="">Seleccionar dirección...</option>
@@ -623,12 +734,10 @@ export default function Pedidos() {
                       <input value={formDomDetalle.direccion_manual} onChange={e => setFormDomDetalle(p => ({ ...p, direccion_manual: e.target.value }))}
                         className="campo-input text-xs" placeholder="Barrio, dirección, indicaciones..." />
                     )}
- 
                     <select value={formDomDetalle.tarifa_id} onChange={e => setFormDomDetalle(p => ({ ...p, tarifa_id: e.target.value }))} className="campo-input text-xs">
                       <option value="">Tarifa por barrio (opcional)...</option>
-                      {tarifas.map(t => <option key={t.id} value={t.id}>{t.barrio || t.zona} — {formatPrecio(t.tarifa)}</option>)}
+                      {tarifas.map(t => <option key={t.id} value={t.id}>{t.barrio}{t.zona ? ` (${t.zona})` : ''} — {formatPrecio(t.tarifa)}</option>)}
                     </select>
- 
                     <button type="button" onClick={handleAsignarDomDetalle} disabled={asignarDomicilio.isPending}
                       className="btn-primary text-xs w-full justify-center">
                       {asignarDomicilio.isPending ? 'Asignando...' : 'Asignar Domicilio'}
@@ -638,7 +747,6 @@ export default function Pedidos() {
               </div>
             )}
  
-            {/* acciones */}
             <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
               <button onClick={() => descargarPDF(`/reportes/pedido/${modalDetalle.pedido.id}`, `comprobante-${modalDetalle.pedido.id}.pdf`)}
                 className="btn-outline text-xs"><Download size={12} /> Comprobante</button>
@@ -653,7 +761,7 @@ export default function Pedidos() {
         )}
       </Modal>
  
-      {/* ───── MODAL HISTORIAL ───── */}
+      {/* Modal Historial */}
       <Modal abierto={modalHistorial.abierto} onCerrar={() => setModalHistorial({ abierto: false, cliente: null })}
         titulo={`Historial — ${modalHistorial.cliente?.nombre || ''}`} ancho="max-w-lg">
         <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -661,16 +769,29 @@ export default function Pedidos() {
           {historial.map(p => (
             <div key={p.id} className="flex justify-between p-3 rounded-lg border border-gray-200 dark:border-dark-border text-xs">
               <div><p className="font-medium">#{p.id}</p><p className="text-gray-400 mt-0.5">{formatFecha(p.fecha_pedido)}</p></div>
-              <div className="text-right">
-                <p className="text-primary font-medium">{formatPrecio(p.total)}</p>
-                <span className={getBadge(p.estado)}>{p.estado}</span>
-              </div>
+              <div className="text-right"><p className="text-primary font-medium">{formatPrecio(p.total)}</p><span className={getBadge(p.estado)}>{p.estado}</span></div>
             </div>
           ))}
         </div>
       </Modal>
  
-      {/* ───── MODAL CONFIG ───── */}
+      {/* Modal Eliminar Tarifa */}
+      <Modal abierto={modalEliminarTarifa.abierto} onCerrar={() => setModalEliminarTarifa({ abierto: false, item: null })}
+        titulo="Confirmar Eliminación" ancho="max-w-sm">
+        <div className="space-y-4">
+          <p className="text-sm">¿Eliminar la tarifa del barrio <span className="font-medium text-primary">{modalEliminarTarifa.item?.barrio}</span>?</p>
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
+            <button onClick={() => setModalEliminarTarifa({ abierto: false, item: null })}
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
+            <button onClick={() => eliminarTarifa.mutate(modalEliminarTarifa.item.id)} disabled={eliminarTarifa.isPending}
+              className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
+              {eliminarTarifa.isPending ? 'Eliminando...' : 'Aceptar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+ 
+      {/* Modal Config */}
       <Modal abierto={modalConfig} onCerrar={() => setModalConfig(false)} titulo="Configurar Cancelación" ancho="max-w-sm">
         <div className="space-y-4">
           <div>
@@ -687,4 +808,3 @@ export default function Pedidos() {
     </div>
   )
 }
- 
