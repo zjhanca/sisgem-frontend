@@ -62,7 +62,7 @@ export default function Dashboard() {
  
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
-      <p className="text-sm text-gray-400 dark:text-dark-text/40">cargando...</p>
+      <p className="text-sm text-gray-400 dark:text-dark-text/40">Cargando...</p>
     </div>
   )
  
@@ -81,7 +81,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="page-title">dashboard</h1>
+        <h1 className="page-title">Dashboard</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarReporte('semana')}
             className="btn-outline text-xs">

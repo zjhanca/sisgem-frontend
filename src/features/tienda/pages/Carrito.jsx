@@ -173,7 +173,7 @@ export default function Carrito({ carrito, setCarrito }) {
             </div>
           )}
           <div className="flex justify-between font-bold text-base border-t border-gray-200 dark:border-dark-border pt-2 mt-2">
-            <span className="text-light-text dark:text-dark-text">total</span>
+            <span className="text-light-text dark:text-dark-text">Total</span>
             <span className="text-primary">{formatPrecio(total)}</span>
           </div>
         </div>
@@ -197,3 +197,4 @@ export default function Carrito({ carrito, setCarrito }) {
     </div>
   )
 }
+ 

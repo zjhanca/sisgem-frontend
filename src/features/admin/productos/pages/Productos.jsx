@@ -136,7 +136,7 @@ export default function Productos() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">productos</h1>
+        <h1 className="page-title">Productos</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarPDF('/reportes/productos', 'reporte-productos.pdf')} className="btn-outline">
             <Download size={14} /> Reporte</button>
@@ -193,7 +193,7 @@ export default function Productos() {
               items={categorias}
               valorId={form.categoria_id}
               onSelect={id => setForm({ ...form, categoria_id: id })}
-              placeholder="buscar categoría..." />
+              placeholder="Buscar categoría..." />
  
             {/* buscador marca */}
             <BuscadorSelect
@@ -201,7 +201,7 @@ export default function Productos() {
               items={marcas}
               valorId={form.marca_id}
               onSelect={id => setForm({ ...form, marca_id: id })}
-              placeholder="buscar marca..." />
+              placeholder="Buscar marca..." />
  
             {/* buscador proveedor */}
             <BuscadorSelect
@@ -209,14 +209,14 @@ export default function Productos() {
               items={proveedores}
               valorId={form.proveedor_id}
               onSelect={id => setForm({ ...form, proveedor_id: id })}
-              placeholder="buscar proveedor..." />
+              placeholder="Buscar proveedor..." />
  
             {/* código de barras */}
             <div className="relative">
               <label className="campo-label">código de barras</label>
               <input value={form.codigo_barras}
                 onChange={e => setForm({ ...form, codigo_barras: e.target.value })}
-                className="campo-input pr-8" placeholder="ej: 7702001234567" />
+                className="campo-input pr-8" placeholder="Ej: 7702001234567" />
               <Scan size={13} className="absolute right-2 bottom-2.5 text-gray-400" />
             </div>
  

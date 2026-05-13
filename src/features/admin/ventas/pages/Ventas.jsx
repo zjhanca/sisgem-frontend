@@ -150,7 +150,7 @@ export default function Ventas() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">ventas</h1>
+        <h1 className="page-title">Ventas</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarPDF('/reportes/ventas', 'reporte-ventas.pdf')} className="btn-outline">
             <Download size={14} /> Reporte</button>
@@ -160,13 +160,13 @@ export default function Ventas() {
  
       <div className="flex gap-2 mb-4 flex-wrap">
         <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
-          placeholder="buscar cliente o #..." className="campo-input w-48 text-xs" />
+          placeholder="Buscar cliente o #..." className="campo-input w-48 text-xs" />
         <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
           <option value="">todos los estados</option>
           {estados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
         </select>
         {(filtroEstado || filtroBusqueda) && (
-          <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda('') }} className="btn-ghost text-xs text-red-400">limpiar</button>
+          <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda('') }} className="btn-ghost text-xs text-red-400">Limpiar</button>
         )}
       </div>
  
@@ -238,13 +238,13 @@ export default function Ventas() {
               </div>
             ) : (
               <input value={form.cliente_nombre} onChange={e => setForm({ ...form, cliente_nombre: e.target.value })}
-                className="campo-input" placeholder="nombre del cliente" />
+                className="campo-input" placeholder="Nombre del cliente" />
             )}
           </div>
  
           {/* PRODUCTOS */}
           <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-2">
-            <p className="text-xs font-semibold">productos</p>
+            <p className="text-xs font-semibold">Productos</p>
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
@@ -267,7 +267,7 @@ export default function Ventas() {
                 )}
               </div>
               <div className="relative">
-                <input placeholder="cód. barras" className="campo-input w-28 text-xs pr-7"
+                <input placeholder="Cód. barras" className="campo-input w-28 text-xs pr-7"
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo(e.target.value); e.target.value = '' }}} />
                 <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
               </div>
@@ -292,7 +292,7 @@ export default function Ventas() {
                   </div>
                 ))}
                 <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-200 dark:border-dark-border">
-                  <span>total</span>
+                  <span>Total</span>
                   <span className="text-primary">{formatPrecio(totalVenta)}</span>
                 </div>
               </div>
@@ -323,7 +323,7 @@ export default function Ventas() {
                   : 'bg-primary/20 text-green-700 dark:text-primary'}`}>
                   {modalDetalle.venta.tipo_venta}</span></div>
               <div><p className="campo-label">estado</p><span className={getBadge(modalDetalle.venta.estado)}>{modalDetalle.venta.estado}</span></div>
-              <div><p className="campo-label">total</p><p className="text-primary font-bold text-sm">{formatPrecio(modalDetalle.venta.total)}</p></div>
+              <div><p className="campo-label">Total</p><p className="text-primary font-bold text-sm">{formatPrecio(modalDetalle.venta.total)}</p></div>
               <div className="col-span-2"><p className="campo-label">fecha</p><p>{formatFechaHora(modalDetalle.venta.fecha_pedido)}</p></div>
             </div>
             <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">

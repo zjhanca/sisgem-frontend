@@ -96,7 +96,7 @@ export default function Proveedores() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">proveedores</h1>
+        <h1 className="page-title">Proveedores</h1>
         <div className="flex gap-2">
           <button
             onClick={() => descargarPDF('/reportes/proveedores', 'reporte-proveedores.pdf')}
@@ -161,7 +161,7 @@ export default function Proveedores() {
               <input value={form.documento}
                 onChange={e => setForm({ ...form, documento: e.target.value })}
                 className={`campo-input ${errores.documento ? 'border-red-400' : ''}`}
-                placeholder="ej: 900123456" />
+                placeholder="Ej: 900123456" />
               {errores.documento && <p className="campo-error">{errores.documento}</p>}
             </div>
             <div>
@@ -182,7 +182,7 @@ export default function Proveedores() {
               <label className="campo-label">telefono</label>
               <input value={form.telefono}
                 onChange={e => setForm({ ...form, telefono: e.target.value })}
-                className="campo-input" placeholder="ej: 3001234567" />
+                className="campo-input" placeholder="Ej: 3001234567" />
             </div>
             <div>
               <label className="campo-label">correo</label>

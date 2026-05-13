@@ -104,7 +104,7 @@ export default function Usuarios() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">usuarios</h1>
+        <h1 className="page-title">Usuarios</h1>
         <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo</button>
       </div>
  
@@ -153,7 +153,7 @@ export default function Usuarios() {
               <label className="campo-label">numero documento</label>
               <input value={form.numero_documento}
                 onChange={e => setForm({ ...form, numero_documento: e.target.value })}
-                className="campo-input" placeholder="ej: 1234567890" />
+                className="campo-input" placeholder="Ej: 1234567890" />
             </div>
             <div className="col-span-2">
               <label className="campo-label">correo *</label>
@@ -173,7 +173,7 @@ export default function Usuarios() {
             <div>
               <label className="campo-label">telefono</label>
               <input value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })}
-                className="campo-input" placeholder="ej: 3001234567" />
+                className="campo-input" placeholder="Ej: 3001234567" />
             </div>
             <div className="col-span-2">
               <label className="campo-label">rol *</label>

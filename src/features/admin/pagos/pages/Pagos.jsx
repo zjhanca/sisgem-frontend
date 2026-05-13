@@ -104,7 +104,7 @@ export default function Pagos() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">pagos</h1>
+        <h1 className="page-title">Pagos</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarPDF('/reportes/pagos', 'reporte-pagos.pdf')} className="btn-outline">
             <Download size={14} /> Reporte</button>
@@ -119,7 +119,7 @@ export default function Pagos() {
           <option value="pagado">pagados</option>
           <option value="anulado">anulados</option>
         </select>
-        {filtroEstado && <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400">limpiar</button>}
+        {filtroEstado && <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400">Limpiar</button>}
       </div>
  
       <Tabla columnas={columnas} datos={pagosFiltrados} sinBusqueda
@@ -256,3 +256,4 @@ export default function Pagos() {
     </div>
   )
 }
+ 

@@ -79,7 +79,7 @@ export default function Marcas() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">marcas</h1>
+        <h1 className="page-title">Marcas</h1>
         <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> nueva marca</button>
       </div>
  
@@ -195,3 +195,4 @@ export default function Marcas() {
     </div>
   )
 }
+ 

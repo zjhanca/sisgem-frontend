@@ -55,7 +55,7 @@ export default function Catalogo({ carrito, setCarrito }) {
           <div className="flex-1 relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={busqueda} onChange={e => setBusqueda(e.target.value)}
-              placeholder="buscar productos..."
+              placeholder="Buscar productos..."
               className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-dark-border
                 bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text
                 focus:outline-none focus:border-primary/60" />
@@ -193,3 +193,4 @@ export default function Catalogo({ carrito, setCarrito }) {
     </div>
   )
 }
+ 

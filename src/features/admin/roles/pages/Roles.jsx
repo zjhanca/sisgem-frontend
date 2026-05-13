@@ -112,7 +112,7 @@ export default function Roles() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">roles y permisos</h1>
+        <h1 className="page-title">Roles y Permisos</h1>
         <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> nuevo rol</button>
       </div>
  
@@ -172,7 +172,7 @@ export default function Roles() {
               <div>
                 <label className="campo-label">descripción</label>
                 <textarea value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })}
-                  rows={2} className="campo-input resize-none" placeholder="descripción del rol..." />
+                  rows={2} className="campo-input resize-none" placeholder="Descripción del rol..." />
               </div>
               {!modal.item && (
                 <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-xs text-blue-600 dark:text-blue-400">
@@ -194,7 +194,7 @@ export default function Roles() {
                     className="text-xs text-primary hover:underline">seleccionar todos</button>
                   <span className="text-gray-300">|</span>
                   <button type="button" onClick={limpiarTodos}
-                    className="text-xs text-gray-400 hover:underline">limpiar</button>
+                    className="text-xs text-gray-400 hover:underline">Limpiar</button>
                 </div>
               </div>
  

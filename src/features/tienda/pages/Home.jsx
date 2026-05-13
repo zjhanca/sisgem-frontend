@@ -129,7 +129,7 @@ export default function Home({ carrito, setCarrito }) {
             </h2>
             {!busqueda && <Link to="/productos" className="text-xs text-primary hover:underline">ver todos →</Link>}
             {busqueda && (
-              <button onClick={() => setBusqueda('')} className="text-xs text-red-400 hover:underline">limpiar</button>
+              <button onClick={() => setBusqueda('')} className="text-xs text-red-400 hover:underline">Limpiar</button>
             )}
           </div>
  
@@ -215,7 +215,7 @@ export default function Home({ carrito, setCarrito }) {
         {marcas.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-semibold text-light-text dark:text-dark-text">marcas</h2>
+              <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Marcas</h2>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {marcas.map(m => (
@@ -279,4 +279,3 @@ export default function Home({ carrito, setCarrito }) {
     </div>
   )
 }
- 

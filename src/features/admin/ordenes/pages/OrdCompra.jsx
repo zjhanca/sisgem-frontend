@@ -156,7 +156,7 @@ export default function OrdCompra() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">órdenes de compra</h1>
+        <h1 className="page-title">Órdenes de Compra</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')} className="btn-outline">
             <Download size={14} /> Reporte</button>
@@ -170,7 +170,7 @@ export default function OrdCompra() {
           <option value="">todos los estados</option>
           {ESTADOS_ORDEN.map(e => <option key={e.key} value={e.key}>{e.label}</option>)}
         </select>
-        {filtroEstado && <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400">limpiar</button>}
+        {filtroEstado && <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400">Limpiar</button>}
       </div>
  
       <Tabla columnas={columnas} datos={ordenesFiltradas} sinBusqueda
@@ -193,7 +193,7 @@ export default function OrdCompra() {
               <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
               <input value={provSeleccionado ? provSeleccionado.nombre : provBusqueda}
                 onChange={e => { buscarProveedor(e.target.value); setForm({ ...form, proveedor_id: '' }); setProvSeleccionado(null) }}
-                className="campo-input pl-8 text-xs" placeholder="buscar proveedor por nombre..." />
+                className="campo-input pl-8 text-xs" placeholder="Buscar proveedor por nombre..." />
               {provSeleccionado && (
                 <button type="button" onClick={() => { setProvSeleccionado(null); setProvBusqueda(''); setForm({ ...form, proveedor_id: '' }) }}
                   className="absolute right-2 top-2 text-gray-400 hover:text-red-400 text-xs">✕</button>
@@ -242,7 +242,7 @@ export default function OrdCompra() {
                 )}
               </div>
               <div className="relative">
-                <input placeholder="cód. barras" className="campo-input w-28 text-xs pr-7"
+                <input placeholder="Cód. barras" className="campo-input w-28 text-xs pr-7"
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo(e.target.value); e.target.value = '' }}} />
                 <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
               </div>
@@ -279,7 +279,7 @@ export default function OrdCompra() {
                   </div>
                 ))}
                 <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-200 dark:border-dark-border">
-                  <span>total</span><span className="text-primary">{formatPrecio(totalOrden)}</span>
+                  <span>Total</span><span className="text-primary">{formatPrecio(totalOrden)}</span>
                 </div>
               </div>
             )}
@@ -306,7 +306,7 @@ export default function OrdCompra() {
               <div><p className="campo-label">estado</p>
                 <div className="flex items-center gap-1">{getIconEstado(modalDetalle.orden.estado)}
                   <span className={getBadgeEstado(modalDetalle.orden.estado)}>{modalDetalle.orden.estado}</span></div></div>
-              <div><p className="campo-label">total</p>
+              <div><p className="campo-label">Total</p>
                 <p className="text-primary font-bold text-sm">{formatPrecio(modalDetalle.orden.total)}</p></div>
               <div><p className="campo-label">fecha</p><p>{formatFecha(modalDetalle.orden.created_at)}</p></div>
             </div>

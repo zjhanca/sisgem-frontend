@@ -127,10 +127,10 @@ export default function PanelCliente() {
         {tab === 'pedidos' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-light-text dark:text-dark-text">mis pedidos</h2>
+              <h2 className="font-semibold text-light-text dark:text-dark-text">Mis Pedidos</h2>
               <Link to="/productos" className="btn-primary text-xs"><Plus size={12} /> nuevo pedido</Link>
             </div>
-            {loadPedidos && <p className="text-sm text-gray-400 text-center py-8">cargando...</p>}
+            {loadPedidos && <p className="text-sm text-gray-400 text-center py-8">Cargando...</p>}
             {!loadPedidos && pedidos.length === 0 && (
               <div className="text-center py-12">
                 <ShoppingBag size={40} className="mx-auto text-gray-300 mb-3" />
@@ -200,7 +200,7 @@ export default function PanelCliente() {
         {tab === 'direcciones' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-light-text dark:text-dark-text">mis direcciones</h2>
+              <h2 className="font-semibold text-light-text dark:text-dark-text">Mis Direcciones</h2>
               <button onClick={() => setModalDir(true)} className="btn-primary text-xs"><Plus size={12} /> Agregar</button>
             </div>
             {direcciones.length === 0 && (
@@ -295,17 +295,17 @@ export default function PanelCliente() {
             <div>
               <label className="campo-label">direccion *</label>
               <input value={formDir.direccion} onChange={e => setFormDir(p => ({ ...p, direccion: e.target.value }))}
-                className="campo-input" placeholder="ej: Calle 50 # 40-10" />
+                className="campo-input" placeholder="Ej: Calle 50 # 40-10" />
             </div>
             <div>
               <label className="campo-label">barrio</label>
               <input value={formDir.barrio} onChange={e => setFormDir(p => ({ ...p, barrio: e.target.value }))}
-                className="campo-input" placeholder="ej: Laureles" />
+                className="campo-input" placeholder="Ej: Laureles" />
             </div>
             <div>
               <label className="campo-label">indicaciones</label>
               <input value={formDir.indicaciones} onChange={e => setFormDir(p => ({ ...p, indicaciones: e.target.value }))}
-                className="campo-input" placeholder="ej: piso 3, apto 301" />
+                className="campo-input" placeholder="Ej: piso 3, apto 301" />
             </div>
             <div className="flex gap-2">
               <button onClick={() => setModalDir(false)}

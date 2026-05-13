@@ -1,31 +1,25 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import api from '@shared/services/api'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
+import { useTema } from '@shared/contexts/ThemeContext'
+import api from '@shared/services/api'
 import toast from 'react-hot-toast'
+import { Eye, EyeOff, Sun, Moon, Store } from 'lucide-react'
  
-const formVacio = {
-  nombre: '', apellido: '', email: '', password: '', confirmar: '',
-  telefono: '', tipo_documento: 'CC', numero_documento: '',
-  direccion: '', barrio: ''
-}
- 
-export default function Register() {
-  const [form, setForm]       = useState(formVacio)
-  const [errores, setErrores] = useState({})
+export default function Login() {
+  const [form, setForm]         = useState({ email: '', password: '' })
+  const [verPass, setVerPass]   = useState(false)
   const [cargando, setCargando] = useState(false)
-  const { login } = useAuth()
-  const navigate  = useNavigate()
+  const [errores, setErrores]   = useState({})
+  const { login }               = useAuth()
+  const { tema, toggleTema }    = useTema()
+  const navigate                = useNavigate()
  
   const validar = () => {
     const e = {}
-    if (!form.nombre.trim())    e.nombre   = 'el nombre es obligatorio'
-    if (!form.apellido.trim())  e.apellido = 'el apellido es obligatorio'
-    if (!form.email.trim())     e.email    = 'el correo es obligatorio'
+    if (!form.email.trim()) e.email = 'el correo es obligatorio'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'correo invalido'
-    if (!form.password)         e.password  = 'la contrasena es obligatoria'
-    else if (form.password.length < 6) e.password = 'minimo 6 caracteres'
-    if (form.password !== form.confirmar) e.confirmar = 'las contrasenas no coinciden'
+    if (!form.password.trim()) e.password = 'la contrasena es obligatoria'
     return e
   }
  
@@ -33,137 +27,93 @@ export default function Register() {
     e.preventDefault()
     const e2 = validar()
     if (Object.keys(e2).length) { setErrores(e2); return }
+    setErrores({})
     setCargando(true)
     try {
-      const { data } = await api.post('/auth/registro', {
-        nombre: form.nombre.trim(),
-        apellido: form.apellido.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        telefono: form.telefono || null,
-        tipo_documento: form.tipo_documento,
-        numero_documento: form.numero_documento || null,
-        direccion: form.direccion || null,
-        barrio: form.barrio || null
-      })
-      if (data.ok) {
-        login(data.token, data.usuario)
-        toast.success(`bienvenido, ${data.usuario.nombre}!`)
-        navigate('/')
-      }
+      const { data } = await api.post('/auth/login', form)
+      login(data.token, data.usuario)
+      toast.success(`bienvenido, ${data.usuario.nombre}`)
+      navigate(data.usuario.rol_id === 1 ? '/admin' : '/')
     } catch (err) {
-      toast.error(err.response?.data?.mensaje || 'error al registrarse')
-    } finally { setCargando(false) }
+      toast.error(err.response?.data?.mensaje || 'error al iniciar sesion')
+    } finally {
+      setCargando(false)
+    }
   }
  
-  const f = (campo, val) => setForm(p => ({ ...p, [campo]: val }))
- 
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-lg">
-        {/* logo */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-primary">SISGEM</h1>
-          <p className="text-sm text-gray-500 dark:text-dark-text/60 mt-1">crear cuenta nueva</p>
+    <div className="min-h-screen flex items-center justify-center bg-light-bg dark:bg-dark-bg px-4">
+      <button onClick={toggleTema} className="fixed top-4 right-4 btn-ghost">
+        {tema === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
+ 
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/20 mb-4">
+            <Store size={22} className="text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold text-primary">sisgem</h1>
+          <p className="text-sm text-gray-400 dark:text-dark-text/50 mt-1">
+            sistema de gestion para minimercado
+          </p>
         </div>
  
-        <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-dark-border">
-          <form onSubmit={handleSubmit} className="space-y-4">
- 
-            {/* datos personales */}
+        <div className="card">
+          <h2 className="text-sm font-medium text-light-text dark:text-dark-text mb-4">
+            inicia sesion
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">datos personales</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="campo-label">nombre *</label>
-                  <input value={form.nombre} onChange={e => f('nombre', e.target.value)}
-                    className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`} placeholder="tu nombre" />
-                  {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
-                </div>
-                <div>
-                  <label className="campo-label">apellido *</label>
-                  <input value={form.apellido} onChange={e => f('apellido', e.target.value)}
-                    className={`campo-input ${errores.apellido ? 'border-red-400' : ''}`} placeholder="tu apellido" />
-                  {errores.apellido && <p className="campo-error">{errores.apellido}</p>}
-                </div>
-                <div>
-                  <label className="campo-label">tipo documento</label>
-                  <select value={form.tipo_documento} onChange={e => f('tipo_documento', e.target.value)} className="campo-input">
-                    <option value="CC">Cedula (CC)</option>
-                    <option value="CE">Cedula extranjeria (CE)</option>
-                    <option value="TI">Tarjeta identidad (TI)</option>
-                    <option value="PA">Pasaporte (PA)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="campo-label">numero documento</label>
-                  <input value={form.numero_documento} onChange={e => f('numero_documento', e.target.value)}
-                    className="campo-input" placeholder="ej: 1234567890" />
-                </div>
-                <div className="col-span-2">
-                  <label className="campo-label">telefono</label>
-                  <input value={form.telefono} onChange={e => f('telefono', e.target.value)}
-                    className="campo-input" placeholder="ej: 3001234567" />
-                </div>
-              </div>
+              <label className="campo-label">correo electronico</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+                className={`campo-input ${errores.email ? 'border-red-400' : ''}`}
+                placeholder="admin@sisgem.com"
+                autoComplete="email"
+              />
+              {errores.email && <p className="campo-error">{errores.email}</p>}
             </div>
  
-            {/* ubicacion */}
             <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">ubicacion en medellin</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="campo-label">direccion</label>
-                  <input value={form.direccion} onChange={e => f('direccion', e.target.value)}
-                    className="campo-input" placeholder="ej: Calle 50 # 40-10" />
-                </div>
-                <div className="col-span-2">
-                  <label className="campo-label">barrio</label>
-                  <input value={form.barrio} onChange={e => f('barrio', e.target.value)}
-                    className="campo-input" placeholder="ej: Laureles, El Poblado..." />
-                </div>
+              <label className="campo-label">contrasena</label>
+              <div className="relative">
+                <input
+                  type={verPass ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  className={`campo-input pr-10 ${errores.password ? 'border-red-400' : ''}`}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+                <button type="button" onClick={() => setVerPass(!verPass)}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-primary transition-colors">
+                  {verPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
               </div>
-            </div>
- 
-            {/* cuenta */}
-            <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">datos de acceso</p>
-              <div className="space-y-3">
-                <div>
-                  <label className="campo-label">correo electronico *</label>
-                  <input type="email" value={form.email} onChange={e => f('email', e.target.value)}
-                    className={`campo-input ${errores.email ? 'border-red-400' : ''}`} placeholder="Correo@ejemplo.com" />
-                  {errores.email && <p className="campo-error">{errores.email}</p>}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="campo-label">contrasena *</label>
-                    <input type="password" value={form.password} onChange={e => f('password', e.target.value)}
-                      className={`campo-input ${errores.password ? 'border-red-400' : ''}`} placeholder="minimo 6 caracteres" />
-                    {errores.password && <p className="campo-error">{errores.password}</p>}
-                  </div>
-                  <div>
-                    <label className="campo-label">confirmar contrasena *</label>
-                    <input type="password" value={form.confirmar} onChange={e => f('confirmar', e.target.value)}
-                      className={`campo-input ${errores.confirmar ? 'border-red-400' : ''}`} placeholder="repetir contrasena" />
-                    {errores.confirmar && <p className="campo-error">{errores.confirmar}</p>}
-                  </div>
-                </div>
-              </div>
+              {errores.password && <p className="campo-error">{errores.password}</p>}
             </div>
  
             <button type="submit" disabled={cargando}
-              className="btn-primary w-full justify-center py-2.5 text-sm disabled:opacity-50">
-              {cargando ? 'creando cuenta...' : 'crear cuenta'}
+              className="btn-primary w-full justify-center py-2">
+              {cargando ? 'ingresando...' : 'ingresar'}
             </button>
- 
-            <p className="text-center text-xs text-gray-500 dark:text-dark-text/60">
-              ya tienes cuenta?{' '}
-              <Link to="/login" className="text-primary hover:underline font-medium">inicia sesion</Link>
-            </p>
           </form>
+ 
+          <div className="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-dark-border pt-4">
+            <Link to="/recuperar"
+              className="text-xs text-primary/70 hover:text-primary transition-colors">
+              olvide mi contrasena
+            </Link>
+            <Link to="/"
+              className="text-xs text-primary/70 hover:text-primary transition-colors">
+              ver catalogo
+            </Link>
+          </div>
         </div>
       </div>
     </div>
   )
 }
+ 

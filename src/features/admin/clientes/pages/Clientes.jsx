@@ -95,7 +95,7 @@ export default function Clientes() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">clientes</h1>
+        <h1 className="page-title">Clientes</h1>
         <div className="flex gap-2">
           <button onClick={() => descargarPDF('/reportes/clientes', 'reporte-clientes.pdf')} className="btn-outline">
             <Download size={14} /> Reporte</button>
@@ -146,7 +146,7 @@ export default function Clientes() {
             <div>
               <label className="campo-label">numero documento</label>
               <input value={form.numero_documento} onChange={e => setForm({ ...form, numero_documento: e.target.value })}
-                className="campo-input" placeholder="ej: 1234567890" />
+                className="campo-input" placeholder="Ej: 1234567890" />
             </div>
             <div>
               <label className="campo-label">correo</label>
@@ -157,7 +157,7 @@ export default function Clientes() {
             <div>
               <label className="campo-label">telefono</label>
               <input value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })}
-                className="campo-input" placeholder="ej: 3001234567" />
+                className="campo-input" placeholder="Ej: 3001234567" />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
@@ -190,7 +190,7 @@ export default function Clientes() {
             <div>
               <p className="campo-label mb-2">historial de pedidos ({historial.length})</p>
               {historial.length === 0
-                ? <p className="text-xs text-center text-gray-400 py-3">sin pedidos</p>
+                ? <p className="text-xs text-center text-gray-400 py-3">Sin Pedidos</p>
                 : (
                   <div className="space-y-1 max-h-36 overflow-y-auto">
                     {historial.map(p => (
@@ -234,12 +234,12 @@ export default function Clientes() {
           <form onSubmit={handleSubmitDir} className="space-y-2 pt-3 border-t border-gray-200 dark:border-dark-border">
             <p className="text-xs font-medium">agregar nueva direccion</p>
             <input value={formDir.direccion} onChange={e => setFormDir({ ...formDir, direccion: e.target.value })}
-              className="campo-input" placeholder="direccion completa *" />
+              className="campo-input" placeholder="Dirección completa *" />
             <div className="grid grid-cols-2 gap-2">
               <input value={formDir.barrio} onChange={e => setFormDir({ ...formDir, barrio: e.target.value })}
-                className="campo-input" placeholder="barrio" />
+                className="campo-input" placeholder="Barrio" />
               <input value={formDir.indicaciones} onChange={e => setFormDir({ ...formDir, indicaciones: e.target.value })}
-                className="campo-input" placeholder="indicaciones" />
+                className="campo-input" placeholder="Indicaciones" />
             </div>
             <button type="submit" disabled={guardarDir.isPending} className="btn-primary w-full justify-center">
               {guardarDir.isPending ? 'Guardando...' : 'agregar direccion'}
