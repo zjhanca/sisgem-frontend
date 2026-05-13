@@ -47,14 +47,14 @@ export default function Pedidos() {
     onSuccess: () => {
       qc.invalidateQueries(['pedidos']); qc.invalidateQueries(['productos'])
       setModalNuevo(false); setForm(formVacio); setProdBusqueda(''); setClienteBusqueda('')
-      toast.success('pedido creado')
+      	oast.success('Pedido creado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
  
   const cambiarEstado = useMutation({
     mutationFn: ({ id, estado_id }) => api.patch(`/pedidos/${id}/estado`, { estado_id }),
-    onSuccess: () => { qc.invalidateQueries(['pedidos']); toast.success('estado actualizado') }
+    onSuccess: () => { qc.invalidateQueries(['pedidos']); 	oast.success('Estado actualizado') }
   })
  
   const anular = useMutation({
@@ -62,7 +62,7 @@ export default function Pedidos() {
       const e = estados.find(e => e.nombre?.toLowerCase().includes('anula'))
       return api.patch(`/pedidos/${id}/estado`, { estado_id: e?.id || 3 })
     },
-    onSuccess: () => { qc.invalidateQueries(['pedidos']); setModalDetalle({ abierto: false, pedido: null }); toast.success('pedido anulado') }
+    onSuccess: () => { qc.invalidateQueries(['pedidos']); setModalDetalle({ abierto: false, pedido: null }); 	oast.success('Pedido anulado') }
   })
  
   // clientes filtrados por búsqueda
@@ -353,9 +353,9 @@ export default function Pedidos() {
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button type="button"
               onClick={() => { setModalNuevo(false); setForm(formVacio); setProdBusqueda(''); setClienteBusqueda('') }}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button type="submit" disabled={crearPedido.isPending} className="btn-primary">
-              {crearPedido.isPending ? 'creando...' : 'crear pedido'}
+              {crearPedido.isPending ? 'Creando...' : 'Aceptar'}
             </button>
           </div>
         </form>
@@ -398,7 +398,7 @@ export default function Pedidos() {
               {puedeAnular(modalDetalle.pedido) && (
                 <button onClick={() => anular.mutate(modalDetalle.pedido.id)} disabled={anular.isPending}
                   className="px-3 py-1.5 text-xs border border-red-400/40 text-red-400 rounded-lg hover:bg-red-400/10">
-                  {anular.isPending ? 'anulando...' : 'anular pedido'}
+                  {anular.isPending ? 'Anulando...' : 'anular pedido'}
                 </button>
               )}
             </div>
@@ -433,8 +433,8 @@ export default function Pedidos() {
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button onClick={() => setModalConfig(false)}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
-            <button onClick={() => { setModalConfig(false); toast.success('guardado') }} className="btn-primary">guardar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
+            <button onClick={() => { setModalConfig(false); 	oast.success('Guardado') }} className="btn-primary">guardar</button>
           </div>
         </div>
       </Modal>

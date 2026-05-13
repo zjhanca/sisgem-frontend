@@ -21,16 +21,16 @@ export default function Marcas() {
  
   const guardar = useMutation({
     mutationFn: data => modal.item ? api.put(`/marcas/${modal.item.id}`, data) : api.post('/marcas', data),
-    onSuccess: () => { qc.invalidateQueries(['marcas']); cerrarModal(); toast.success('marca guardada') },
+    onSuccess: () => { qc.invalidateQueries(['marcas']); cerrarModal(); 	oast.success('Marca guardada') },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
   const toggleEstado = useMutation({
     mutationFn: id => api.patch(`/marcas/${id}/estado`),
-    onSuccess: () => { qc.invalidateQueries(['marcas']); toast.success('estado actualizado') }
+    onSuccess: () => { qc.invalidateQueries(['marcas']); 	oast.success('Estado actualizado') }
   })
   const eliminar = useMutation({
     mutationFn: id => api.delete(`/marcas/${id}`),
-    onSuccess: () => { qc.invalidateQueries(['marcas']); setModalEliminar({ abierto: false, item: null }); toast.success('marca eliminada') },
+    onSuccess: () => { qc.invalidateQueries(['marcas']); setModalEliminar({ abierto: false, item: null }); 	oast.success('Marca eliminada') },
     onError: err => toast.error(err.response?.data?.mensaje || 'no se puede eliminar')
   })
  
@@ -134,9 +134,9 @@ export default function Marcas() {
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button type="button" onClick={cerrarModal}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button type="submit" disabled={guardar.isPending} className="btn-primary">
-              {guardar.isPending ? 'guardando...' : 'guardar'}
+              {guardar.isPending ? 'Guardando...' : 'Aceptar'}
             </button>
           </div>
         </form>
@@ -184,10 +184,10 @@ export default function Marcas() {
           </p>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button onClick={() => setModalEliminar({ abierto: false, item: null })}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button onClick={() => eliminar.mutate(modalEliminar.item.id)} disabled={eliminar.isPending}
               className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
-              {eliminar.isPending ? 'eliminando...' : 'eliminar'}
+              {eliminar.isPending ? 'Eliminando...' : 'Eliminar'}
             </button>
           </div>
         </div>
@@ -195,3 +195,4 @@ export default function Marcas() {
     </div>
   )
 }
+ 

@@ -71,7 +71,7 @@ export default function Productos() {
  
   const guardar = useMutation({
     mutationFn: data => modal.item ? api.put(`/productos/${modal.item.id}`, data) : api.post('/productos', data),
-    onSuccess: () => { qc.invalidateQueries(['productos']); cerrarModal(); toast.success('producto guardado') },
+    onSuccess: () => { qc.invalidateQueries(['productos']); cerrarModal(); 	oast.success('Producto guardado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
   const toggleEstado = useMutation({
@@ -80,7 +80,7 @@ export default function Productos() {
   })
   const eliminar = useMutation({
     mutationFn: id => api.delete(`/productos/${id}`),
-    onSuccess: () => { qc.invalidateQueries(['productos']); setModalEliminar({ abierto: false, item: null }); toast.success('producto eliminado') },
+    onSuccess: () => { qc.invalidateQueries(['productos']); setModalEliminar({ abierto: false, item: null }); 	oast.success('Producto eliminado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'no se puede eliminar')
   })
  
@@ -242,9 +242,9 @@ export default function Productos() {
  
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button type="button" onClick={cerrarModal}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button type="submit" disabled={guardar.isPending} className="btn-primary">
-              {guardar.isPending ? 'guardando...' : 'guardar'}
+              {guardar.isPending ? 'Guardando...' : 'Aceptar'}
             </button>
           </div>
         </form>
@@ -288,10 +288,10 @@ export default function Productos() {
             No se puede si tiene movimientos.</p>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button onClick={() => setModalEliminar({ abierto: false, item: null })}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button onClick={() => eliminar.mutate(modalEliminar.item.id)} disabled={eliminar.isPending}
               className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
-              {eliminar.isPending ? 'eliminando...' : 'eliminar'}
+              {eliminar.isPending ? 'Eliminando...' : 'Eliminar'}
             </button>
           </div>
         </div>

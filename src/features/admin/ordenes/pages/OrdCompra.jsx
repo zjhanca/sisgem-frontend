@@ -45,7 +45,7 @@ export default function OrdCompra() {
       setModalNuevo(false)
       setForm({ proveedor_id: '', productos: [] })
       setProvBusqueda(''); setProvSeleccionado(null)
-      toast.success('orden creada')
+      	oast.success('Orden creada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
@@ -54,7 +54,7 @@ export default function OrdCompra() {
     mutationFn: ({ id, estado_id }) => api.patch(`/ordenes/${id}/estado`, { estado_id }),
     onSuccess: () => {
       qc.invalidateQueries(['ordenes']); qc.invalidateQueries(['productos'])
-      toast.success('estado actualizado')
+      	oast.success('Estado actualizado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
@@ -288,9 +288,9 @@ export default function OrdCompra() {
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button type="button"
               onClick={() => { setModalNuevo(false); setForm({ proveedor_id: '', productos: [] }); setProvBusqueda(''); setProvSeleccionado(null) }}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button type="submit" disabled={crear.isPending} className="btn-primary">
-              {crear.isPending ? 'creando...' : 'crear orden'}
+              {crear.isPending ? 'Creando...' : 'Aceptar'}
             </button>
           </div>
         </form>

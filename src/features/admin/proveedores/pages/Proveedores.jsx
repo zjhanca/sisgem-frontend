@@ -33,7 +33,7 @@ export default function Proveedores() {
     onSuccess: () => {
       qc.invalidateQueries(['proveedores'])
       cerrarModal()
-      toast.success('proveedor guardado')
+      	oast.success('Proveedor guardado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
@@ -42,7 +42,7 @@ export default function Proveedores() {
     mutationFn: id => api.patch(`/proveedores/${id}/estado`),
     onSuccess: () => {
       qc.invalidateQueries(['proveedores'])
-      toast.success('estado actualizado')
+      	oast.success('Estado actualizado')
     }
   })
  
@@ -51,7 +51,7 @@ export default function Proveedores() {
     onSuccess: () => {
       qc.invalidateQueries(['proveedores'])
       setModalEliminar({ abierto: false, item: null })
-      toast.success('proveedor eliminado')
+      	oast.success('Proveedor eliminado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error al eliminar')
   })
@@ -204,7 +204,7 @@ export default function Proveedores() {
               cancelar
             </button>
             <button type="submit" disabled={guardar.isPending} className="btn-primary">
-              {guardar.isPending ? 'guardando...' : 'guardar'}
+              {guardar.isPending ? 'Guardando...' : 'Aceptar'}
             </button>
           </div>
         </form>
@@ -306,7 +306,7 @@ export default function Proveedores() {
               disabled={eliminar.isPending}
               className="px-4 py-1.5 text-sm bg-red-500 hover:bg-red-600
                 text-white rounded-lg transition-colors disabled:opacity-50">
-              {eliminar.isPending ? 'eliminando...' : 'eliminar'}
+              {eliminar.isPending ? 'Eliminando...' : 'Eliminar'}
             </button>
           </div>
         </div>
@@ -314,4 +314,3 @@ export default function Proveedores() {
     </div>
   )
 }
- 

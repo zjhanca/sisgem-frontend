@@ -1,18 +1,14 @@
 import { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
- 
 import AdminLayout from '@shared/components/AdminLayout'
- 
 import Login     from '@features/autch/pages/Login'
 import Register  from '@features/autch/pages/Register'
 import Recuperar from '@features/autch/pages/Recuperar'
- 
 import Home         from '@features/tienda/pages/Home'
 import Catalogo     from '@features/tienda/pages/Catalogo'
 import Carrito      from '@features/tienda/pages/Carrito'
 import PanelCliente from '@features/tienda/pages/PanelCliente'
- 
 import Dashboard   from '@features/admin/dashboard/pages/Dashboard'
 import Pedidos     from '@features/admin/pedidos/pages/Pedidos'
 import Ventas      from '@features/admin/ventas/pages/Ventas'
@@ -44,7 +40,6 @@ function RutaCliente({ children }) {
  
 export default function AppRoutes() {
   const [carrito, setCarrito] = useState([])
- 
   return (
     <Routes>
       <Route path="/"          element={<Home     carrito={carrito} setCarrito={setCarrito} />} />
@@ -54,7 +49,6 @@ export default function AppRoutes() {
       <Route path="/register"  element={<Register />} />
       <Route path="/recuperar" element={<Recuperar />} />
       <Route path="/perfil"    element={<RutaCliente><PanelCliente /></RutaCliente>} />
- 
       <Route path="/admin" element={<RutaAdmin><AdminLayout /></RutaAdmin>}>
         <Route index              element={<Dashboard />} />
         <Route path="pedidos"     element={<Pedidos />} />
@@ -70,7 +64,6 @@ export default function AppRoutes() {
         <Route path="usuarios"    element={<Usuarios />} />
         <Route path="roles"       element={<Roles />} />
       </Route>
- 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -50,7 +50,7 @@ export default function Ventas() {
       setModalNuevo(false)
       setForm({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [] })
       setProdBusqueda(''); setClienteBusqueda('')
-      toast.success('venta registrada y marcada como pagada')
+      	oast.success('Venta registrada y marcada como pagada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
@@ -63,7 +63,7 @@ export default function Ventas() {
     onSuccess: () => {
       qc.invalidateQueries(['pedidos'])
       setModalAnular({ abierto: false, venta: null })
-      toast.success('venta anulada')
+      	oast.success('Venta anulada')
     }
   })
  
@@ -302,9 +302,9 @@ export default function Ventas() {
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button type="button"
               onClick={() => { setModalNuevo(false); setForm({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [] }); setProdBusqueda(''); setClienteBusqueda('') }}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button type="submit" disabled={crearVenta.isPending} className="btn-primary">
-              {crearVenta.isPending ? 'registrando...' : 'registrar venta'}
+              {crearVenta.isPending ? 'Registrando...' : 'Aceptar'}
             </button>
           </div>
         </form>
@@ -348,10 +348,10 @@ export default function Ventas() {
           </p>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button onClick={() => setModalAnular({ abierto: false, venta: null })}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button onClick={() => anular.mutate(modalAnular.venta.id)} disabled={anular.isPending}
               className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
-              {anular.isPending ? 'anulando...' : 'anular'}
+              {anular.isPending ? 'Anulando...' : 'Anular'}
             </button>
           </div>
         </div>
@@ -359,4 +359,3 @@ export default function Ventas() {
     </div>
   )
 }
- 

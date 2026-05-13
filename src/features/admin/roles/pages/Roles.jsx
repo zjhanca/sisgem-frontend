@@ -61,19 +61,19 @@ export default function Roles() {
       }
       return res.data
     },
-    onSuccess: () => { qc.invalidateQueries(['roles']); cerrarModal(); toast.success('rol guardado') },
+    onSuccess: () => { qc.invalidateQueries(['roles']); cerrarModal(); 	oast.success('Rol guardado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
  
   const toggleEstado = useMutation({
     mutationFn: id => api.patch(`/roles/${id}/estado`),
-    onSuccess: () => { qc.invalidateQueries(['roles']); toast.success('estado actualizado') },
+    onSuccess: () => { qc.invalidateQueries(['roles']); 	oast.success('Estado actualizado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'no se puede modificar')
   })
  
   const eliminar = useMutation({
     mutationFn: id => api.delete(`/roles/${id}`),
-    onSuccess: () => { qc.invalidateQueries(['roles']); setModalEliminar({ abierto: false, item: null }); toast.success('rol eliminado') },
+    onSuccess: () => { qc.invalidateQueries(['roles']); setModalEliminar({ abierto: false, item: null }); 	oast.success('Rol eliminado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'no se puede eliminar')
   })
  
@@ -239,9 +239,9 @@ export default function Roles() {
  
           <div className="flex justify-end gap-2 pt-3 mt-3 border-t border-gray-200 dark:border-dark-border">
             <button type="button" onClick={cerrarModal}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button type="submit" disabled={guardar.isPending} className="btn-primary">
-              {guardar.isPending ? 'guardando...' : 'guardar rol'}
+              {guardar.isPending ? 'Guardando...' : 'Aceptar'}
             </button>
           </div>
         </form>
@@ -286,10 +286,10 @@ export default function Roles() {
           </p>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button onClick={() => setModalEliminar({ abierto: false, item: null })}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button onClick={() => eliminar.mutate(modalEliminar.item.id)} disabled={eliminar.isPending}
               className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
-              {eliminar.isPending ? 'eliminando...' : 'eliminar'}
+              {eliminar.isPending ? 'Eliminando...' : 'Eliminar'}
             </button>
           </div>
         </div>
@@ -297,4 +297,3 @@ export default function Roles() {
     </div>
   )
 }
- 

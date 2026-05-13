@@ -35,7 +35,7 @@ export default function Pagos() {
     mutationFn: data => api.post('/pagos', data),
     onSuccess: () => {
       qc.invalidateQueries(['pagos']); qc.invalidateQueries(['pedidos'])
-      setModalNuevo(false); setForm(formVacio); toast.success('pago registrado')
+      setModalNuevo(false); setForm(formVacio); 	oast.success('Pago registrado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
@@ -45,7 +45,7 @@ export default function Pagos() {
     onSuccess: () => {
       qc.invalidateQueries(['pagos'])
       setModalAnular({ abierto: false, pago: null })
-      toast.success('pago anulado')
+      	oast.success('Pago anulado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
@@ -192,9 +192,9 @@ export default function Pagos() {
  
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button type="button" onClick={() => { setModalNuevo(false); setForm(formVacio); setErrores({}) }}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button type="submit" disabled={crear.isPending || pagoCompleto} className="btn-primary">
-              {crear.isPending ? 'registrando...' : 'registrar pago'}
+              {crear.isPending ? 'Registrando...' : 'Aceptar'}
             </button>
           </div>
         </form>
@@ -245,10 +245,10 @@ export default function Pagos() {
           </p>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button onClick={() => setModalAnular({ abierto: false, pago: null })}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button onClick={() => anular.mutate(modalAnular.pago.id)} disabled={anular.isPending}
               className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
-              {anular.isPending ? 'anulando...' : 'anular pago'}
+              {anular.isPending ? 'Anulando...' : 'anular pago'}
             </button>
           </div>
         </div>

@@ -55,7 +55,7 @@ export default function Domicilios() {
  
   const guardarTarifa = useMutation({
     mutationFn: data => api.post('/domicilios/tarifas', data),
-    onSuccess: () => { refetchTarifas(); setFormTarifa(tarifaVacia); toast.success('tarifa guardada') },
+    onSuccess: () => { refetchTarifas(); setFormTarifa(tarifaVacia); 	oast.success('Tarifa guardada') },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
  
@@ -65,14 +65,14 @@ export default function Domicilios() {
       qc.invalidateQueries(['domicilios'])
       setModalAsignar(false); setFormDom(domVacio)
       setPedidoBusqueda(''); setPedidoSeleccionado(null)
-      toast.success('domicilio asignado')
+      	oast.success('Domicilio asignado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
  
   const cambiarEstado = useMutation({
     mutationFn: ({ id, estado_id }) => api.patch(`/domicilios/${id}/estado`, { estado_id }),
-    onSuccess: () => { qc.invalidateQueries(['domicilios']); qc.invalidateQueries(['pedidos']); toast.success('estado actualizado') },
+    onSuccess: () => { qc.invalidateQueries(['domicilios']); qc.invalidateQueries(['pedidos']); 	oast.success('Estado actualizado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'no permitido')
   })
  
@@ -331,9 +331,9 @@ export default function Domicilios() {
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button type="button"
               onClick={() => { setModalAsignar(false); setFormDom(domVacio); setPedidoBusqueda(''); setPedidoSeleccionado(null) }}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button type="submit" disabled={asignar.isPending} className="btn-primary">
-              {asignar.isPending ? 'asignando...' : 'asignar domicilio'}
+              {asignar.isPending ? 'asignando...' : 'Aceptar'}
             </button>
           </div>
         </form>
@@ -369,7 +369,7 @@ export default function Domicilios() {
                 className="campo-input text-xs" placeholder="distancia km" />
             </div>
             <button type="submit" disabled={guardarTarifa.isPending} className="btn-primary w-full justify-center">
-              {guardarTarifa.isPending ? 'guardando...' : 'agregar tarifa'}
+              {guardarTarifa.isPending ? 'Guardando...' : 'agregar tarifa'}
             </button>
           </form>
         </div>

@@ -32,13 +32,13 @@ export default function Usuarios() {
     mutationFn: data => modal.item
       ? api.put(`/usuarios/${modal.item.id}`, data)
       : api.post('/usuarios', data),
-    onSuccess: () => { qc.invalidateQueries(['usuarios']); cerrarModal(); toast.success('usuario guardado') },
+    onSuccess: () => { qc.invalidateQueries(['usuarios']); cerrarModal(); 	oast.success('Usuario guardado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
  
   const toggleEstado = useMutation({
     mutationFn: id => api.patch(`/usuarios/${id}/estado`),
-    onSuccess: () => { qc.invalidateQueries(['usuarios']); toast.success('estado actualizado') }
+    onSuccess: () => { qc.invalidateQueries(['usuarios']); 	oast.success('Estado actualizado') }
   })
  
   const eliminar = useMutation({
@@ -46,7 +46,7 @@ export default function Usuarios() {
     onSuccess: () => {
       qc.invalidateQueries(['usuarios'])
       setModalEliminar({ abierto: false, item: null })
-      toast.success('usuario eliminado')
+      	oast.success('Usuario eliminado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'error al eliminar')
   })
@@ -188,9 +188,9 @@ export default function Usuarios() {
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button type="button" onClick={cerrarModal}
               className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border
-                text-gray-500 dark:text-dark-text/60 rounded-lg">cancelar</button>
+                text-gray-500 dark:text-dark-text/60 rounded-lg">Cancelar</button>
             <button type="submit" disabled={guardar.isPending} className="btn-primary">
-              {guardar.isPending ? 'guardando...' : 'guardar'}</button>
+              {guardar.isPending ? 'Guardando...' : 'Aceptar'}</button>
           </div>
         </form>
       </Modal>
@@ -230,15 +230,14 @@ export default function Usuarios() {
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button onClick={() => setModalEliminar({ abierto: false, item: null })}
               className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border
-                text-gray-500 rounded-lg">cancelar</button>
+                text-gray-500 rounded-lg">Cancelar</button>
             <button onClick={() => eliminar.mutate(modalEliminar.item.id)}
               disabled={eliminar.isPending}
               className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
-              {eliminar.isPending ? 'eliminando...' : 'eliminar'}</button>
+              {eliminar.isPending ? 'Eliminando...' : 'Eliminar'}</button>
           </div>
         </div>
       </Modal>
     </div>
   )
 }
- 

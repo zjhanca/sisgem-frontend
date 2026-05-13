@@ -34,17 +34,17 @@ export default function Clientes() {
  
   const guardar = useMutation({
     mutationFn: data => modal.item ? api.put(`/clientes/${modal.item.id}`, data) : api.post('/clientes', data),
-    onSuccess: () => { qc.invalidateQueries(['clientes']); cerrarModal(); toast.success('cliente guardado') },
+    onSuccess: () => { qc.invalidateQueries(['clientes']); cerrarModal(); 	oast.success('Cliente guardado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
   const guardarDir = useMutation({
     mutationFn: data => api.post(`/clientes/${modalDir.cliente.id}/direcciones`, data),
-    onSuccess: () => { refetchDir(); setFormDir(dirVacio); toast.success('direccion guardada') },
+    onSuccess: () => { refetchDir(); setFormDir(dirVacio); 	oast.success('Direccion guardada') },
     onError: err => toast.error(err.response?.data?.mensaje || 'error')
   })
   const toggleEstado = useMutation({
     mutationFn: id => api.patch(`/clientes/${id}/estado`),
-    onSuccess: () => { qc.invalidateQueries(['clientes']); toast.success('estado actualizado') }
+    onSuccess: () => { qc.invalidateQueries(['clientes']); 	oast.success('Estado actualizado') }
   })
  
   const abrirModal = (item = null) => {
@@ -162,9 +162,9 @@ export default function Clientes() {
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
             <button type="button" onClick={cerrarModal}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">cancelar</button>
+              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
             <button type="submit" disabled={guardar.isPending} className="btn-primary">
-              {guardar.isPending ? 'guardando...' : 'guardar'}
+              {guardar.isPending ? 'Guardando...' : 'Aceptar'}
             </button>
           </div>
         </form>
@@ -242,7 +242,7 @@ export default function Clientes() {
                 className="campo-input" placeholder="indicaciones" />
             </div>
             <button type="submit" disabled={guardarDir.isPending} className="btn-primary w-full justify-center">
-              {guardarDir.isPending ? 'guardando...' : 'agregar direccion'}
+              {guardarDir.isPending ? 'Guardando...' : 'agregar direccion'}
             </button>
           </form>
         </div>
@@ -250,3 +250,4 @@ export default function Clientes() {
     </div>
   )
 }
+ 
