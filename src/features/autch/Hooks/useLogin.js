@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 const validar = form => {
   const e = {}
   if (!form.email.trim())    e.email    = 'El correo es obligatorio'
-  else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(form.email)) e.email = 'Correo inválido'
+  else if (!form.email.includes('@')) e.email = 'Correo inválido'
   if (!form.password.trim()) e.password = 'La contraseña es obligatoria'
   return e
 }
