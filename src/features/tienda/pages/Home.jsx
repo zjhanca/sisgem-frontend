@@ -1,11 +1,11 @@
 import { useHome } from '../hooks/useHome'
 import NavbarPublico     from '@shared/components/NavbarPublico'
-import Carrusel           from '../Components/Carrusel'
-import CategoryCarousel   from '../Components/CategoryCarousel'
-import FeaturedProducts   from '../Components/FeaturedProducts'
-import PromotionalBanners from '../Components/PromotionalBanners'
-import BrandCarousel      from '../Components/BrandCarousel'
-import Footer             from '../Components/Footer'
+import Carrusel           from '../components/Carrusel'
+import CategoryCarousel   from '../components/CategoryCarousel'
+import FeaturedProducts   from '../components/FeaturedProducts'
+import PromotionalBanners from '../components/PromotionalBanners'
+import BrandCarousel      from '../components/BrandCarousel'
+import Footer             from '../components/Footer'
  
 export default function Home({ carrito, setCarrito }) {
   const { productos, categorias, marcas, busqueda, setBusqueda, agregarAlCarrito } = useHome({ setCarrito })
