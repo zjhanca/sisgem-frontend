@@ -1,0 +1,94 @@
+import { useState, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { rolesService } from '../services/rolesService'
+import toast from 'react-hot-toast'
+ 
+const formVacio = { nombre: '', descripcion: '' }
+ 
+const agruparPermisos = permisos => permisos.reduce((acc, p) => {
+  if (!acc[p.modulo]) acc[p.modulo] = []
+  acc[p.modulo].push(p)
+  return acc
+}, {})
+ 
+export function useRoles() {
+  const qc = useQueryClient()
+  const [modal, setModal]                 = useState({ abierto: false, item: null })
+  const [modalDetalle, setModalDetalle]   = useState({ abierto: false, item: null })
+  const [modalEliminar, setModalEliminar] = useState({ abierto: false, item: null })
+  const [form, setForm]     = useState(formVacio)
+  const [errores, setErrores] = useState({})
+  const [tab, setTab]       = useState('info')
+  const [permisosSeleccionados, setPermisosSeleccionados] = useState([])
+ 
+  const { data: roles = [] }         = useQuery({ queryKey: ['roles'],    queryFn: rolesService.getAll })
+  const { data: todosPermisos = [] } = useQuery({ queryKey: ['permisos'], queryFn: rolesService.getPermisos })
+ 
+  const gruposPermisos = agruparPermisos(todosPermisos)
+  const esAdmin = id => +id === 1
+ 
+  const abrirModal = async (item = null) => {
+    setForm(item ? { nombre: item.nombre, descripcion: item.descripcion || '' } : formVacio)
+    setTab('info'); setErrores({})
+    if (item) {
+      try { const { data } = await rolesService.getById(item.id); setPermisosSeleccionados(data.datos.permisos?.map(p => p.id) || []) }
+      catch { setPermisosSeleccionados([]) }
+    } else { setPermisosSeleccionados([]) }
+    setModal({ abierto: true, item })
+  }
+  const cerrarModal = () => { setModal({ abierto: false, item: null }); setTab('info') }
+ 
+  const guardar = useMutation({
+    mutationFn: async data => {
+      let res
+      if (modal.item) {
+        res = await rolesService.update(modal.item.id, { nombre: data.nombre, descripcion: data.descripcion })
+        await rolesService.setPermisos(modal.item.id, { permiso_ids: permisosSeleccionados })
+      } else {
+        res = await rolesService.create({ nombre: data.nombre, descripcion: data.descripcion })
+        if (permisosSeleccionados.length > 0) await rolesService.setPermisos(res.data.datos.id, { permiso_ids: permisosSeleccionados })
+      }
+      return res.data
+    },
+    onSuccess: () => { qc.invalidateQueries(['roles']); cerrarModal(); toast.success('Rol guardado') },
+    onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
+  })
+  const toggleEstado = useMutation({
+    mutationFn: rolesService.toggleEstado,
+    onSuccess: () => { qc.invalidateQueries(['roles']); toast.success('Estado actualizado') },
+    onError: err => toast.error(err.response?.data?.mensaje || 'No se puede modificar'),
+  })
+  const eliminar = useMutation({
+    mutationFn: rolesService.delete,
+    onSuccess: () => { qc.invalidateQueries(['roles']); setModalEliminar({ abierto: false, item: null }); toast.success('Rol eliminado') },
+    onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar'),
+  })
+ 
+  const handleSubmit = e => {
+    e.preventDefault()
+    if (!form.nombre.trim()) { setErrores({ nombre: 'El nombre es obligatorio' }); return }
+    guardar.mutate(form)
+  }
+ 
+  const togglePermiso = useCallback(id => setPermisosSeleccionados(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]), [])
+  const toggleModulo = perms => {
+    const ids = perms.map(p => p.id)
+    const todos = ids.every(id => permisosSeleccionados.includes(id))
+    setPermisosSeleccionados(prev => todos ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])])
+  }
+  const seleccionarTodos = () => setPermisosSeleccionados(todosPermisos.map(p => p.id))
+  const limpiarTodos     = () => setPermisosSeleccionados([])
+ 
+  return {
+    roles, todosPermisos, gruposPermisos,
+    form, setForm, errores, tab, setTab,
+    permisosSeleccionados,
+    modal, modalDetalle, modalEliminar,
+    setModalDetalle, setModalEliminar,
+    esAdmin, abrirModal, cerrarModal, handleSubmit,
+    toggleEstado, eliminar, togglePermiso, toggleModulo,
+    seleccionarTodos, limpiarTodos,
+    guardando: guardar.isPending, eliminando: eliminar.isPending,
+  }
+}
+ 

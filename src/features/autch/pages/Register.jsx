@@ -1,119 +1,104 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '@shared/contexts/AuthContext'
-import { useTema } from '@shared/contexts/ThemeContext'
-import api from '@shared/services/api'
-import toast from 'react-hot-toast'
-import { Eye, EyeOff, Sun, Moon, Store } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { useRegister } from '../Hooks/useRegister'
  
-export default function Login() {
-  const [form, setForm]         = useState({ email: '', password: '' })
-  const [verPass, setVerPass]   = useState(false)
-  const [cargando, setCargando] = useState(false)
-  const [errores, setErrores]   = useState({})
-  const { login }               = useAuth()
-  const { tema, toggleTema }    = useTema()
-  const navigate                = useNavigate()
- 
-  const validar = () => {
-    const e = {}
-    if (!form.email.trim()) e.email = 'el correo es obligatorio'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'correo invalido'
-    if (!form.password.trim()) e.password = 'la contrasena es obligatoria'
-    return e
-  }
- 
-  const handleSubmit = async e => {
-    e.preventDefault()
-    const e2 = validar()
-    if (Object.keys(e2).length) { setErrores(e2); return }
-    setErrores({})
-    setCargando(true)
-    try {
-      const { data } = await api.post('/auth/login', form)
-      login(data.token, data.usuario)
-      toast.success(`bienvenido, ${data.usuario.nombre}`)
-      navigate(data.usuario.rol_id === 1 ? '/admin' : '/')
-    } catch (err) {
-      toast.error(err.response?.data?.mensaje || 'error al iniciar sesion')
-    } finally {
-      setCargando(false)
-    }
-  }
+export default function Register() {
+  const { form, errores, cargando, handleChange, handleSubmit } = useRegister()
  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light-bg dark:bg-dark-bg px-4">
-      <button onClick={toggleTema} className="fixed top-4 right-4 btn-ghost">
-        {tema === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-      </button>
- 
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/20 mb-4">
-            <Store size={22} className="text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold text-primary">sisgem</h1>
-          <p className="text-sm text-gray-400 dark:text-dark-text/50 mt-1">
-            sistema de gestion para minimercado
-          </p>
+    <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-lg">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-primary">SISGEM</h1>
+          <p className="text-sm text-gray-500 dark:text-dark-text/60 mt-1">Crear Cuenta Nueva</p>
         </div>
- 
-        <div className="card">
-          <h2 className="text-sm font-medium text-light-text dark:text-dark-text mb-4">
-            inicia sesion
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-dark-border">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="campo-label">correo electronico</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
-                className={`campo-input ${errores.email ? 'border-red-400' : ''}`}
-                placeholder="admin@sisgem.com"
-                autoComplete="email"
-              />
-              {errores.email && <p className="campo-error">{errores.email}</p>}
-            </div>
- 
-            <div>
-              <label className="campo-label">contrasena</label>
-              <div className="relative">
-                <input
-                  type={verPass ? 'text' : 'password'}
-                  value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  className={`campo-input pr-10 ${errores.password ? 'border-red-400' : ''}`}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                />
-                <button type="button" onClick={() => setVerPass(!verPass)}
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-primary transition-colors">
-                  {verPass ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Datos Personales</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="campo-label">Nombre *</label>
+                  <input value={form.nombre} onChange={e => handleChange('nombre', e.target.value)}
+                    className={'campo-input ' + (errores.nombre ? 'border-red-400' : '')} placeholder="Tu nombre" />
+                  {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
+                </div>
+                <div>
+                  <label className="campo-label">Apellido *</label>
+                  <input value={form.apellido} onChange={e => handleChange('apellido', e.target.value)}
+                    className={'campo-input ' + (errores.apellido ? 'border-red-400' : '')} placeholder="Tu apellido" />
+                  {errores.apellido && <p className="campo-error">{errores.apellido}</p>}
+                </div>
+                <div>
+                  <label className="campo-label">Tipo Documento</label>
+                  <select value={form.tipo_documento} onChange={e => handleChange('tipo_documento', e.target.value)} className="campo-input">
+                    <option value="CC">Cédula (CC)</option>
+                    <option value="CE">Cédula Extranjería (CE)</option>
+                    <option value="TI">Tarjeta Identidad (TI)</option>
+                    <option value="PA">Pasaporte (PA)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="campo-label">Número Documento</label>
+                  <input value={form.numero_documento} onChange={e => handleChange('numero_documento', e.target.value)}
+                    className="campo-input" placeholder="Ej: 1234567890" />
+                </div>
+                <div className="col-span-2">
+                  <label className="campo-label">Teléfono</label>
+                  <input value={form.telefono} onChange={e => handleChange('telefono', e.target.value)}
+                    className="campo-input" placeholder="Ej: 3001234567" />
+                </div>
               </div>
-              {errores.password && <p className="campo-error">{errores.password}</p>}
             </div>
- 
-            <button type="submit" disabled={cargando}
-              className="btn-primary w-full justify-center py-2">
-              {cargando ? 'ingresando...' : 'ingresar'}
+            <div>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Ubicación en Medellín</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="campo-label">Dirección</label>
+                  <input value={form.direccion} onChange={e => handleChange('direccion', e.target.value)}
+                    className="campo-input" placeholder="Ej: Calle 50 # 40-10" />
+                </div>
+                <div className="col-span-2">
+                  <label className="campo-label">Barrio</label>
+                  <input value={form.barrio} onChange={e => handleChange('barrio', e.target.value)}
+                    className="campo-input" placeholder="Ej: Laureles, El Poblado..." />
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Datos de Acceso</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="campo-label">Correo Electrónico *</label>
+                  <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)}
+                    className={'campo-input ' + (errores.email ? 'border-red-400' : '')} placeholder="correo@ejemplo.com" />
+                  {errores.email && <p className="campo-error">{errores.email}</p>}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="campo-label">Contraseña *</label>
+                    <input type="password" value={form.password} onChange={e => handleChange('password', e.target.value)}
+                      className={'campo-input ' + (errores.password ? 'border-red-400' : '')} placeholder="Mínimo 6 caracteres" />
+                    {errores.password && <p className="campo-error">{errores.password}</p>}
+                  </div>
+                  <div>
+                    <label className="campo-label">Confirmar Contraseña *</label>
+                    <input type="password" value={form.confirmar} onChange={e => handleChange('confirmar', e.target.value)}
+                      className={'campo-input ' + (errores.confirmar ? 'border-red-400' : '')} placeholder="Repetir contraseña" />
+                    {errores.confirmar && <p className="campo-error">{errores.confirmar}</p>}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="submit" disabled={cargando} className="btn-primary w-full justify-center py-2.5 text-sm disabled:opacity-50">
+              {cargando ? 'Creando Cuenta...' : 'Crear Cuenta'}
             </button>
+            <p className="text-center text-xs text-gray-500 dark:text-dark-text/60">
+              ¿Ya tienes cuenta?{' '}
+              <Link to="/login" className="text-primary hover:underline font-medium">Inicia Sesión</Link>
+            </p>
           </form>
- 
-          <div className="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-dark-border pt-4">
-            <Link to="/recuperar"
-              className="text-xs text-primary/70 hover:text-primary transition-colors">
-              olvide mi contrasena
-            </Link>
-            <Link to="/"
-              className="text-xs text-primary/70 hover:text-primary transition-colors">
-              ver catalogo
-            </Link>
-          </div>
         </div>
       </div>
     </div>
   )
 }
- 

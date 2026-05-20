@@ -1,55 +1,18 @@
-﻿import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { useSearchParams, Link } from 'react-router-dom'
-import api from '@shared/services/api'
-import { Search, Scan, ShoppingCart, Filter, X } from 'lucide-react'
+﻿import { Search, ShoppingCart, Filter, X } from 'lucide-react'
+import { useCatalogo } from '../hooks/useCatalogo'
 import { formatPrecio } from '@shared/utils/validaciones'
  
 export default function Catalogo({ carrito, setCarrito }) {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [busqueda, setBusqueda]   = useState('')
-  const [mostrarFiltros, setMostrarFiltros] = useState(false)
- 
-  const categoriaFiltro = searchParams.get('categoria') || ''
-  const marcaFiltro     = searchParams.get('marca') || ''
- 
-  const { data: productos = [], isLoading } = useQuery({
-    queryKey: ['catalogo', categoriaFiltro, marcaFiltro, busqueda],
-    queryFn: () => {
-      const params = new URLSearchParams()
-      if (categoriaFiltro) params.append('categoria_id', categoriaFiltro)
-      if (marcaFiltro)     params.append('marca_id', marcaFiltro)
-      if (busqueda)        params.append('busqueda', busqueda)
-      return api.get(`/catalogo?${params}`).then(r => r.data.datos)
-    }
-  })
-  const { data: categorias = [] } = useQuery({
-    queryKey: ['catalogo-cats'],
-    queryFn: () => api.get('/catalogo/categorias').then(r => r.data.datos)
-  })
-  const { data: marcas = [] } = useQuery({
-    queryKey: ['catalogo-marcas'],
-    queryFn: () => api.get('/catalogo/marcas').then(r => r.data.datos)
-  })
- 
-  const agregarAlCarrito = prod => {
-    setCarrito(prev => {
-      const existe = prev.find(p => p.id === prod.id)
-      if (existe) return prev.map(p => p.id === prod.id ? { ...p, cantidad: p.cantidad + 1 } : p)
-      return [...prev, { ...prod, cantidad: 1 }]
-    })
-  }
- 
-  const limpiarFiltros = () => {
-    setSearchParams({})
-    setBusqueda('')
-  }
- 
-  const hayFiltros = categoriaFiltro || marcaFiltro || busqueda
+  const {
+    productos, categorias, marcas, isLoading,
+    busqueda, setBusqueda, mostrarFiltros, setMostrarFiltros,
+    categoriaFiltro, marcaFiltro, hayFiltros,
+    agregarAlCarrito, limpiarFiltros, setCategoria, setMarca,
+  } = useCatalogo({ setCarrito })
  
   return (
     <div>
-      {/* barra busqueda + filtros */}
+      {/* barra búsqueda + filtros */}
       <div className="bg-light-card dark:bg-dark-card border-b border-gray-100 dark:border-dark-border px-4 py-3">
         <div className="max-w-6xl mx-auto flex gap-2">
           <div className="flex-1 relative">
@@ -66,7 +29,7 @@ export default function Catalogo({ carrito, setCarrito }) {
                 ? 'border-primary bg-primary/10 text-primary'
                 : 'border-gray-200 dark:border-dark-border text-gray-500'
             }`}>
-            <Filter size={13} /> filtros
+            <Filter size={13} /> Filtros
             {hayFiltros && <span className="w-4 h-4 rounded-full bg-primary text-dark-bg text-xs flex items-center justify-center">!</span>}
           </button>
           {hayFiltros && (
@@ -83,20 +46,16 @@ export default function Catalogo({ carrito, setCarrito }) {
         <div className="bg-light-bg dark:bg-dark-bg border-b border-gray-100 dark:border-dark-border px-4 py-4">
           <div className="max-w-6xl mx-auto grid grid-cols-2 gap-4">
             <div>
-              <label className="campo-label">categoria</label>
-              <select value={categoriaFiltro}
-                onChange={e => setSearchParams(prev => { const p = new URLSearchParams(prev); e.target.value ? p.set('categoria', e.target.value) : p.delete('categoria'); return p })}
-                className="campo-input text-sm">
-                <option value="">todas las categorias</option>
+              <label className="campo-label">Categoría</label>
+              <select value={categoriaFiltro} onChange={e => setCategoria(e.target.value)} className="campo-input text-sm">
+                <option value="">Todas las categorías</option>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
               </select>
             </div>
             <div>
-              <label className="campo-label">marca</label>
-              <select value={marcaFiltro}
-                onChange={e => setSearchParams(prev => { const p = new URLSearchParams(prev); e.target.value ? p.set('marca', e.target.value) : p.delete('marca'); return p })}
-                className="campo-input text-sm">
-                <option value="">todas las marcas</option>
+              <label className="campo-label">Marca</label>
+              <select value={marcaFiltro} onChange={e => setMarca(e.target.value)} className="campo-input text-sm">
+                <option value="">Todas las marcas</option>
                 {marcas.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
               </select>
             </div>
@@ -105,23 +64,14 @@ export default function Catalogo({ carrito, setCarrito }) {
       )}
  
       <div className="max-w-6xl mx-auto px-4 py-6">
-        {/* resultados */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-500 dark:text-dark-text/60">
-            {isLoading ? 'cargando...' : `${productos.length} productos encontrados`}
+            {isLoading ? 'Cargando...' : `${productos.length} productos encontrados`}
           </p>
           {hayFiltros && (
             <div className="flex gap-1 flex-wrap">
-              {categoriaFiltro && (
-                <span className="badge-proceso text-xs">
-                  {categorias.find(c => c.id === +categoriaFiltro)?.nombre}
-                </span>
-              )}
-              {marcaFiltro && (
-                <span className="badge-proceso text-xs">
-                  {marcas.find(m => m.id === +marcaFiltro)?.nombre}
-                </span>
-              )}
+              {categoriaFiltro && <span className="badge-proceso text-xs">{categorias.find(c => c.id === +categoriaFiltro)?.nombre}</span>}
+              {marcaFiltro     && <span className="badge-proceso text-xs">{marcas.find(m => m.id === +marcaFiltro)?.nombre}</span>}
             </div>
           )}
         </div>
@@ -143,10 +93,8 @@ export default function Catalogo({ carrito, setCarrito }) {
         {!isLoading && productos.length === 0 && (
           <div className="text-center py-16">
             <Search size={48} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-400 text-sm">no se encontraron productos</p>
-            <button onClick={limpiarFiltros} className="text-primary text-sm mt-2 hover:underline">
-              limpiar filtros
-            </button>
+            <p className="text-gray-400 text-sm">No se encontraron productos</p>
+            <button onClick={limpiarFiltros} className="text-primary text-sm mt-2 hover:underline">Limpiar filtros</button>
           </div>
         )}
  
@@ -157,32 +105,23 @@ export default function Catalogo({ carrito, setCarrito }) {
                 className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
                   hover:border-primary/40 hover:shadow-md transition-all group flex flex-col">
                 <div className="relative h-36 rounded-t-xl overflow-hidden bg-gray-50 dark:bg-dark-bg">
-                  {prod.imagen_url ? (
-                    <img src={prod.imagen_url} alt={prod.nombre}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={e => { e.target.style.display='none' }} />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl">🛒</div>
-                  )}
+                  {prod.imagen_url
+                    ? <img src={prod.imagen_url} alt={prod.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={e => e.target.style.display='none'} />
+                    : <div className="w-full h-full flex items-center justify-center text-4xl">🛒</div>
+                  }
                   {prod.stock <= 5 && prod.stock > 0 && (
-                    <span className="absolute top-2 right-2 text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded-full">
-                      quedan {prod.stock}
-                    </span>
+                    <span className="absolute top-2 right-2 text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded-full">Quedan {prod.stock}</span>
                   )}
                 </div>
                 <div className="p-2.5 flex flex-col flex-1">
-                  <p className="text-xs font-medium text-light-text dark:text-dark-text line-clamp-2 flex-1">
-                    {prod.nombre}
-                  </p>
+                  <p className="text-xs font-medium text-light-text dark:text-dark-text line-clamp-2 flex-1">{prod.nombre}</p>
                   {prod.categoria && <p className="text-xs text-gray-400 mt-0.5">{prod.categoria}</p>}
-                  {prod.marca && <p className="text-xs text-gray-400">{prod.marca}</p>}
-                  <div className="mt-2">
-                    <p className="text-sm font-bold text-primary">{formatPrecio(prod.precio)}</p>
-                  </div>
+                  {prod.marca     && <p className="text-xs text-gray-400">{prod.marca}</p>}
+                  <p className="text-sm font-bold text-primary mt-2">{formatPrecio(prod.precio)}</p>
                   <button onClick={() => agregarAlCarrito(prod)}
                     className="mt-2 w-full py-1.5 text-xs font-medium rounded-lg border border-primary/40
                       text-primary hover:bg-primary hover:text-dark-bg transition-colors flex items-center justify-center gap-1">
-                    <ShoppingCart size={11} /> agregar
+                    <ShoppingCart size={11} /> Agregar
                   </button>
                 </div>
               </div>
@@ -193,4 +132,3 @@ export default function Catalogo({ carrito, setCarrito }) {
     </div>
   )
 }
- 
