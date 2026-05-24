@@ -2,15 +2,18 @@ import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { rolesService } from '../services/rolesService'
 import toast from 'react-hot-toast'
- 
+
 const formVacio = { nombre: '', descripcion: '' }
- 
+
 const agruparPermisos = permisos => permisos.reduce((acc, p) => {
   if (!acc[p.modulo]) acc[p.modulo] = []
   acc[p.modulo].push(p)
   return acc
 }, {})
- 
+
+// nombres de roles que no se pueden eliminar ni modificar
+const ROLES_PROTEGIDOS = ['administrador', 'admin', 'cliente', 'vendedor']
+
 export function useRoles() {
   const qc = useQueryClient()
   const [modal, setModal]                 = useState({ abierto: false, item: null })
@@ -20,15 +23,18 @@ export function useRoles() {
   const [errores, setErrores] = useState({})
   const [tab, setTab]         = useState('info')
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([])
- 
+
   const { data: roles = [] }         = useQuery({ queryKey: ['roles'],    queryFn: rolesService.getAll })
   const { data: todosPermisos = [] } = useQuery({ queryKey: ['permisos'], queryFn: rolesService.getPermisos })
- 
+
   const gruposPermisos = agruparPermisos(todosPermisos)
- 
-  // IDs protegidos: 1=Admin, 2=Cliente — no se pueden eliminar ni modificar
-  const esProtegido = id => +id === 1 || +id === 2
- 
+
+  // proteger por nombre — no depende de IDs fijos
+  const esProtegido = id => {
+    const rol = roles.find(r => r.id === +id)
+    return ROLES_PROTEGIDOS.some(n => rol?.nombre?.toLowerCase().includes(n))
+  }
+
   const abrirModal = async (item = null) => {
     setForm(item ? { nombre: item.nombre, descripcion: item.descripcion || '' } : formVacio)
     setTab('info'); setErrores({})
@@ -41,7 +47,7 @@ export function useRoles() {
     setModal({ abierto: true, item })
   }
   const cerrarModal = () => { setModal({ abierto: false, item: null }); setTab('info') }
- 
+
   const handleNombreChange = valor => {
     setForm(p => ({ ...p, nombre: valor }))
     if (!valor.trim()) { setErrores(p => ({ ...p, nombre: 'El nombre es obligatorio' })); return }
@@ -50,7 +56,7 @@ export function useRoles() {
     )
     setErrores(p => ({ ...p, nombre: duplicado ? 'Ya existe un rol con ese nombre' : '' }))
   }
- 
+
   const guardar = useMutation({
     mutationFn: async data => {
       let res
@@ -77,24 +83,24 @@ export function useRoles() {
     onSuccess: () => { qc.invalidateQueries(['roles']); setModalEliminar({ abierto: false, item: null }); toast.success('Rol eliminado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar'),
   })
- 
+
   const handleSubmit = e => {
     e.preventDefault()
     if (!form.nombre.trim()) { setErrores({ nombre: 'El nombre es obligatorio' }); return }
     if (errores.nombre) return
     guardar.mutate(form)
   }
- 
-  const togglePermiso  = useCallback(id => setPermisosSeleccionados(prev =>
+
+  const togglePermiso = useCallback(id => setPermisosSeleccionados(prev =>
     prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]), [])
-  const toggleModulo   = perms => {
+  const toggleModulo = perms => {
     const ids   = perms.map(p => p.id)
     const todos = ids.every(id => permisosSeleccionados.includes(id))
     setPermisosSeleccionados(prev => todos ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])])
   }
   const seleccionarTodos = () => setPermisosSeleccionados(todosPermisos.map(p => p.id))
   const limpiarTodos     = () => setPermisosSeleccionados([])
- 
+
   return {
     roles, todosPermisos, gruposPermisos,
     form, setForm, errores, tab, setTab,
