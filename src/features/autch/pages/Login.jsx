@@ -49,17 +49,26 @@ export default function Login() {
               {cargando ? 'Ingresando...' : 'Ingresar'}
             </button>
           </form>
-          <div className="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-dark-border pt-4">
-            <Link to="/recuperar" className="text-xs text-primary/70 hover:text-primary transition-colors">
-              Olvidé mi Contraseña
-            </Link>
-            <Link to="/" className="text-xs text-primary/70 hover:text-primary transition-colors">
-              Ver Catálogo
-            </Link>
+ 
+          {/* links inferiores */}
+          <div className="mt-4 border-t border-gray-200 dark:border-dark-border pt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <Link to="/recuperar" className="text-xs text-primary/70 hover:text-primary transition-colors">
+                Olvidé mi Contraseña
+              </Link>
+              <Link to="/" className="text-xs text-primary/70 hover:text-primary transition-colors">
+                Ver Catálogo
+              </Link>
+            </div>
+            <div className="text-center pt-1">
+              <span className="text-xs text-gray-400">¿No tienes cuenta? </span>
+              <Link to="/register" className="text-xs text-primary hover:underline font-medium">
+                Regístrate aquí
+              </Link>
+            </div>
           </div>
         </div>
       </div>
     </div>
   )
 }
- 

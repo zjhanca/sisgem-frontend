@@ -10,16 +10,36 @@ const formVacio = {
   direccion: '', barrio: ''
 }
  
-const validar = form => {
-  const e = {}
-  if (!form.nombre.trim())   e.nombre   = 'El nombre es obligatorio'
-  if (!form.apellido.trim()) e.apellido = 'El apellido es obligatorio'
-  if (!form.email.trim())    e.email    = 'El correo es obligatorio'
-  else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(form.email)) e.email = 'Correo inválido'
-  if (!form.password)        e.password  = 'La contraseña es obligatoria'
-  else if (form.password.length < 6) e.password = 'Mínimo 6 caracteres'
-  if (form.password !== form.confirmar) e.confirmar = 'Las contraseñas no coinciden'
-  return e
+const validarCampo = (campo, valor, form) => {
+  switch (campo) {
+    case 'nombre':
+      return !valor.trim() ? 'El nombre es obligatorio' : ''
+    case 'apellido':
+      return !valor.trim() ? 'El apellido es obligatorio' : ''
+    case 'email':
+      if (!valor.trim()) return 'El correo es obligatorio'
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) return 'Correo inválido'
+      return ''
+    case 'password':
+      if (!valor) return 'La contraseña es obligatoria'
+      if (valor.length < 6) return 'Mínimo 6 caracteres'
+      if (!/[A-Z]/.test(valor)) return 'Debe tener al menos una mayúscula'
+      if (!/[0-9]/.test(valor)) return 'Debe tener al menos un número'
+      return ''
+    case 'confirmar':
+      return valor !== form.password ? 'Las contraseñas no coinciden' : ''
+    case 'telefono':
+      if (!valor) return ''
+      if (!/^\d+$/.test(valor)) return 'Solo se permiten números'
+      if (valor.length !== 10) return 'El teléfono debe tener 10 dígitos'
+      return ''
+    case 'numero_documento':
+      if (!valor) return ''
+      if (!/^\d+$/.test(valor)) return 'Solo se permiten números'
+      return ''
+    default:
+      return ''
+  }
 }
  
 export function useRegister() {
@@ -30,16 +50,28 @@ export function useRegister() {
   const navigate   = useNavigate()
  
   const handleChange = (campo, valor) => {
+    // bloquear letras en teléfono y documento
+    if (campo === 'telefono' || campo === 'numero_documento') {
+      if (valor && !/^\d*$/.test(valor)) return
+    }
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
-    const e = validar(nuevo)
-    setErrores(prev => ({ ...prev, [campo]: e[campo] || '' }))
+    const err = validarCampo(campo, valor, nuevo)
+    setErrores(prev => ({ ...prev, [campo]: err }))
+    // revalidar confirmar si cambia password
+    if (campo === 'password') {
+      const errConf = validarCampo('confirmar', nuevo.confirmar, nuevo)
+      setErrores(prev => ({ ...prev, confirmar: errConf }))
+    }
   }
  
   const handleSubmit = async e => {
     e.preventDefault()
-    const e2 = validar(form)
-    if (Object.keys(e2).length) { setErrores(e2); return }
+    const campos = ['nombre', 'apellido', 'email', 'password', 'confirmar', 'telefono', 'numero_documento']
+    const nuevosErrores = {}
+    campos.forEach(c => { nuevosErrores[c] = validarCampo(c, form[c], form) })
+    setErrores(nuevosErrores)
+    if (Object.values(nuevosErrores).some(Boolean)) return
     setCargando(true)
     try {
       const { data } = await authService.registro({
@@ -65,3 +97,4 @@ export function useRegister() {
  
   return { form, errores, cargando, handleChange, handleSubmit }
 }
+ 

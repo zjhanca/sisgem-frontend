@@ -5,7 +5,8 @@ export default function RolForm({
   modal, form, setForm, errores, tab, setTab,
   permisosSeleccionados, gruposPermisos, todosPermisos,
   handleSubmit, cerrarModal, guardando,
-  togglePermiso, toggleModulo, seleccionarTodos, limpiarTodos
+  togglePermiso, toggleModulo, seleccionarTodos, limpiarTodos,
+  handleNombreChange,
 }) {
   return (
     <Modal abierto={modal.abierto} onCerrar={cerrarModal}
@@ -13,7 +14,9 @@ export default function RolForm({
       <div className="flex gap-1 mb-4 p-1 bg-light-bg dark:bg-dark-bg rounded-xl">
         {[{ id:'info', label:'Información', icon:Edit2 }, { id:'permisos', label:'Permisos', icon:Shield }].map(t => (
           <button key={t.id} type="button" onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-medium transition-all ${tab === t.id ? 'bg-primary text-dark-bg shadow-sm' : 'text-gray-500 dark:text-dark-text/60 hover:text-primary'}`}>
+            className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-medium transition-all ${
+              tab === t.id ? 'bg-primary text-dark-bg shadow-sm' : 'text-gray-500 dark:text-dark-text/60 hover:text-primary'
+            }`}>
             <t.icon size={13} /> {t.label}
             {t.id === 'permisos' && permisosSeleccionados.length > 0 && (
               <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${tab==='permisos' ? 'bg-dark-bg/20' : 'bg-primary/20 text-primary'}`}>
@@ -29,8 +32,11 @@ export default function RolForm({
           <div className="space-y-3">
             <div>
               <label className="campo-label">Nombre del Rol *</label>
-              <input value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))}
-                className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`} placeholder="Nombre del rol" />
+              <input
+                value={form.nombre}
+                onChange={e => handleNombreChange(e.target.value)}
+                className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`}
+                placeholder="Nombre del rol" />
               {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
             </div>
             <div>
@@ -64,7 +70,9 @@ export default function RolForm({
                     <div className="flex items-center justify-between px-3 py-2 bg-light-bg dark:bg-dark-bg">
                       <span className="text-xs font-semibold capitalize">{modulo}</span>
                       <button type="button" onClick={() => toggleModulo(perms)}
-                        className={`text-xs px-2 py-0.5 rounded border transition-colors ${todosSelec ? 'bg-primary text-dark-bg border-primary' : 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'}`}>
+                        className={`text-xs px-2 py-0.5 rounded border transition-colors ${
+                          todosSelec ? 'bg-primary text-dark-bg border-primary' : 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'
+                        }`}>
                         {todosSelec ? 'Quitar todos' : 'Todos'}
                       </button>
                     </div>
@@ -84,8 +92,12 @@ export default function RolForm({
         )}
  
         <div className="flex justify-end gap-2 pt-3 mt-3 border-t border-gray-200 dark:border-dark-border">
-          <button type="button" onClick={cerrarModal} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
-          <button type="submit" disabled={guardando} className="btn-primary">{guardando ? 'Guardando...' : 'Aceptar'}</button>
+          <button type="button" onClick={cerrarModal}
+            className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
+          <button type="submit" disabled={guardando || !!errores.nombre}
+            className="btn-primary disabled:opacity-50">
+            {guardando ? 'Guardando...' : 'Aceptar'}
+          </button>
         </div>
       </form>
     </Modal>

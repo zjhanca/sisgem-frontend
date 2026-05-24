@@ -1,21 +1,21 @@
-﻿import { useState } from 'react'
-import { Plus, Eye, Download, CheckCircle, Clock, XCircle } from 'lucide-react'
+﻿import { Plus, Eye, Download, CheckCircle, Clock, XCircle, AlertTriangle, Edit2, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { useOrdenes } from '../hooks/useOrdenes'
-import OrdenForm   from '../components/OrdenForm'
+import OrdenForm    from '../components/OrdenForm'
 import OrdenDetalle from '../components/OrdenDetalle'
  
-const ICONOS = { pendiente: Clock, recibido: CheckCircle, anulado: XCircle }
-const COLORES = { pendiente: 'text-yellow-500', recibido: 'text-green-500', anulado: 'text-red-400' }
+const ICONOS  = { pendiente: Clock, pagada: CheckCircle, vencida: AlertTriangle, anulado: XCircle }
+const COLORES = { pendiente: 'text-yellow-500', pagada: 'text-green-500', vencida: 'text-red-500', anulado: 'text-gray-400' }
  
 export default function OrdCompra() {
   const {
-    ordenesFiltradas, proveedores, productos,
-    modalNuevo, modalDetalle, filtroEstado,
-    setModalNuevo, setModalDetalle, setFiltroEstado,
+    ordenesFiltradas, proveedores, productos, ordenesVencidas,
+    modalNuevo, modalDetalle, filtroEstado, filtroProveedor,
+    setModalNuevo, setModalDetalle, setFiltroEstado, setFiltroProveedor,
     form, setForm, itemForm, setItemForm,
+    facturaPreview, handleFacturaChange,
     prodBusqueda, prodsFiltrados, provBusqueda, provsFiltrados, provSeleccionado,
     buscarProveedor, buscarProducto, buscarPorCodigo, agregarItem, quitarItem,
     setProvSeleccionado, setProvBusqueda, setProdBusqueda,
@@ -24,12 +24,15 @@ export default function OrdCompra() {
   } = useOrdenes()
  
   const columnas = [
-    { key: 'id',         label: '#' },
-    { key: 'proveedor',  label: 'Proveedor' },
-    { key: 'total',      label: 'Total', render: r => formatPrecio(r.total) },
+    { key: 'id',          label: '#' },
+    { key: 'proveedor',   label: 'Proveedor' },
+    { key: 'registrado_por', label: 'Registrado por', render: r => r.registrado_por || '—' },
+    { key: 'fecha_compra',   label: 'Fecha Compra', render: r => formatFecha(r.fecha_compra || r.created_at) },
+    { key: 'metodo_pago',    label: 'Método Pago', render: r => r.metodo_pago || '—' },
+    { key: 'total',          label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado', label: 'Estado',
       render: r => {
-        const key = getKeyEstado(r.estado)
+        const key = r._vencida ? 'vencida' : getKeyEstado(r.estado)
         const Ico = ICONOS[key] || Clock
         const label = ESTADOS_ORDEN.find(e => e.key === key)?.label || 'Pendiente'
         return (
@@ -39,7 +42,7 @@ export default function OrdCompra() {
         )
       }
     },
-    { key: 'created_at', label: 'Fecha', render: r => formatFecha(r.created_at) },
+    { key: 'fecha_limite_pago', label: 'Límite Pago', render: r => r.fecha_limite_pago ? formatFecha(r.fecha_limite_pago) : '—' },
   ]
  
   return (
@@ -47,23 +50,56 @@ export default function OrdCompra() {
       <div className="page-header">
         <h1 className="page-title">Órdenes de Compra</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')} className="btn-outline"><Download size={14} /> Reporte</button>
-          <button onClick={() => setModalNuevo(true)} className="btn-primary"><Plus size={14} /> Nueva Orden</button>
+          <button onClick={() => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')} className="btn-outline">
+            <Download size={14} /> Reporte
+          </button>
+          <button onClick={() => setModalNuevo(true)} className="btn-primary">
+            <Plus size={14} /> Nueva Orden
+          </button>
         </div>
       </div>
  
-      <div className="flex gap-2 mb-4">
-        <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-44 text-xs">
-          <option value="">Todos los estados</option>
-          {ESTADOS_ORDEN.map(e => <option key={e.key} value={e.key}>{e.label}</option>)}
-        </select>
-        {filtroEstado && <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400">Limpiar</button>}
+      {/* alerta facturas vencidas */}
+      {ordenesVencidas > 0 && (
+        <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-400/20">
+          <AlertTriangle size={16} className="text-red-500 shrink-0" />
+          <p className="text-sm text-red-600 dark:text-red-400">
+            <span className="font-semibold">{ordenesVencidas}</span> orden{ordenesVencidas > 1 ? 'es' : ''} con factura vencida
+          </p>
+          <button onClick={() => setFiltroEstado('vencida')} className="ml-auto text-xs text-red-500 hover:underline">
+            Ver vencidas →
+          </button>
+        </div>
+      )}
+ 
+      {/* filtros */}
+      <div className="flex gap-2 mb-4 flex-wrap items-end">
+        <div>
+          <p className="campo-label mb-0.5">Estado</p>
+          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-44 text-xs">
+            <option value="">Todos los estados</option>
+            {ESTADOS_ORDEN.map(e => <option key={e.key} value={e.key}>{e.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <p className="campo-label mb-0.5">Proveedor</p>
+          <select value={filtroProveedor} onChange={e => setFiltroProveedor(e.target.value)} className="campo-input w-44 text-xs">
+            <option value="">Todos los proveedores</option>
+            {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+          </select>
+        </div>
+        {(filtroEstado || filtroProveedor) && (
+          <button onClick={() => { setFiltroEstado(''); setFiltroProveedor('') }}
+            className="btn-ghost text-xs text-red-400 self-end">
+            Limpiar
+          </button>
+        )}
       </div>
  
       <Tabla columnas={columnas} datos={ordenesFiltradas} sinBusqueda
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost"><Eye size={14} /></button>
-          <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
+          <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
+          <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost" title="Descargar PDF"><Download size={14} /></button>
         </>)}
       />
  
@@ -77,6 +113,7 @@ export default function OrdCompra() {
         agregarItem={agregarItem} quitarItem={quitarItem}
         setProvSeleccionado={setProvSeleccionado} setProvBusqueda={setProvBusqueda} setProdBusqueda={setProdBusqueda}
         totalOrden={totalOrden} handleCrear={handleCrear} creando={creando}
+        handleFacturaChange={handleFacturaChange} facturaPreview={facturaPreview}
       />
       <OrdenDetalle
         modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
@@ -86,3 +123,4 @@ export default function OrdCompra() {
     </div>
   )
 }
+ 

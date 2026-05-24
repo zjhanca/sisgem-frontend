@@ -3,15 +3,32 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { clientesService } from '../services/clientesService'
 import toast from 'react-hot-toast'
  
-const formVacio = { nombre: '', apellido: '', email: '', telefono: '', tipo_documento: 'CC', numero_documento: '' }
-const dirVacia  = { direccion: '', barrio: '', indicaciones: '' }
+const formVacio = {
+  nombre: '', apellido: '', email: '', telefono: '',
+  tipo_documento: 'CC', numero_documento: '',
+  permite_fiado: false, limite_fiado: '',
+}
+const dirVacia = { direccion: '', barrio: '', indicaciones: '' }
  
-const validar = form => {
-  const e = {}
-  if (!form.nombre.trim())   e.nombre   = 'El nombre es obligatorio'
-  if (!form.apellido.trim()) e.apellido = 'El apellido es obligatorio'
-  if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Correo inválido'
-  return e
+const validarCampo = (campo, valor) => {
+  switch (campo) {
+    case 'nombre':   return !valor.trim() ? 'El nombre es obligatorio' : ''
+    case 'apellido': return !valor.trim() ? 'El apellido es obligatorio' : ''
+    case 'email':
+      if (!valor) return ''
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) return 'Correo inválido'
+      return ''
+    case 'telefono':
+      if (!valor) return ''
+      if (!/^\d+$/.test(valor)) return 'Solo números'
+      if (valor.length !== 10) return 'Debe tener 10 dígitos'
+      return ''
+    case 'numero_documento':
+      if (!valor) return ''
+      if (!/^\d+$/.test(valor)) return 'Solo números'
+      return ''
+    default: return ''
+  }
 }
  
 export function useClientes() {
@@ -51,25 +68,38 @@ export function useClientes() {
   })
  
   const abrirModal = (item = null) => {
-    setForm(item ? { nombre: item.nombre, apellido: item.apellido, email: item.email || '',
-      telefono: item.telefono || '', tipo_documento: item.tipo_documento || 'CC',
-      numero_documento: item.numero_documento || '' } : formVacio)
+    setForm(item ? {
+      nombre: item.nombre, apellido: item.apellido,
+      email: item.email || '', telefono: item.telefono || '',
+      tipo_documento: item.tipo_documento || 'CC',
+      numero_documento: item.numero_documento || '',
+      permite_fiado: item.permite_fiado || false,
+      limite_fiado: item.limite_fiado || '',
+    } : formVacio)
     setErrores({})
     setModal({ abierto: true, item })
   }
   const cerrarModal = () => { setModal({ abierto: false, item: null }); setErrores({}) }
+ 
   const handleChange = (campo, valor) => {
+    // bloquear letras en campos numéricos
+    if ((campo === 'telefono' || campo === 'numero_documento') && valor && !/^\d*$/.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
-    const e = validar(nuevo)
-    setErrores(prev => ({ ...prev, [campo]: e[campo] || '' }))
+    const err = validarCampo(campo, valor)
+    setErrores(prev => ({ ...prev, [campo]: err }))
   }
+ 
   const handleSubmit = e => {
     e.preventDefault()
-    const e2 = validar(form)
-    if (Object.keys(e2).length) { setErrores(e2); return }
+    const campos = ['nombre', 'apellido', 'email', 'telefono', 'numero_documento']
+    const nuevosErrores = {}
+    campos.forEach(c => { nuevosErrores[c] = validarCampo(c, form[c]) })
+    setErrores(nuevosErrores)
+    if (Object.values(nuevosErrores).some(Boolean)) return
     guardar.mutate(form)
   }
+ 
   const handleSubmitDir = e => {
     e.preventDefault()
     if (!formDir.direccion.trim()) { toast.error('La dirección es obligatoria'); return }

@@ -16,9 +16,9 @@ export function useRoles() {
   const [modal, setModal]                 = useState({ abierto: false, item: null })
   const [modalDetalle, setModalDetalle]   = useState({ abierto: false, item: null })
   const [modalEliminar, setModalEliminar] = useState({ abierto: false, item: null })
-  const [form, setForm]     = useState(formVacio)
+  const [form, setForm]       = useState(formVacio)
   const [errores, setErrores] = useState({})
-  const [tab, setTab]       = useState('info')
+  const [tab, setTab]         = useState('info')
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([])
  
   const { data: roles = [] }         = useQuery({ queryKey: ['roles'],    queryFn: rolesService.getAll })
@@ -31,12 +31,29 @@ export function useRoles() {
     setForm(item ? { nombre: item.nombre, descripcion: item.descripcion || '' } : formVacio)
     setTab('info'); setErrores({})
     if (item) {
-      try { const { data } = await rolesService.getById(item.id); setPermisosSeleccionados(data.datos.permisos?.map(p => p.id) || []) }
-      catch { setPermisosSeleccionados([]) }
+      try {
+        const { data } = await rolesService.getById(item.id)
+        setPermisosSeleccionados(data.datos.permisos?.map(p => p.id) || [])
+      } catch { setPermisosSeleccionados([]) }
     } else { setPermisosSeleccionados([]) }
     setModal({ abierto: true, item })
   }
   const cerrarModal = () => { setModal({ abierto: false, item: null }); setTab('info') }
+ 
+  // validar nombre en tiempo real
+  const handleNombreChange = valor => {
+    setForm(p => ({ ...p, nombre: valor }))
+    if (!valor.trim()) {
+      setErrores(p => ({ ...p, nombre: 'El nombre es obligatorio' }))
+      return
+    }
+    // verificar duplicado (ignorar el rol que se está editando)
+    const duplicado = roles.find(r =>
+      r.nombre.toLowerCase() === valor.trim().toLowerCase() &&
+      r.id !== modal.item?.id
+    )
+    setErrores(p => ({ ...p, nombre: duplicado ? 'Ya existe un rol con ese nombre' : '' }))
+  }
  
   const guardar = useMutation({
     mutationFn: async data => {
@@ -46,7 +63,8 @@ export function useRoles() {
         await rolesService.setPermisos(modal.item.id, { permiso_ids: permisosSeleccionados })
       } else {
         res = await rolesService.create({ nombre: data.nombre, descripcion: data.descripcion })
-        if (permisosSeleccionados.length > 0) await rolesService.setPermisos(res.data.datos.id, { permiso_ids: permisosSeleccionados })
+        if (permisosSeleccionados.length > 0)
+          await rolesService.setPermisos(res.data.datos.id, { permiso_ids: permisosSeleccionados })
       }
       return res.data
     },
@@ -67,12 +85,14 @@ export function useRoles() {
   const handleSubmit = e => {
     e.preventDefault()
     if (!form.nombre.trim()) { setErrores({ nombre: 'El nombre es obligatorio' }); return }
+    if (errores.nombre) return // hay error (ej: duplicado)
     guardar.mutate(form)
   }
  
-  const togglePermiso = useCallback(id => setPermisosSeleccionados(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]), [])
-  const toggleModulo = perms => {
-    const ids = perms.map(p => p.id)
+  const togglePermiso  = useCallback(id => setPermisosSeleccionados(prev =>
+    prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]), [])
+  const toggleModulo   = perms => {
+    const ids  = perms.map(p => p.id)
     const todos = ids.every(id => permisosSeleccionados.includes(id))
     setPermisosSeleccionados(prev => todos ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])])
   }
@@ -85,10 +105,9 @@ export function useRoles() {
     permisosSeleccionados,
     modal, modalDetalle, modalEliminar,
     setModalDetalle, setModalEliminar,
-    esAdmin, abrirModal, cerrarModal, handleSubmit,
+    esAdmin, abrirModal, cerrarModal, handleSubmit, handleNombreChange,
     toggleEstado, eliminar, togglePermiso, toggleModulo,
     seleccionarTodos, limpiarTodos,
     guardando: guardar.isPending, eliminando: eliminar.isPending,
   }
 }
- 

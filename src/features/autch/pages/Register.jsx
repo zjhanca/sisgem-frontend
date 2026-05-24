@@ -1,8 +1,27 @@
 import { Link } from 'react-router-dom'
+import { Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react'
+import { useState } from 'react'
 import { useRegister } from '../Hooks/useRegister'
+ 
+function Requisito({ ok, texto }) {
+  return (
+    <div className={`flex items-center gap-1 text-xs ${ok ? 'text-green-500' : 'text-gray-400'}`}>
+      {ok ? <CheckCircle size={10} /> : <XCircle size={10} />} {texto}
+    </div>
+  )
+}
  
 export default function Register() {
   const { form, errores, cargando, handleChange, handleSubmit } = useRegister()
+  const [verPass, setVerPass]   = useState(false)
+  const [verConf, setVerConf]   = useState(false)
+  const [focusPass, setFocusPass] = useState(false)
+ 
+  const passReqs = {
+    largo:     form.password.length >= 6,
+    mayuscula: /[A-Z]/.test(form.password),
+    numero:    /[0-9]/.test(form.password),
+  }
  
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center px-4 py-8">
@@ -13,6 +32,8 @@ export default function Register() {
         </div>
         <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-dark-border">
           <form onSubmit={handleSubmit} className="space-y-4">
+ 
+            {/* datos personales */}
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Datos Personales</p>
               <div className="grid grid-cols-2 gap-3">
@@ -40,15 +61,21 @@ export default function Register() {
                 <div>
                   <label className="campo-label">Número Documento</label>
                   <input value={form.numero_documento} onChange={e => handleChange('numero_documento', e.target.value)}
-                    className="campo-input" placeholder="Ej: 1234567890" />
+                    className={'campo-input ' + (errores.numero_documento ? 'border-red-400' : '')}
+                    placeholder="Solo números" maxLength={15} inputMode="numeric" />
+                  {errores.numero_documento && <p className="campo-error">{errores.numero_documento}</p>}
                 </div>
                 <div className="col-span-2">
-                  <label className="campo-label">Teléfono</label>
+                  <label className="campo-label">Teléfono (10 dígitos)</label>
                   <input value={form.telefono} onChange={e => handleChange('telefono', e.target.value)}
-                    className="campo-input" placeholder="Ej: 3001234567" />
+                    className={'campo-input ' + (errores.telefono ? 'border-red-400' : '')}
+                    placeholder="Ej: 3001234567" maxLength={10} inputMode="numeric" />
+                  {errores.telefono && <p className="campo-error">{errores.telefono}</p>}
                 </div>
               </div>
             </div>
+ 
+            {/* ubicación */}
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Ubicación en Medellín</p>
               <div className="grid grid-cols-2 gap-3">
@@ -64,6 +91,8 @@ export default function Register() {
                 </div>
               </div>
             </div>
+ 
+            {/* datos de acceso */}
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Datos de Acceso</p>
               <div className="space-y-3">
@@ -76,19 +105,44 @@ export default function Register() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="campo-label">Contraseña *</label>
-                    <input type="password" value={form.password} onChange={e => handleChange('password', e.target.value)}
-                      className={'campo-input ' + (errores.password ? 'border-red-400' : '')} placeholder="Mínimo 6 caracteres" />
+                    <div className="relative">
+                      <input type={verPass ? 'text' : 'password'} value={form.password}
+                        onChange={e => handleChange('password', e.target.value)}
+                        onFocus={() => setFocusPass(true)} onBlur={() => setFocusPass(false)}
+                        className={'campo-input pr-8 ' + (errores.password ? 'border-red-400' : '')}
+                        placeholder="Mínimo 6 caracteres" />
+                      <button type="button" onClick={() => setVerPass(!verPass)}
+                        className="absolute right-2 top-2.5 text-gray-400 hover:text-primary">
+                        {verPass ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                    </div>
+                    {(focusPass || form.password) && (
+                      <div className="mt-1.5 space-y-0.5 p-2 bg-light-bg dark:bg-dark-bg rounded-lg">
+                        <Requisito ok={passReqs.largo}     texto="Mínimo 6 caracteres" />
+                        <Requisito ok={passReqs.mayuscula} texto="Una letra mayúscula" />
+                        <Requisito ok={passReqs.numero}    texto="Un número" />
+                      </div>
+                    )}
                     {errores.password && <p className="campo-error">{errores.password}</p>}
                   </div>
                   <div>
                     <label className="campo-label">Confirmar Contraseña *</label>
-                    <input type="password" value={form.confirmar} onChange={e => handleChange('confirmar', e.target.value)}
-                      className={'campo-input ' + (errores.confirmar ? 'border-red-400' : '')} placeholder="Repetir contraseña" />
+                    <div className="relative">
+                      <input type={verConf ? 'text' : 'password'} value={form.confirmar}
+                        onChange={e => handleChange('confirmar', e.target.value)}
+                        className={'campo-input pr-8 ' + (errores.confirmar ? 'border-red-400' : '')}
+                        placeholder="Repetir contraseña" />
+                      <button type="button" onClick={() => setVerConf(!verConf)}
+                        className="absolute right-2 top-2.5 text-gray-400 hover:text-primary">
+                        {verConf ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                    </div>
                     {errores.confirmar && <p className="campo-error">{errores.confirmar}</p>}
                   </div>
                 </div>
               </div>
             </div>
+ 
             <button type="submit" disabled={cargando} className="btn-primary w-full justify-center py-2.5 text-sm disabled:opacity-50">
               {cargando ? 'Creando Cuenta...' : 'Crear Cuenta'}
             </button>

@@ -1,17 +1,16 @@
-import { useState } from 'react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
  
 export default function TarifaForm({
   tarifas, formTarifa, setFormTarifa,
   handleGuardarTarifa, guardandoTarifa,
   modalElimTarifa, setModalElimTarifa,
-  eliminarTarifa, eliminandoTarifa
+  eliminarTarifa, eliminandoTarifa,
+  // modal controlado desde Pedidos.jsx header
+  modalNuevaTarifa, setModalNuevaTarifa,
 }) {
-  const [modalNueva, setModalNueva] = useState(false)
- 
   const columnas = [
     { key: 'barrio',       label: 'Barrio' },
     { key: 'zona',         label: 'Zona',      render: r => r.zona || '—' },
@@ -21,17 +20,11 @@ export default function TarifaForm({
  
   const handleGuardar = () => {
     handleGuardarTarifa()
-    setModalNueva(false)
+    setModalNuevaTarifa(false)
   }
  
   return (
     <div className="space-y-4">
-      {/* botón nueva tarifa */}
-      <div className="flex justify-end">
-        <button onClick={() => setModalNueva(true)} className="btn-primary">
-          <Plus size={14} /> Nueva Tarifa
-        </button>
-      </div>
  
       {/* tabla de tarifas */}
       <Tabla columnas={columnas} datos={tarifas}
@@ -44,8 +37,8 @@ export default function TarifaForm({
         )}
       />
  
-      {/* modal nueva tarifa */}
-      <Modal abierto={modalNueva} onCerrar={() => setModalNueva(false)}
+      {/* modal nueva tarifa — abierto desde el botón del header en Pedidos.jsx */}
+      <Modal abierto={modalNuevaTarifa} onCerrar={() => setModalNuevaTarifa(false)}
         titulo="Nueva Tarifa por Barrio" ancho="max-w-lg">
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -75,7 +68,7 @@ export default function TarifaForm({
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => setModalNueva(false)}
+            <button onClick={() => setModalNuevaTarifa(false)}
               className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">
               Cancelar
             </button>

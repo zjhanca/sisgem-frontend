@@ -30,7 +30,9 @@ export default function UsuarioForm({ modal, form, errores, handleChange, handle
           <div>
             <label className="campo-label">Número Documento</label>
             <input value={form.numero_documento} onChange={e => handleChange('numero_documento', e.target.value)}
-              className="campo-input" placeholder="Ej: 1234567890" />
+              className={`campo-input ${errores.numero_documento ? 'border-red-400' : ''}`}
+              placeholder="Solo números" inputMode="numeric" maxLength={15} />
+            {errores.numero_documento && <p className="campo-error">{errores.numero_documento}</p>}
           </div>
           <div className="col-span-2">
             <label className="campo-label">Correo *</label>
@@ -46,9 +48,11 @@ export default function UsuarioForm({ modal, form, errores, handleChange, handle
             {errores.password && <p className="campo-error">{errores.password}</p>}
           </div>
           <div>
-            <label className="campo-label">Teléfono</label>
+            <label className="campo-label">Teléfono (10 dígitos)</label>
             <input value={form.telefono} onChange={e => handleChange('telefono', e.target.value)}
-              className="campo-input" placeholder="Ej: 3001234567" />
+              className={`campo-input ${errores.telefono ? 'border-red-400' : ''}`}
+              placeholder="Ej: 3001234567" inputMode="numeric" maxLength={10} />
+            {errores.telefono && <p className="campo-error">{errores.telefono}</p>}
           </div>
           <div className="col-span-2">
             <label className="campo-label">Rol *</label>
@@ -61,7 +65,8 @@ export default function UsuarioForm({ modal, form, errores, handleChange, handle
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-          <button type="button" onClick={cerrarModal} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
+          <button type="button" onClick={cerrarModal}
+            className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button type="submit" disabled={guardando} className="btn-primary">{guardando ? 'Guardando...' : 'Aceptar'}</button>
         </div>
       </form>

@@ -1,4 +1,5 @@
-﻿import { Download, Settings, ShoppingCart, Bike, Tag, CheckCircle, Clock, XCircle, Eye, History, Plus } from 'lucide-react'
+﻿import { useState } from 'react'
+import { Download, Settings, ShoppingCart, Bike, Tag, CheckCircle, Clock, XCircle, Eye, History, Plus } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
@@ -19,6 +20,7 @@ const COLORES_DOM = { pendiente: 'text-yellow-500', entregado: 'text-green-500',
  
 export default function Pedidos() {
   const p = usePedidos()
+  const [modalNuevaTarifa, setModalNuevaTarifa] = useState(false)
  
   const getBadge = nombre => {
     if (!nombre) return 'badge-pendiente'
@@ -71,8 +73,20 @@ export default function Pedidos() {
         <h1 className="page-title">Pedidos</h1>
         <div className="flex gap-2">
           <button onClick={() => p.setModalConfig(true)} className="btn-ghost"><Settings size={14} /></button>
-          <button onClick={() => descargarPDF('/reportes/pedidos', 'reporte-pedidos.pdf')} className="btn-outline"><Download size={14} /> Reporte</button>
-          {p.tabActivo === 'pedidos' && <button onClick={() => p.setModalNuevo(true)} className="btn-primary"><Plus size={14} /> Nuevo Pedido</button>}
+          <button onClick={() => descargarPDF('/reportes/pedidos', 'reporte-pedidos.pdf')} className="btn-outline">
+            <Download size={14} /> Reporte
+          </button>
+          {/* botón Nueva Tarifa visible siempre en el header */}
+          {p.tabActivo === 'tarifas' && (
+            <button onClick={() => setModalNuevaTarifa(true)} className="btn-outline">
+              <Tag size={14} /> Nueva Tarifa
+            </button>
+          )}
+          {p.tabActivo === 'pedidos' && (
+            <button onClick={() => p.setModalNuevo(true)} className="btn-primary">
+              <Plus size={14} /> Nuevo Pedido
+            </button>
+          )}
         </div>
       </div>
  
@@ -155,10 +169,11 @@ export default function Pedidos() {
           handleGuardarTarifa={p.handleGuardarTarifa} guardandoTarifa={p.guardandoTarifa}
           modalElimTarifa={p.modalElimTarifa} setModalElimTarifa={p.setModalElimTarifa}
           eliminarTarifa={p.eliminarTarifa} eliminandoTarifa={p.eliminandoTarifa}
+          modalNuevaTarifa={modalNuevaTarifa} setModalNuevaTarifa={setModalNuevaTarifa}
         />
       )}
  
-      {/* modales */}
+      {/* modales pedidos */}
       <NuevoPedidoForm
         modalNuevo={p.modalNuevo} setModalNuevo={p.setModalNuevo}
         form={p.form} setF={p.setF} setForm={p.setForm}
@@ -203,3 +218,4 @@ export default function Pedidos() {
     </div>
   )
 }
+ 

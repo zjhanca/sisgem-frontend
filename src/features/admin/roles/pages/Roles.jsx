@@ -1,8 +1,8 @@
 ﻿import { Plus, Edit2, ToggleLeft, ToggleRight, Eye, Trash2, Lock } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { useRoles } from '../hooks/useRoles'
-import RolForm    from '../components/RolForm'
-import RolDetalle from '../components/RolDetalle'
+import RolForm     from '../components/RolForm'
+import RolDetalle  from '../components/RolDetalle'
 import RolEliminar from '../components/RolEliminar'
  
 export default function Roles() {
@@ -12,7 +12,7 @@ export default function Roles() {
     permisosSeleccionados,
     modal, modalDetalle, modalEliminar,
     setModalDetalle, setModalEliminar,
-    esAdmin, abrirModal, cerrarModal, handleSubmit,
+    esAdmin, abrirModal, cerrarModal, handleSubmit, handleNombreChange,
     toggleEstado, eliminar, togglePermiso, toggleModulo,
     seleccionarTodos, limpiarTodos, guardando, eliminando,
   } = useRoles()
@@ -49,6 +49,7 @@ export default function Roles() {
       <RolForm modal={modal} form={form} setForm={setForm} errores={errores} tab={tab} setTab={setTab}
         permisosSeleccionados={permisosSeleccionados} gruposPermisos={gruposPermisos} todosPermisos={todosPermisos}
         handleSubmit={handleSubmit} cerrarModal={cerrarModal} guardando={guardando}
+        handleNombreChange={handleNombreChange}
         togglePermiso={togglePermiso} toggleModulo={toggleModulo}
         seleccionarTodos={seleccionarTodos} limpiarTodos={limpiarTodos} />
       <RolDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} esAdmin={esAdmin} />

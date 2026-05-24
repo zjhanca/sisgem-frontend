@@ -1,18 +1,29 @@
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Trash2 } from 'lucide-react'
+import { Search, Scan, Trash2, Upload } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
+ 
+const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito', 'Cheque']
  
 export default function OrdenForm({
   modalNuevo, setModalNuevo, form, setForm, itemForm, setItemForm,
   proveedores, productos, prodBusqueda, prodsFiltrados, provBusqueda,
   provsFiltrados, provSeleccionado, buscarProveedor, buscarProducto,
   buscarPorCodigo, agregarItem, quitarItem, setProvSeleccionado,
-  setProvBusqueda, setProdBusqueda, totalOrden, handleCrear, creando
+  setProvBusqueda, setProdBusqueda, totalOrden, handleCrear, creando,
+  handleFacturaChange, facturaPreview,
 }) {
-  const cerrar = () => { setModalNuevo(false); setForm({ proveedor_id:'', productos:[] }); setProvBusqueda(''); setProvSeleccionado(null) }
+  const cerrar = () => {
+    setModalNuevo(false)
+    setForm({ proveedor_id: '', productos: [], fecha_compra: '', metodo_pago: 'Efectivo', estado: 'pendiente', fecha_limite_pago: '', notas: '' })
+    setProvBusqueda('')
+    setProvSeleccionado(null)
+  }
+ 
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} titulo="Nueva Orden de Compra" ancho="max-w-2xl">
       <form onSubmit={handleCrear} className="space-y-3">
+ 
+        {/* proveedor */}
         <div>
           <label className="campo-label">Proveedor *</label>
           <div className="relative">
@@ -21,7 +32,8 @@ export default function OrdenForm({
               onChange={e => buscarProveedor(e.target.value)}
               className="campo-input pl-8 text-xs" placeholder="Buscar proveedor por nombre..." />
             {provSeleccionado && (
-              <button type="button" onClick={() => { setProvSeleccionado(null); setProvBusqueda(''); setForm(p => ({ ...p, proveedor_id: '' })) }}
+              <button type="button"
+                onClick={() => { setProvSeleccionado(null); setProvBusqueda(''); setForm(p => ({ ...p, proveedor_id: '' })) }}
                 className="absolute right-2 top-2 text-gray-400 hover:text-red-400 text-xs">✕</button>
             )}
             {provBusqueda && !provSeleccionado && provsFiltrados.length > 0 && (
@@ -39,8 +51,48 @@ export default function OrdenForm({
           {form.proveedor_id && <p className="text-xs text-primary mt-1">✓ Proveedor: {provSeleccionado?.nombre}</p>}
         </div>
  
+        {/* fecha + método pago */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="campo-label">Fecha de Compra *</label>
+            <input type="date" value={form.fecha_compra}
+              onChange={e => setForm(p => ({ ...p, fecha_compra: e.target.value }))}
+              className="campo-input text-xs" />
+          </div>
+          <div>
+            <label className="campo-label">Método de Pago</label>
+            <select value={form.metodo_pago}
+              onChange={e => setForm(p => ({ ...p, metodo_pago: e.target.value }))}
+              className="campo-input text-xs">
+              {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+        </div>
+ 
+        {/* estado + fecha límite */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="campo-label">Estado</label>
+            <select value={form.estado}
+              onChange={e => setForm(p => ({ ...p, estado: e.target.value }))}
+              className="campo-input text-xs">
+              <option value="pendiente">Pendiente</option>
+              <option value="pagada">Pagada</option>
+            </select>
+          </div>
+          {form.estado === 'pendiente' && (
+            <div>
+              <label className="campo-label">Fecha Límite de Pago</label>
+              <input type="date" value={form.fecha_limite_pago}
+                onChange={e => setForm(p => ({ ...p, fecha_limite_pago: e.target.value }))}
+                className="campo-input text-xs" />
+            </div>
+          )}
+        </div>
+ 
+        {/* productos */}
         <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-3">
-          <p className="text-xs font-semibold">Agregar Productos</p>
+          <p className="text-xs font-semibold">Productos</p>
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
@@ -101,8 +153,26 @@ export default function OrdenForm({
           )}
         </div>
  
+        {/* subir factura */}
+        <div>
+          <label className="campo-label">Factura (PDF o imagen)</label>
+          <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-dark-border hover:border-primary/40 transition-colors">
+            <Upload size={14} className="text-primary/50" />
+            <span className="text-xs text-gray-400">{facturaPreview || 'Seleccionar archivo...'}</span>
+            <input type="file" accept=".pdf,image/*" onChange={handleFacturaChange} className="hidden" />
+          </label>
+        </div>
+ 
+        {/* notas */}
+        <div>
+          <label className="campo-label">Notas (Opcional)</label>
+          <textarea value={form.notas} onChange={e => setForm(p => ({ ...p, notas: e.target.value }))}
+            rows={2} className="campo-input resize-none" placeholder="Observaciones de la compra..." />
+        </div>
+ 
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-          <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
+          <button type="button" onClick={cerrar}
+            className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button type="submit" disabled={creando} className="btn-primary">{creando ? 'Creando...' : 'Aceptar'}</button>
         </div>
       </form>
