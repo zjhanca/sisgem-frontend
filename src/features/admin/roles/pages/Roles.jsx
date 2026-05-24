@@ -12,7 +12,7 @@ export default function Roles() {
     permisosSeleccionados,
     modal, modalDetalle, modalEliminar,
     setModalDetalle, setModalEliminar,
-    esAdmin, abrirModal, cerrarModal, handleSubmit, handleNombreChange,
+    esProtegido, abrirModal, cerrarModal, handleSubmit, handleNombreChange,
     toggleEstado, eliminar, togglePermiso, toggleModulo,
     seleccionarTodos, limpiarTodos, guardando, eliminando,
   } = useRoles()
@@ -21,7 +21,9 @@ export default function Roles() {
     { key: 'nombre',         label: 'Rol' },
     { key: 'descripcion',    label: 'Descripción', render: r => r.descripcion || '—' },
     { key: 'total_usuarios', label: 'Usuarios',    render: r => <span className="badge-proceso">{r.total_usuarios}</span> },
-    { key: 'estado', label: 'Estado',              render: r => <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span> },
+    { key: 'estado', label: 'Estado',
+      render: r => <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span>
+    },
   ]
  
   return (
@@ -33,15 +35,19 @@ export default function Roles() {
  
       <Tabla columnas={columnas} datos={roles}
         acciones={fila => (
-          esAdmin(fila.id) ? (
+          esProtegido(fila.id) ? (
             <span className="flex items-center gap-1 text-xs text-gray-400 px-2"><Lock size={11} /> Protegido</span>
           ) : (<>
-            <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost"><Eye size={14} /></button>
-            <button onClick={() => abrirModal(fila)} className="btn-ghost"><Edit2 size={14} /></button>
-            <button onClick={() => toggleEstado.mutate(fila.id)} className={`btn-ghost ${fila.estado ? 'hover:text-red-400' : 'hover:text-green-400'}`}>
+            <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
+            <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
+            <button onClick={() => toggleEstado.mutate(fila.id)}
+              className={`btn-ghost ${fila.estado ? 'hover:text-red-400' : 'hover:text-green-400'}`}
+              title={fila.estado ? 'Desactivar' : 'Activar'}>
               {fila.estado ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
             </button>
-            <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400"><Trash2 size={14} /></button>
+            <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400" title="Eliminar">
+              <Trash2 size={14} />
+            </button>
           </>)
         )}
       />
@@ -52,7 +58,7 @@ export default function Roles() {
         handleNombreChange={handleNombreChange}
         togglePermiso={togglePermiso} toggleModulo={toggleModulo}
         seleccionarTodos={seleccionarTodos} limpiarTodos={limpiarTodos} />
-      <RolDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} esAdmin={esAdmin} />
+      <RolDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} esProtegido={esProtegido} />
       <RolEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />
     </div>
   )

@@ -25,7 +25,9 @@ export function useRoles() {
   const { data: todosPermisos = [] } = useQuery({ queryKey: ['permisos'], queryFn: rolesService.getPermisos })
  
   const gruposPermisos = agruparPermisos(todosPermisos)
-  const esAdmin = id => +id === 1
+ 
+  // IDs protegidos: 1=Admin, 2=Cliente — no se pueden eliminar ni modificar
+  const esProtegido = id => +id === 1 || +id === 2
  
   const abrirModal = async (item = null) => {
     setForm(item ? { nombre: item.nombre, descripcion: item.descripcion || '' } : formVacio)
@@ -40,17 +42,11 @@ export function useRoles() {
   }
   const cerrarModal = () => { setModal({ abierto: false, item: null }); setTab('info') }
  
-  // validar nombre en tiempo real
   const handleNombreChange = valor => {
     setForm(p => ({ ...p, nombre: valor }))
-    if (!valor.trim()) {
-      setErrores(p => ({ ...p, nombre: 'El nombre es obligatorio' }))
-      return
-    }
-    // verificar duplicado (ignorar el rol que se está editando)
+    if (!valor.trim()) { setErrores(p => ({ ...p, nombre: 'El nombre es obligatorio' })); return }
     const duplicado = roles.find(r =>
-      r.nombre.toLowerCase() === valor.trim().toLowerCase() &&
-      r.id !== modal.item?.id
+      r.nombre.toLowerCase() === valor.trim().toLowerCase() && r.id !== modal.item?.id
     )
     setErrores(p => ({ ...p, nombre: duplicado ? 'Ya existe un rol con ese nombre' : '' }))
   }
@@ -85,14 +81,14 @@ export function useRoles() {
   const handleSubmit = e => {
     e.preventDefault()
     if (!form.nombre.trim()) { setErrores({ nombre: 'El nombre es obligatorio' }); return }
-    if (errores.nombre) return // hay error (ej: duplicado)
+    if (errores.nombre) return
     guardar.mutate(form)
   }
  
   const togglePermiso  = useCallback(id => setPermisosSeleccionados(prev =>
     prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]), [])
   const toggleModulo   = perms => {
-    const ids  = perms.map(p => p.id)
+    const ids   = perms.map(p => p.id)
     const todos = ids.every(id => permisosSeleccionados.includes(id))
     setPermisosSeleccionados(prev => todos ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])])
   }
@@ -105,7 +101,7 @@ export function useRoles() {
     permisosSeleccionados,
     modal, modalDetalle, modalEliminar,
     setModalDetalle, setModalEliminar,
-    esAdmin, abrirModal, cerrarModal, handleSubmit, handleNombreChange,
+    esProtegido, abrirModal, cerrarModal, handleSubmit, handleNombreChange,
     toggleEstado, eliminar, togglePermiso, toggleModulo,
     seleccionarTodos, limpiarTodos,
     guardando: guardar.isPending, eliminando: eliminar.isPending,

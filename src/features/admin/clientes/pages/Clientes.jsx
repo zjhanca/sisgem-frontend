@@ -1,17 +1,18 @@
-﻿import { Plus, Edit2, ToggleLeft, ToggleRight, Eye, MapPin, Download } from 'lucide-react'
+﻿import { Plus, Edit2, Eye, MapPin, Download } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
+import EstadoToggle from '@shared/components/EstadoToggle'
 import { descargarPDF } from '@shared/utils/reportes'
 import { useClientes } from '../hooks/useClientes'
 import ClienteForm        from '../components/ClienteForm'
 import ClienteDetalle     from '../components/ClienteDetalle'
 import ClienteDirecciones from '../components/ClienteDirecciones'
-import { formatFecha, formatPrecio } from '@shared/utils/validaciones'
  
 export default function Clientes() {
   const {
     clientes, historial, direcciones,
     form, formDir, errores,
     modal, modalDetalle, modalDir,
+    filtroEstado, setFiltroEstado,
     setModalDetalle, setModalDir, setFormDir,
     abrirModal, cerrarModal,
     handleChange, handleSubmit, handleSubmitDir,
@@ -24,7 +25,12 @@ export default function Clientes() {
       render: r => r.numero_documento ? `${r.tipo_documento}: ${r.numero_documento}` : '—' },
     { key: 'email',    label: 'Correo',   render: r => r.email    || '—' },
     { key: 'telefono', label: 'Teléfono', render: r => r.telefono || '—' },
-    { key: 'estado',   label: 'Estado',
+    { key: 'permite_fiado', label: 'Fiado',
+      render: r => r.permite_fiado
+        ? <span className="badge-activo">Habilitado</span>
+        : <span className="text-xs text-gray-400">—</span>
+    },
+    { key: 'estado', label: 'Estado',
       render: r => <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span>
     },
   ]
@@ -43,15 +49,39 @@ export default function Clientes() {
         </div>
       </div>
  
+      {/* filtro estado */}
+      <div className="flex gap-2 mb-4 items-end">
+        <div>
+          <p className="campo-label mb-0.5">Estado</p>
+          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
+            <option value="">Todos</option>
+            <option value="activo">Activos</option>
+            <option value="inactivo">Inactivos</option>
+          </select>
+        </div>
+        {filtroEstado && (
+          <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400 self-end">
+            Limpiar
+          </button>
+        )}
+      </div>
+ 
       <Tabla columnas={columnas} datos={clientes}
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
-          <button onClick={() => setModalDir({ abierto: true, cliente: fila })} className="btn-ghost" title="Direcciones"><MapPin size={14} /></button>
-          <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
-          <button onClick={() => toggleEstado.mutate(fila.id)}
-            className={`btn-ghost ${fila.estado ? 'hover:text-red-400' : 'hover:text-green-400'}`}>
-            {fila.estado ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+          <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle">
+            <Eye size={14} />
           </button>
+          <button onClick={() => setModalDir({ abierto: true, cliente: fila })} className="btn-ghost" title="Direcciones">
+            <MapPin size={14} />
+          </button>
+          <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar">
+            <Edit2 size={14} />
+          </button>
+          <EstadoToggle
+            activo={fila.estado}
+            onChange={() => toggleEstado.mutate(fila.id)}
+            cargando={toggleEstado.isPending}
+          />
         </>)}
       />
  

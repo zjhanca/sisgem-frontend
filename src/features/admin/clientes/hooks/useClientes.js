@@ -36,9 +36,10 @@ export function useClientes() {
   const [modal, setModal]               = useState({ abierto: false, item: null })
   const [modalDetalle, setModalDetalle] = useState({ abierto: false, item: null })
   const [modalDir, setModalDir]         = useState({ abierto: false, cliente: null })
-  const [form, setForm]       = useState(formVacio)
-  const [formDir, setFormDir] = useState(dirVacia)
-  const [errores, setErrores] = useState({})
+  const [form, setForm]                 = useState(formVacio)
+  const [formDir, setFormDir]           = useState(dirVacia)
+  const [errores, setErrores]           = useState({})
+  const [filtroEstado, setFiltroEstado] = useState('')
  
   const { data: clientes = [] } = useQuery({ queryKey: ['clientes'], queryFn: clientesService.getAll })
   const { data: direcciones = [], refetch: refetchDir } = useQuery({
@@ -82,7 +83,6 @@ export function useClientes() {
   const cerrarModal = () => { setModal({ abierto: false, item: null }); setErrores({}) }
  
   const handleChange = (campo, valor) => {
-    // bloquear letras en campos numéricos
     if ((campo === 'telefono' || campo === 'numero_documento') && valor && !/^\d*$/.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
@@ -106,12 +106,20 @@ export function useClientes() {
     guardarDir.mutate(formDir)
   }
  
+  const clientesFiltrados = clientes.filter(c => {
+    if (filtroEstado === 'activo'   && !c.estado) return false
+    if (filtroEstado === 'inactivo' &&  c.estado) return false
+    return true
+  })
+ 
   return {
-    clientes, historial, direcciones,
+    clientes: clientesFiltrados, historial, direcciones,
     form, formDir, errores,
     modal, modalDetalle, modalDir,
+    filtroEstado, setFiltroEstado,
     setModalDetalle, setModalDir, setFormDir,
     abrirModal, cerrarModal, handleChange, handleSubmit, handleSubmitDir,
     toggleEstado, guardando: guardar.isPending, guardandoDir: guardarDir.isPending,
   }
 }
+ 

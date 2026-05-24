@@ -12,10 +12,8 @@ const formVacio = {
  
 const validarCampo = (campo, valor, form) => {
   switch (campo) {
-    case 'nombre':
-      return !valor.trim() ? 'El nombre es obligatorio' : ''
-    case 'apellido':
-      return !valor.trim() ? 'El apellido es obligatorio' : ''
+    case 'nombre':   return !valor.trim() ? 'El nombre es obligatorio' : ''
+    case 'apellido': return !valor.trim() ? 'El apellido es obligatorio' : ''
     case 'email':
       if (!valor.trim()) return 'El correo es obligatorio'
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) return 'Correo inválido'
@@ -37,8 +35,7 @@ const validarCampo = (campo, valor, form) => {
       if (!valor) return ''
       if (!/^\d+$/.test(valor)) return 'Solo se permiten números'
       return ''
-    default:
-      return ''
+    default: return ''
   }
 }
  
@@ -50,7 +47,6 @@ export function useRegister() {
   const navigate   = useNavigate()
  
   const handleChange = (campo, valor) => {
-    // bloquear letras en teléfono y documento
     if (campo === 'telefono' || campo === 'numero_documento') {
       if (valor && !/^\d*$/.test(valor)) return
     }
@@ -58,7 +54,6 @@ export function useRegister() {
     setForm(nuevo)
     const err = validarCampo(campo, valor, nuevo)
     setErrores(prev => ({ ...prev, [campo]: err }))
-    // revalidar confirmar si cambia password
     if (campo === 'password') {
       const errConf = validarCampo('confirmar', nuevo.confirmar, nuevo)
       setErrores(prev => ({ ...prev, confirmar: errConf }))
@@ -84,6 +79,7 @@ export function useRegister() {
         numero_documento: form.numero_documento || null,
         direccion:        form.direccion || null,
         barrio:           form.barrio || null,
+        rol_id:           2, // rol Cliente — asignado automáticamente al registrarse
       })
       if (data.ok) {
         login(data.token, data.usuario)

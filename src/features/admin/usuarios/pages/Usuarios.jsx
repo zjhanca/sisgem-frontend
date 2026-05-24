@@ -1,5 +1,6 @@
-﻿import { Plus, Edit2, ToggleLeft, ToggleRight, Eye, Trash2 } from 'lucide-react'
+﻿import { Plus, Edit2, Eye, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
+import EstadoToggle from '@shared/components/EstadoToggle'
 import { useUsuarios } from '../hooks/useUsuarios'
 import UsuarioForm     from '../components/UsuarioForm'
 import UsuarioDetalle  from '../components/UsuarioDetalle'
@@ -22,7 +23,11 @@ export default function Usuarios() {
     { key: 'email',  label: 'Correo' },
     { key: 'rol',    label: 'Rol' },
     { key: 'estado', label: 'Estado',
-      render: r => <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span>
+      render: r => (
+        <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>
+          {r.estado ? 'Activo' : 'Inactivo'}
+        </span>
+      )
     },
   ]
  
@@ -60,13 +65,17 @@ export default function Usuarios() {
  
       <Tabla columnas={columnas} datos={usuarios}
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
-          <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
-          <button onClick={() => toggleEstado.mutate(fila.id)}
-            className={`btn-ghost ${fila.estado ? 'hover:text-red-400' : 'hover:text-green-400'}`}
-            title={fila.estado ? 'Desactivar' : 'Activar'}>
-            {fila.estado ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+          <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle">
+            <Eye size={14} />
           </button>
+          <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar">
+            <Edit2 size={14} />
+          </button>
+          <EstadoToggle
+            activo={fila.estado}
+            onChange={() => toggleEstado.mutate(fila.id)}
+            cargando={toggleEstado.isPending}
+          />
           <button onClick={() => setModalEliminar({ abierto: true, item: fila })}
             className="btn-ghost hover:text-red-400" title="Eliminar">
             <Trash2 size={14} />
