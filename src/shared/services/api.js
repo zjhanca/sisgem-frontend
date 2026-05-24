@@ -15,11 +15,16 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   res => res,
   err => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
+    const url = err.config?.url || ''
+    const esLoginORecuperar = url.includes('/auth/login') || url.includes('/auth/recuperar') || url.includes('/auth/registro')
+
+    // solo redirigir si NO es una llamada de auth
+    if (!esLoginORecuperar && (err.response?.status === 401 || err.response?.status === 403)) {
       localStorage.removeItem('sisgem_token')
       localStorage.removeItem('sisgem_usuario')
       window.location.href = '/login'
     }
+
     return Promise.reject(err)
   }
 )
