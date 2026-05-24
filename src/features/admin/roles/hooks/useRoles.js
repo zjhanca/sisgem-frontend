@@ -11,8 +11,7 @@ const agruparPermisos = permisos => permisos.reduce((acc, p) => {
   return acc
 }, {})
 
-// nombres de roles que no se pueden eliminar ni modificar
-const ROLES_PROTEGIDOS = ['administrador', 'admin', 'cliente', 'vendedor']
+const ROLES_PROTEGIDOS = ['administrador', 'admin', 'cliente']
 
 export function useRoles() {
   const qc = useQueryClient()
@@ -29,7 +28,6 @@ export function useRoles() {
 
   const gruposPermisos = agruparPermisos(todosPermisos)
 
-  // proteger por nombre — no depende de IDs fijos
   const esProtegido = id => {
     const rol = roles.find(r => r.id === +id)
     return ROLES_PROTEGIDOS.some(n => rol?.nombre?.toLowerCase().includes(n))
