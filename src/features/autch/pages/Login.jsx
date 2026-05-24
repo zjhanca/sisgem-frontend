@@ -1,9 +1,13 @@
 ﻿import { Link } from 'react-router-dom'
-import { Eye, EyeOff, Sun, Moon, Store } from 'lucide-react'
+import { Eye, EyeOff, Sun, Moon, Store, AlertCircle } from 'lucide-react'
 import { useLogin } from '../Hooks/useLogin'
  
 export default function Login() {
-  const { form, verPass, setVerPass, cargando, errores, tema, toggleTema, handleChange, handleSubmit } = useLogin()
+  const {
+    form, verPass, setVerPass, cargando,
+    errores, errorGeneral,
+    tema, toggleTema, handleChange, handleSubmit,
+  } = useLogin()
  
   return (
     <div className="min-h-screen flex items-center justify-center bg-light-bg dark:bg-dark-bg px-4">
@@ -22,6 +26,14 @@ export default function Login() {
  
         <div className="card">
           <h2 className="text-sm font-medium text-light-text dark:text-dark-text mb-4">Inicia Sesión</h2>
+ 
+          {errorGeneral && (
+            <div className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-400/20">
+              <AlertCircle size={14} className="text-red-500 shrink-0" />
+              <p className="text-xs text-red-600 dark:text-red-400">{errorGeneral}</p>
+            </div>
+          )}
+ 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
               <label className="campo-label">Correo Electrónico</label>
@@ -31,12 +43,13 @@ export default function Login() {
                 placeholder="admin@sisgem.com" autoComplete="email" />
               {errores.email && <p className="campo-error">{errores.email}</p>}
             </div>
+ 
             <div>
               <label className="campo-label">Contraseña</label>
               <div className="relative">
                 <input type={verPass ? 'text' : 'password'} value={form.password}
                   onChange={e => handleChange('password', e.target.value)}
-                  className={"campo-input pr-10 " + (errores.password ? 'border-red-400' : '')}
+                  className={"campo-input pr-10 " + (errores.password || errorGeneral ? 'border-red-400' : '')}
                   placeholder="••••••••" autoComplete="current-password" />
                 <button type="button" onClick={() => setVerPass(!verPass)}
                   className="absolute right-3 top-2.5 text-gray-400 hover:text-primary transition-colors">
@@ -45,12 +58,12 @@ export default function Login() {
               </div>
               {errores.password && <p className="campo-error">{errores.password}</p>}
             </div>
+ 
             <button type="submit" disabled={cargando} className="btn-primary w-full justify-center py-2">
               {cargando ? 'Ingresando...' : 'Ingresar'}
             </button>
           </form>
  
-          {/* links inferiores */}
           <div className="mt-4 border-t border-gray-200 dark:border-dark-border pt-4 space-y-2">
             <div className="flex items-center justify-between">
               <Link to="/recuperar" className="text-xs text-primary/70 hover:text-primary transition-colors">

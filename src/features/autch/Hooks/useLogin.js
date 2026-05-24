@@ -14,36 +14,47 @@ const validar = form => {
 }
  
 export function useLogin() {
-  const [form, setForm]       = useState({ email: '', password: '' })
-  const [verPass, setVerPass] = useState(false)
+  const [form, setForm]         = useState({ email: '', password: '' })
+  const [verPass, setVerPass]   = useState(false)
   const [cargando, setCargando] = useState(false)
-  const [errores, setErrores] = useState({})
-  const { login }    = useAuth()
+  const [errores, setErrores]   = useState({})
+  const [errorGeneral, setErrorGeneral] = useState('')
+  const { login }            = useAuth()
   const { tema, toggleTema } = useTema()
-  const navigate     = useNavigate()
+  const navigate             = useNavigate()
  
   const handleChange = (campo, valor) => {
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
+    // limpiar error general al escribir
+    setErrorGeneral('')
     const e = validar(nuevo)
     setErrores(prev => ({ ...prev, [campo]: e[campo] || '' }))
   }
  
   const handleSubmit = async e => {
     e.preventDefault()
+    e.stopPropagation()
+ 
     const e2 = validar(form)
     if (Object.keys(e2).length) { setErrores(e2); return }
+ 
     setErrores({})
+    setErrorGeneral('')
     setCargando(true)
+ 
     try {
       const { data } = await authService.login(form)
       login(data.token, data.usuario)
       toast.success('Bienvenido, ' + data.usuario.nombre)
       navigate(data.usuario.rol_id === 1 ? '/admin' : '/')
     } catch (err) {
-      toast.error(err.response?.data?.mensaje || 'Error al iniciar sesión')
-    } finally { setCargando(false) }
+      const msg = err.response?.data?.mensaje || 'Correo o contraseña incorrectos'
+      setErrorGeneral(msg)
+    } finally {
+      setCargando(false)
+    }
   }
  
-  return { form, verPass, setVerPass, cargando, errores, tema, toggleTema, handleChange, handleSubmit }
+  return { form, verPass, setVerPass, cargando, errores, errorGeneral, tema, toggleTema, handleChange, handleSubmit }
 }
