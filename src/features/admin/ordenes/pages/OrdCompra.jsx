@@ -1,5 +1,4 @@
-﻿import { useState } from 'react'
-import { Plus, Eye, Download, CheckCircle, Clock, XCircle, AlertTriangle, Edit2, Truck } from 'lucide-react'
+﻿import { Plus, Eye, Download, Clock, XCircle, AlertTriangle, Edit2, CheckCircle, Truck } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
@@ -7,11 +6,9 @@ import { descargarPDF } from '@shared/utils/reportes'
 import { useOrdenes } from '../hooks/useOrdenes'
 import OrdenForm    from '../components/OrdenForm'
 import OrdenDetalle from '../components/OrdenDetalle'
- 
-const ICONOS  = { pendiente: Clock, entregado: Truck, pagada: CheckCircle, vencida: AlertTriangle, anulado: XCircle }
-const COLORES = { pendiente: 'text-yellow-500', entregado: 'text-blue-500', pagada: 'text-green-500', vencida: 'text-red-500', anulado: 'text-gray-400' }
+
 const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
- 
+
 export default function OrdCompra() {
   const {
     ordenesFiltradas, proveedores, productos, ordenesVencidas,
@@ -29,7 +26,7 @@ export default function OrdCompra() {
     ESTADOS_ORDEN, getEstadoId, getKeyEstado,
     creando, editando, anulando,
   } = useOrdenes()
- 
+
   const columnas = [
     { key: 'id',             label: '#' },
     { key: 'proveedor',      label: 'Proveedor' },
@@ -37,21 +34,27 @@ export default function OrdCompra() {
     { key: 'fecha_compra',   label: 'Fecha Compra',   render: r => formatFecha(r.fecha_compra || r.created_at) },
     { key: 'metodo_pago',    label: 'Método Pago',    render: r => r.metodo_pago || '—' },
     { key: 'total',          label: 'Total',          render: r => formatPrecio(r.total) },
-    { key: 'estado', label: 'Estado',
-      render: r => {
-        const key = r._vencida ? 'vencida' : getKeyEstado(r.estado)
-        const Ico = ICONOS[key] || Clock
-        const label = ESTADOS_ORDEN.find(e => e.key === key)?.label || 'Pendiente'
-        return (
-          <div className={`flex items-center gap-1.5 ${COLORES[key]}`}>
-            <Ico size={13} /> <span className="text-xs">{label}</span>
-          </div>
-        )
-      }
+    { key: 'estado_id', label: 'Estado',
+      render: r => (
+        <select
+          value={getEstadoId(getKeyEstado(r.estado)) || ''}
+          onChange={e => {
+            if (e.target.value) cambiarEstado.mutate({ id: r.id, estado_id: +e.target.value })
+          }}
+          onClick={e => e.stopPropagation()}
+          disabled={getKeyEstado(r.estado) === 'anulado'}
+          className="text-xs bg-transparent border border-gray-200 dark:border-dark-border rounded px-1 py-0.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+          {ESTADOS_ORDEN.map(e => {
+            const id = getEstadoId(e.key)
+            if (!id) return null
+            return <option key={e.key} value={id}>{e.label}</option>
+          })}
+        </select>
+      )
     },
     { key: 'fecha_limite_pago', label: 'Límite Pago', render: r => r.fecha_limite_pago ? formatFecha(r.fecha_limite_pago) : '—' },
   ]
- 
+
   return (
     <div>
       <div className="page-header">
@@ -65,7 +68,7 @@ export default function OrdCompra() {
           </button>
         </div>
       </div>
- 
+
       {/* alerta vencidas */}
       {ordenesVencidas > 0 && (
         <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-400/20">
@@ -78,7 +81,7 @@ export default function OrdCompra() {
           </button>
         </div>
       )}
- 
+
       {/* filtros */}
       <div className="flex gap-2 mb-4 flex-wrap items-end">
         <div>
@@ -100,8 +103,7 @@ export default function OrdCompra() {
             className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
         )}
       </div>
- 
-      {/* tabla con búsqueda integrada */}
+
       <Tabla columnas={columnas} datos={ordenesFiltradas}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, orden: fila })}
@@ -121,7 +123,7 @@ export default function OrdCompra() {
           )}
         </>)}
       />
- 
+
       {/* modal nueva orden */}
       <OrdenForm
         modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
@@ -135,16 +137,15 @@ export default function OrdCompra() {
         totalOrden={totalOrden} handleCrear={handleCrear} creando={creando}
         handleFacturaChange={handleFacturaChange} facturaPreview={facturaPreview}
       />
- 
+
       {/* modal detalle */}
       <OrdenDetalle
         modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         cambiarEstado={cambiarEstado} ESTADOS_ORDEN={ESTADOS_ORDEN}
         getEstadoId={getEstadoId} getKeyEstado={getKeyEstado}
-        abrirEditar={abrirEditar}
-        setModalAnular={setModalAnular}
+        abrirEditar={abrirEditar} setModalAnular={setModalAnular}
       />
- 
+
       {/* modal editar */}
       <Modal abierto={modalEditar.abierto} onCerrar={() => setModalEditar({ abierto: false, orden: null })}
         titulo={`Editar Orden #${modalEditar.orden?.id}`} ancho="max-w-lg">
@@ -192,7 +193,7 @@ export default function OrdCompra() {
           </form>
         )}
       </Modal>
- 
+
       {/* modal confirmar anular */}
       <Modal abierto={modalAnular.abierto} onCerrar={() => setModalAnular({ abierto: false, orden: null })}
         titulo="Anular Orden" ancho="max-w-sm">
