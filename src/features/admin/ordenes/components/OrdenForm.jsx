@@ -86,8 +86,9 @@ export default function OrdenForm({
               onChange={e => setForm(p => ({ ...p, estado: e.target.value }))}
               className="campo-input text-xs">
               <option value="pendiente">Pendiente</option>
-              <option value="entregado">Entregado</option>
-              <option value="pagada">Pagada</option>
+              <option value="activo">Activo</option>
+              
+              
             </select>
           </div>
           {form.estado === 'pendiente' && (

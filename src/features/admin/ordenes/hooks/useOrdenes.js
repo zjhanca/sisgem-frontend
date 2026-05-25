@@ -3,15 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ordenesService } from '../services/ordenesService'
 import { useAuth } from '@shared/contexts/AuthContext'
 import toast from 'react-hot-toast'
- 
+
+// estados reales del backend: pendiente(10), activo(11), anulado(12)
 const ESTADOS_ORDEN = [
   { key: 'pendiente', label: 'Pendiente', color: 'yellow' },
-  { key: 'entregado', label: 'Entregado', color: 'blue'   },
-  { key: 'pagada',    label: 'Pagada',    color: 'green'  },
-  { key: 'vencida',   label: 'Vencida',   color: 'red'    },
+  { key: 'activo',    label: 'Activo',    color: 'blue'   },
   { key: 'anulado',   label: 'Anulado',   color: 'gray'   },
 ]
- 
+
 const formVacio = {
   proveedor_id: '', productos: [],
   fecha_compra: new Date().toISOString().split('T')[0],
@@ -20,20 +19,20 @@ const formVacio = {
   fecha_limite_pago: '',
   notas: '',
 }
- 
+
 export function useOrdenes() {
   const qc = useQueryClient()
   const { usuario } = useAuth()
- 
+
   const [modalNuevo, setModalNuevo]         = useState(false)
   const [modalEditar, setModalEditar]       = useState({ abierto: false, orden: null })
   const [modalDetalle, setModalDetalle]     = useState({ abierto: false, orden: null })
   const [modalAnular, setModalAnular]       = useState({ abierto: false, orden: null })
   const [filtroEstado, setFiltroEstado]     = useState('')
   const [filtroProveedor, setFiltroProveedor] = useState('')
-  const [form, setForm]         = useState(formVacio)
+  const [form, setForm]             = useState(formVacio)
   const [formEditar, setFormEditar] = useState({})
-  const [itemForm, setItemForm] = useState({ producto_id: '', costo_unitario: '', cantidad: 1 })
+  const [itemForm, setItemForm]     = useState({ producto_id: '', costo_unitario: '', cantidad: 1 })
   const [facturaFile, setFacturaFile]       = useState(null)
   const [facturaPreview, setFacturaPreview] = useState('')
   const [prodBusqueda, setProdBusqueda]     = useState('')
@@ -41,41 +40,39 @@ export function useOrdenes() {
   const [provBusqueda, setProvBusqueda]     = useState('')
   const [provsFiltrados, setProvsFiltrados] = useState([])
   const [provSeleccionado, setProvSeleccionado] = useState(null)
- 
+
   const { data: ordenes = [] }     = useQuery({ queryKey: ['ordenes'],        queryFn: ordenesService.getAll })
   const { data: proveedores = [] } = useQuery({ queryKey: ['proveedores'],    queryFn: ordenesService.getProveedores })
   const { data: productos = [] }   = useQuery({ queryKey: ['productos'],      queryFn: ordenesService.getProductos })
   const { data: estadosBD = [] }   = useQuery({ queryKey: ['estados-compra'], queryFn: ordenesService.getEstados })
- 
+
+  // mapear nombre del backend al key del frontend
   const getKeyEstado = nombre => {
     if (!nombre) return 'pendiente'
     const n = nombre.toLowerCase()
-    if (n.includes('entrega') || n.includes('recibi')) return 'entregado'
-    if (n.includes('paga') || n.includes('complet'))   return 'pagada'
-    if (n.includes('venci'))                           return 'vencida'
-    if (n.includes('anula') || n.includes('cancel'))   return 'anulado'
+    if (n === 'activo' || n.includes('activo') || n.includes('transito') || n.includes('recibi')) return 'activo'
+    if (n === 'anulado' || n.includes('anula') || n.includes('cancel')) return 'anulado'
     return 'pendiente'
   }
- 
+
+  // detectar órdenes vencidas automáticamente
   const ordenesConEstado = ordenes.map(o => {
     if (getKeyEstado(o.estado) === 'pendiente' && o.fecha_limite_pago) {
       if (new Date(o.fecha_limite_pago) < new Date()) return { ...o, _vencida: true }
     }
     return o
   })
- 
+
+  // obtener ID del estado del backend por key
   const getEstadoId = key => {
     const mapa = {
       pendiente: ['pendiente'],
-      entregado: ['entrega', 'recibi'],
-      pagada:    ['paga', 'complet'],
-      vencida:   ['venci'],
-      anulado:   ['anula', 'cancel'],
+      activo:    ['activo', 'transito', 'recibi'],
+      anulado:   ['anulado', 'anula', 'cancel'],
     }
     return estadosBD.find(e => mapa[key]?.some(k => e.nombre?.toLowerCase().includes(k)))?.id
   }
- 
-  // abrir modal edición
+
   const abrirEditar = orden => {
     setFormEditar({
       fecha_compra:      orden.fecha_compra?.split('T')[0] || '',
@@ -85,8 +82,7 @@ export function useOrdenes() {
     })
     setModalEditar({ abierto: true, orden })
   }
- 
-  // mutations
+
   const crear = useMutation({
     mutationFn: async data => {
       const formData = new FormData()
@@ -110,7 +106,7 @@ export function useOrdenes() {
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
- 
+
   const editar = useMutation({
     mutationFn: ({ id, data }) => ordenesService.update(id, data),
     onSuccess: () => {
@@ -120,7 +116,7 @@ export function useOrdenes() {
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al actualizar'),
   })
- 
+
   const anular = useMutation({
     mutationFn: id => ordenesService.anular(id),
     onSuccess: () => {
@@ -131,7 +127,7 @@ export function useOrdenes() {
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'No se puede anular'),
   })
- 
+
   const cambiarEstado = useMutation({
     mutationFn: ({ id, estado_id }) => ordenesService.cambiarEstado(id, { estado_id }),
     onSuccess: () => {
@@ -140,13 +136,13 @@ export function useOrdenes() {
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
- 
+
   const handleFacturaChange = e => {
     const file = e.target.files[0]
     if (!file) return
     setFacturaFile(file); setFacturaPreview(file.name)
   }
- 
+
   const buscarProveedor = texto => {
     setProvBusqueda(texto); setForm(p => ({ ...p, proveedor_id: '' })); setProvSeleccionado(null)
     if (!texto) { setProvsFiltrados([]); return }
@@ -181,7 +177,7 @@ export function useOrdenes() {
   }
   const quitarItem = idx => setForm(p => ({ ...p, productos: p.productos.filter((_, i) => i !== idx) }))
   const totalOrden = form.productos.reduce((s, p) => s + p.costo_unitario * p.cantidad, 0)
- 
+
   const handleCrear = e => {
     e.preventDefault()
     if (!form.proveedor_id)     { toast.error('Selecciona un proveedor'); return }
@@ -189,21 +185,21 @@ export function useOrdenes() {
     if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
     crear.mutate(form)
   }
- 
+
   const handleEditar = e => {
     e.preventDefault()
     if (!formEditar.fecha_compra) { toast.error('Ingresa la fecha de compra'); return }
     editar.mutate({ id: modalEditar.orden.id, data: formEditar })
   }
- 
+
   const ordenesFiltradas = ordenesConEstado.filter(o => {
     if (filtroEstado && getKeyEstado(o.estado) !== filtroEstado && !(filtroEstado === 'vencida' && o._vencida)) return false
     if (filtroProveedor && o.proveedor_id !== +filtroProveedor) return false
     return true
   })
- 
+
   const ordenesVencidas = ordenesConEstado.filter(o => o._vencida).length
- 
+
   return {
     ordenesFiltradas, proveedores, productos, estadosBD, ordenesVencidas,
     modalNuevo, modalDetalle, modalEditar, modalAnular,
@@ -221,4 +217,3 @@ export function useOrdenes() {
     creando: crear.isPending, editando: editar.isPending, anulando: anular.isPending,
   }
 }
- 
