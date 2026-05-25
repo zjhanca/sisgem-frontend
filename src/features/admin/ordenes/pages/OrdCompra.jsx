@@ -1,35 +1,42 @@
-﻿import { Plus, Eye, Download, CheckCircle, Clock, XCircle, AlertTriangle, Edit2, Trash2 } from 'lucide-react'
+﻿import { useState } from 'react'
+import { Plus, Eye, Download, CheckCircle, Clock, XCircle, AlertTriangle, Edit2, Truck } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
+import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { useOrdenes } from '../hooks/useOrdenes'
 import OrdenForm    from '../components/OrdenForm'
 import OrdenDetalle from '../components/OrdenDetalle'
  
-const ICONOS  = { pendiente: Clock, pagada: CheckCircle, vencida: AlertTriangle, anulado: XCircle }
-const COLORES = { pendiente: 'text-yellow-500', pagada: 'text-green-500', vencida: 'text-red-500', anulado: 'text-gray-400' }
+const ICONOS  = { pendiente: Clock, entregado: Truck, pagada: CheckCircle, vencida: AlertTriangle, anulado: XCircle }
+const COLORES = { pendiente: 'text-yellow-500', entregado: 'text-blue-500', pagada: 'text-green-500', vencida: 'text-red-500', anulado: 'text-gray-400' }
+const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
  
 export default function OrdCompra() {
   const {
     ordenesFiltradas, proveedores, productos, ordenesVencidas,
-    modalNuevo, modalDetalle, filtroEstado, filtroProveedor,
-    setModalNuevo, setModalDetalle, setFiltroEstado, setFiltroProveedor,
-    form, setForm, itemForm, setItemForm,
+    modalNuevo, modalDetalle, modalEditar, modalAnular,
+    filtroEstado, filtroProveedor,
+    setModalNuevo, setModalDetalle, setModalEditar, setModalAnular,
+    setFiltroEstado, setFiltroProveedor,
+    form, setForm, formEditar, setFormEditar, itemForm, setItemForm,
     facturaPreview, handleFacturaChange,
     prodBusqueda, prodsFiltrados, provBusqueda, provsFiltrados, provSeleccionado,
     buscarProveedor, buscarProducto, buscarPorCodigo, agregarItem, quitarItem,
     setProvSeleccionado, setProvBusqueda, setProdBusqueda,
-    totalOrden, handleCrear, cambiarEstado,
-    ESTADOS_ORDEN, getEstadoId, getKeyEstado, creando,
+    totalOrden, handleCrear, handleEditar, abrirEditar,
+    cambiarEstado, anular,
+    ESTADOS_ORDEN, getEstadoId, getKeyEstado,
+    creando, editando, anulando,
   } = useOrdenes()
  
   const columnas = [
-    { key: 'id',          label: '#' },
-    { key: 'proveedor',   label: 'Proveedor' },
+    { key: 'id',             label: '#' },
+    { key: 'proveedor',      label: 'Proveedor' },
     { key: 'registrado_por', label: 'Registrado por', render: r => r.registrado_por || '—' },
-    { key: 'fecha_compra',   label: 'Fecha Compra', render: r => formatFecha(r.fecha_compra || r.created_at) },
-    { key: 'metodo_pago',    label: 'Método Pago', render: r => r.metodo_pago || '—' },
-    { key: 'total',          label: 'Total', render: r => formatPrecio(r.total) },
+    { key: 'fecha_compra',   label: 'Fecha Compra',   render: r => formatFecha(r.fecha_compra || r.created_at) },
+    { key: 'metodo_pago',    label: 'Método Pago',    render: r => r.metodo_pago || '—' },
+    { key: 'total',          label: 'Total',          render: r => formatPrecio(r.total) },
     { key: 'estado', label: 'Estado',
       render: r => {
         const key = r._vencida ? 'vencida' : getKeyEstado(r.estado)
@@ -59,7 +66,7 @@ export default function OrdCompra() {
         </div>
       </div>
  
-      {/* alerta facturas vencidas */}
+      {/* alerta vencidas */}
       {ordenesVencidas > 0 && (
         <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-400/20">
           <AlertTriangle size={16} className="text-red-500 shrink-0" />
@@ -90,19 +97,32 @@ export default function OrdCompra() {
         </div>
         {(filtroEstado || filtroProveedor) && (
           <button onClick={() => { setFiltroEstado(''); setFiltroProveedor('') }}
-            className="btn-ghost text-xs text-red-400 self-end">
-            Limpiar
-          </button>
+            className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
         )}
       </div>
  
-      <Tabla columnas={columnas} datos={ordenesFiltradas} sinBusqueda
+      {/* tabla con búsqueda integrada */}
+      <Tabla columnas={columnas} datos={ordenesFiltradas}
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
-          <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost" title="Descargar PDF"><Download size={14} /></button>
+          <button onClick={() => setModalDetalle({ abierto: true, orden: fila })}
+            className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
+          <button onClick={() => abrirEditar(fila)}
+            className="btn-ghost" title="Editar"
+            disabled={getKeyEstado(fila.estado) === 'anulado'}>
+            <Edit2 size={14} />
+          </button>
+          <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)}
+            className="btn-ghost" title="Descargar PDF"><Download size={14} /></button>
+          {getKeyEstado(fila.estado) !== 'anulado' && (
+            <button onClick={() => setModalAnular({ abierto: true, orden: fila })}
+              className="btn-ghost hover:text-red-400" title="Anular">
+              <XCircle size={14} />
+            </button>
+          )}
         </>)}
       />
  
+      {/* modal nueva orden */}
       <OrdenForm
         modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
         form={form} setForm={setForm} itemForm={itemForm} setItemForm={setItemForm}
@@ -115,12 +135,83 @@ export default function OrdCompra() {
         totalOrden={totalOrden} handleCrear={handleCrear} creando={creando}
         handleFacturaChange={handleFacturaChange} facturaPreview={facturaPreview}
       />
+ 
+      {/* modal detalle */}
       <OrdenDetalle
         modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         cambiarEstado={cambiarEstado} ESTADOS_ORDEN={ESTADOS_ORDEN}
         getEstadoId={getEstadoId} getKeyEstado={getKeyEstado}
+        abrirEditar={abrirEditar}
+        setModalAnular={setModalAnular}
       />
+ 
+      {/* modal editar */}
+      <Modal abierto={modalEditar.abierto} onCerrar={() => setModalEditar({ abierto: false, orden: null })}
+        titulo={`Editar Orden #${modalEditar.orden?.id}`} ancho="max-w-lg">
+        {modalEditar.orden && (
+          <form onSubmit={handleEditar} className="space-y-3">
+            <div className="p-3 rounded-lg bg-light-bg dark:bg-dark-bg text-xs">
+              <span className="text-gray-400">Proveedor: </span>
+              <span className="font-medium">{modalEditar.orden.proveedor}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="campo-label">Fecha de Compra *</label>
+                <input type="date" value={formEditar.fecha_compra || ''}
+                  onChange={e => setFormEditar(p => ({ ...p, fecha_compra: e.target.value }))}
+                  className="campo-input text-xs" />
+              </div>
+              <div>
+                <label className="campo-label">Método de Pago</label>
+                <select value={formEditar.metodo_pago || 'Efectivo'}
+                  onChange={e => setFormEditar(p => ({ ...p, metodo_pago: e.target.value }))}
+                  className="campo-input text-xs">
+                  {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="campo-label">Fecha Límite de Pago</label>
+                <input type="date" value={formEditar.fecha_limite_pago || ''}
+                  onChange={e => setFormEditar(p => ({ ...p, fecha_limite_pago: e.target.value }))}
+                  className="campo-input text-xs" />
+              </div>
+              <div className="col-span-2">
+                <label className="campo-label">Notas</label>
+                <textarea value={formEditar.notas || ''} rows={2}
+                  onChange={e => setFormEditar(p => ({ ...p, notas: e.target.value }))}
+                  className="campo-input resize-none" placeholder="Observaciones..." />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
+              <button type="button" onClick={() => setModalEditar({ abierto: false, orden: null })}
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
+              <button type="submit" disabled={editando} className="btn-primary">
+                {editando ? 'Guardando...' : 'Aceptar'}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+ 
+      {/* modal confirmar anular */}
+      <Modal abierto={modalAnular.abierto} onCerrar={() => setModalAnular({ abierto: false, orden: null })}
+        titulo="Anular Orden" ancho="max-w-sm">
+        {modalAnular.orden && (
+          <div className="space-y-4">
+            <p className="text-sm">¿Anular la orden <span className="font-medium text-primary">#{modalAnular.orden.id}</span> de <span className="font-medium">{modalAnular.orden.proveedor}</span>?
+              <br /><span className="text-xs text-gray-400 mt-1 block">Esta acción no se puede deshacer.</span>
+            </p>
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
+              <button onClick={() => setModalAnular({ abierto: false, orden: null })}
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
+              <button onClick={() => anular.mutate(modalAnular.orden.id)} disabled={anulando}
+                className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
+                {anulando ? 'Anulando...' : 'Anular'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
- 
