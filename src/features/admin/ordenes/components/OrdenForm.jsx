@@ -1,9 +1,9 @@
 import Modal from '@shared/components/Modal'
 import { Search, Scan, Trash2, Upload } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
- 
-const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito', 'Cheque']
- 
+
+const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
+
 export default function OrdenForm({
   modalNuevo, setModalNuevo, form, setForm, itemForm, setItemForm,
   proveedores, productos, prodBusqueda, prodsFiltrados, provBusqueda,
@@ -18,11 +18,20 @@ export default function OrdenForm({
     setProvBusqueda('')
     setProvSeleccionado(null)
   }
- 
+
+  const handleCodigoBarras = e => {
+    // solo permitir números en código de barras
+    e.target.value = e.target.value.replace(/\D/g, '')
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (e.target.value) { buscarPorCodigo(e.target.value); e.target.value = '' }
+    }
+  }
+
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} titulo="Nueva Orden de Compra" ancho="max-w-2xl">
       <form onSubmit={handleCrear} className="space-y-3">
- 
+
         {/* proveedor */}
         <div>
           <label className="campo-label">Proveedor *</label>
@@ -50,7 +59,7 @@ export default function OrdenForm({
           </div>
           {form.proveedor_id && <p className="text-xs text-primary mt-1">✓ Proveedor: {provSeleccionado?.nombre}</p>}
         </div>
- 
+
         {/* fecha + método pago */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -68,7 +77,7 @@ export default function OrdenForm({
             </select>
           </div>
         </div>
- 
+
         {/* estado + fecha límite */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -77,6 +86,7 @@ export default function OrdenForm({
               onChange={e => setForm(p => ({ ...p, estado: e.target.value }))}
               className="campo-input text-xs">
               <option value="pendiente">Pendiente</option>
+              <option value="entregado">Entregado</option>
               <option value="pagada">Pagada</option>
             </select>
           </div>
@@ -89,7 +99,7 @@ export default function OrdenForm({
             </div>
           )}
         </div>
- 
+
         {/* productos */}
         <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-3">
           <p className="text-xs font-semibold">Productos</p>
@@ -111,9 +121,20 @@ export default function OrdenForm({
                 </div>
               )}
             </div>
+            {/* código de barras solo números */}
             <div className="relative">
-              <input placeholder="Cód. barras" className="campo-input w-28 text-xs pr-7"
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo(e.target.value); e.target.value = '' } }} />
+              <input
+                placeholder="Cód. barras"
+                inputMode="numeric"
+                className="campo-input w-28 text-xs pr-7"
+                onChange={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (e.target.value) { buscarPorCodigo(e.target.value); e.target.value = '' }
+                  }
+                }}
+              />
               <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
             </div>
           </div>
@@ -152,7 +173,7 @@ export default function OrdenForm({
             </div>
           )}
         </div>
- 
+
         {/* subir factura */}
         <div>
           <label className="campo-label">Factura (PDF o imagen)</label>
@@ -162,14 +183,14 @@ export default function OrdenForm({
             <input type="file" accept=".pdf,image/*" onChange={handleFacturaChange} className="hidden" />
           </label>
         </div>
- 
+
         {/* notas */}
         <div>
           <label className="campo-label">Notas (Opcional)</label>
           <textarea value={form.notas} onChange={e => setForm(p => ({ ...p, notas: e.target.value }))}
             rows={2} className="campo-input resize-none" placeholder="Observaciones de la compra..." />
         </div>
- 
+
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button type="button" onClick={cerrar}
             className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
