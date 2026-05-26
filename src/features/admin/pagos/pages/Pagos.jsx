@@ -3,7 +3,7 @@ import Tabla from '@shared/components/Tabla'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { usePagos } from '../hooks/usePagos'
-import PagoForm   from '../components/PagoForm'
+import PagoForm    from '../components/PagoForm'
 import PagoDetalle from '../components/PagoDetalle'
 import PagoAnular  from '../components/PagoAnular'
 
@@ -13,14 +13,18 @@ export default function Pagos() {
     modalNuevo, modalDetalle, modalAnular,
     setModalNuevo, setModalDetalle, setModalAnular,
     setForm, filtroEstado, setFiltroEstado,
+    filtroDesde, setFiltroDesde,
+    filtroHasta, setFiltroHasta,
     totalPedido, totalPagado, montoPendiente, pagoCompleto,
-    handleSubmit, anular, esPagado, esAnulado,
+    handleSubmit, anular, esPagado, esAnulado, getFechaPago,
     creando, anulando,
   } = usePagos()
 
+  const hayFiltros = filtroEstado || filtroDesde || filtroHasta
+
   const columnas = [
     { key: 'id',        label: '#' },
-    { key: 'pedido_id', label: 'Pedido', render: r => `#${r.pedido_id}` },
+    { key: 'pedido_id', label: 'Pedido',  render: r => `#${r.pedido_id}` },
     { key: 'cliente',   label: 'Cliente', render: r => r.cliente || '—' },
     { key: 'monto',     label: 'Monto',   render: r => formatPrecio(r.monto) },
     { key: 'metodo',    label: 'Método',  render: r => r.metodo || '—' },
@@ -34,7 +38,8 @@ export default function Pagos() {
         </div>
       )
     },
-    { key: 'created_at', label: 'Fecha', render: r => formatFecha(r.created_at) },
+    // usa getFechaPago para intentar todos los posibles campos de fecha
+    { key: 'fecha', label: 'Fecha', render: r => formatFecha(getFechaPago(r)) || '—' },
   ]
 
   return (
@@ -42,18 +47,41 @@ export default function Pagos() {
       <div className="page-header">
         <h1 className="page-title">Pagos</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarPDF('/reportes/pagos', 'reporte-pagos.pdf')} className="btn-outline"><Download size={14} /> Reporte</button>
-          <button onClick={() => setModalNuevo(true)} className="btn-primary"><Plus size={14} /> Nuevo Pago</button>
+          <button onClick={() => descargarPDF('/reportes/pagos', 'reporte-pagos.pdf')} className="btn-outline">
+            <Download size={14} /> Reporte
+          </button>
+          <button onClick={() => setModalNuevo(true)} className="btn-primary">
+            <Plus size={14} /> Nuevo Pago
+          </button>
         </div>
       </div>
 
-      <div className="flex gap-2 mb-4">
-        <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
-          <option value="">Todos</option>
-          <option value="pagado">Pagados</option>
-          <option value="anulado">Anulados</option>
-        </select>
-        {filtroEstado && <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400">Limpiar</button>}
+      {/* filtros */}
+      <div className="flex gap-2 mb-4 flex-wrap items-end">
+        <div>
+          <p className="campo-label mb-0.5">Estado</p>
+          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
+            <option value="">Todos</option>
+            <option value="pagado">Pagados</option>
+            <option value="anulado">Anulados</option>
+          </select>
+        </div>
+        <div>
+          <p className="campo-label mb-0.5">Desde</p>
+          <input type="date" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)}
+            className="campo-input text-xs" />
+        </div>
+        <div>
+          <p className="campo-label mb-0.5">Hasta</p>
+          <input type="date" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)}
+            className="campo-input text-xs" />
+        </div>
+        {hayFiltros && (
+          <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta('') }}
+            className="btn-ghost text-xs text-red-400 self-end">
+            Limpiar
+          </button>
+        )}
       </div>
 
       <Tabla columnas={columnas} datos={pagosFiltrados} sinBusqueda
