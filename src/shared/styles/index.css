@@ -1,12 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
- 
+
 @layer base {
   * { box-sizing: border-box; }
- 
+
   body {
     @apply bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text;
     font-family: 'DM Sans', system-ui, sans-serif;
@@ -14,21 +14,21 @@
     transition: background-color 0.2s, color 0.2s;
     -webkit-font-smoothing: antialiased;
   }
- 
+
   /* scrollbar refinada */
   ::-webkit-scrollbar { width: 3px; height: 3px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { @apply bg-dark-border/60 rounded-full; }
   ::-webkit-scrollbar-thumb:hover { @apply bg-primary/40; }
- 
+
   /* selección de texto */
   ::selection {
     @apply bg-primary/30 text-dark-text;
   }
 }
- 
+
 @layer components {
- 
+
   /* ─── INPUTS ──────────────────────────────────────── */
   .campo-input {
     @apply w-full px-3 py-2 text-sm rounded-lg border transition-all duration-150;
@@ -48,7 +48,7 @@
   .campo-input.success {
     @apply border-primary/60 focus:border-primary focus:ring-primary/10;
   }
- 
+
   /* ─── BOTONES ─────────────────────────────────────── */
   .btn-primary {
     @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-medium rounded-lg;
@@ -58,39 +58,39 @@
     font-family: 'DM Sans', sans-serif;
     letter-spacing: -0.01em;
   }
- 
+
   .btn-outline {
     @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm rounded-lg;
-    @apply border border-primary/30 text-primary hover:bg-primary/8 hover:border-primary/50;
+    @apply border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50;
     @apply active:scale-[0.98] transition-all duration-150;
     font-family: 'DM Sans', sans-serif;
   }
- 
+
   .btn-ghost {
     @apply inline-flex items-center justify-center p-1.5 rounded-lg;
     @apply text-gray-400 dark:text-dark-text/50;
-    @apply hover:text-primary hover:bg-primary/8 transition-all duration-150;
+    @apply hover:text-primary hover:bg-primary/10 transition-all duration-150;
     @apply active:scale-95;
   }
- 
+
   .btn-danger {
     @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm rounded-lg;
-    @apply border border-red-400/30 text-red-400 hover:bg-red-400/8 hover:border-red-400/50;
+    @apply border border-red-400/30 text-red-400 hover:bg-red-400/10 hover:border-red-400/50;
     @apply active:scale-[0.98] transition-all duration-150;
   }
- 
+
   /* ─── CARD ────────────────────────────────────────── */
   .card {
     @apply bg-light-card dark:bg-dark-card rounded-xl border;
     @apply border-gray-200/80 dark:border-dark-border/80 p-4;
     @apply shadow-sm dark:shadow-none;
   }
- 
+
   .card-elevated {
     @apply card shadow-md dark:shadow-none;
     @apply dark:bg-dark-card/80 backdrop-blur-sm;
   }
- 
+
   /* ─── BADGES ─────────────────────────────────────── */
   .badge {
     @apply inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium;
@@ -102,7 +102,7 @@
   .badge-pendiente { @apply badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-500/20; }
   .badge-proceso   { @apply badge bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-500/20; }
   .badge-anulado   { @apply badge bg-gray-100 dark:bg-dark-border/50 text-gray-500 dark:text-dark-text/50 ring-1 ring-gray-200 dark:ring-dark-border; }
- 
+
   /* ─── TABLA ──────────────────────────────────────── */
   .tabla-header {
     @apply px-3 py-2.5 text-left text-xs font-semibold;
@@ -117,7 +117,7 @@
     @apply border-b border-gray-100 dark:border-dark-border/40;
     @apply hover:bg-primary/4 transition-colors duration-100;
   }
- 
+
   /* ─── PAGE ───────────────────────────────────────── */
   .page-header {
     @apply flex items-center justify-between mb-6;
@@ -127,7 +127,7 @@
     font-family: 'DM Sans', sans-serif;
     letter-spacing: -0.02em;
   }
- 
+
   /* ─── CAMPOS ─────────────────────────────────────── */
   .campo-label {
     @apply block text-xs font-medium mb-1;
@@ -143,34 +143,34 @@
   .campo-hint {
     @apply text-xs text-gray-400 dark:text-dark-text/35 mt-1;
   }
- 
+
   /* ─── DIVISOR ─────────────────────────────────────── */
   .divider {
     @apply border-t border-gray-100 dark:border-dark-border/60 my-4;
   }
- 
+
   /* ─── PANEL INFO ─────────────────────────────────── */
   .panel-info {
     @apply p-3 rounded-lg text-xs;
-    @apply bg-blue-50 dark:bg-blue-500/8 border border-blue-100 dark:border-blue-500/15;
+    @apply bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/15;
     @apply text-blue-600 dark:text-blue-400;
   }
   .panel-warning {
     @apply p-3 rounded-lg text-xs;
-    @apply bg-amber-50 dark:bg-amber-500/8 border border-amber-100 dark:border-amber-500/15;
+    @apply bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/15;
     @apply text-amber-600 dark:text-amber-400;
   }
   .panel-error {
     @apply p-3 rounded-lg text-xs;
-    @apply bg-red-50 dark:bg-red-500/8 border border-red-100 dark:border-red-500/15;
+    @apply bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/15;
     @apply text-red-600 dark:text-red-400;
   }
   .panel-success {
     @apply p-3 rounded-lg text-xs;
-    @apply bg-primary/8 border border-primary/15;
+    @apply bg-primary/10 border border-primary/15;
     @apply text-green-700 dark:text-primary;
   }
- 
+
   /* ─── TOGGLE ─────────────────────────────────────── */
   .toggle-track {
     @apply relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 cursor-pointer;
@@ -178,13 +178,13 @@
   .toggle-thumb {
     @apply inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200;
   }
- 
+
   /* ─── SECCIÓN ─────────────────────────────────────── */
   .section-title {
     @apply text-xs font-semibold text-primary uppercase tracking-wider mb-2;
     letter-spacing: 0.08em;
   }
- 
+
   /* ─── ANIMACIONES ─────────────────────────────────── */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(4px); }
@@ -197,4 +197,3 @@
   .animate-fadeIn  { animation: fadeIn  0.15s ease-out both; }
   .animate-slideIn { animation: slideIn 0.15s ease-out both; }
 }
- 
