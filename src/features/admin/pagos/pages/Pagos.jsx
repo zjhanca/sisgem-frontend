@@ -15,12 +15,13 @@ export default function Pagos() {
     setForm, filtroEstado, setFiltroEstado,
     filtroDesde, setFiltroDesde,
     filtroHasta, setFiltroHasta,
+    filtroBusqueda, setFiltroBusqueda,
     totalPedido, totalPagado, montoPendiente, pagoCompleto,
     handleSubmit, anular, esPagado, esAnulado, getFechaPago,
     creando, anulando,
   } = usePagos()
 
-  const hayFiltros = filtroEstado || filtroDesde || filtroHasta
+  const hayFiltros = filtroEstado || filtroDesde || filtroHasta || filtroBusqueda
 
   const columnas = [
     { key: 'id',        label: '#' },
@@ -59,6 +60,11 @@ export default function Pagos() {
       {/* filtros */}
       <div className="flex gap-2 mb-4 flex-wrap items-end">
         <div>
+          <p className="campo-label mb-0.5">Buscar</p>
+          <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
+            placeholder="# o cliente..." className="campo-input w-36 text-xs" />
+        </div>
+        <div>
           <p className="campo-label mb-0.5">Estado</p>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
             <option value="">Todos</option>
@@ -77,7 +83,7 @@ export default function Pagos() {
             className="campo-input text-xs" />
         </div>
         {hayFiltros && (
-          <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta('') }}
+          <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta(''); setFiltroBusqueda('') }}
             className="btn-ghost text-xs text-red-400 self-end">
             Limpiar
           </button>

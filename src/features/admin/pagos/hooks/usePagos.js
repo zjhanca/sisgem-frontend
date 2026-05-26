@@ -15,6 +15,7 @@ export function usePagos() {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroDesde, setFiltroDesde]   = useState('')
   const [filtroHasta, setFiltroHasta]   = useState('')
+  const [filtroBusqueda, setFiltroBusqueda] = useState('')
 
   const { data: pagos = [] }   = useQuery({ queryKey: ['pagos'],   queryFn: pagosService.getAll })
   const { data: pedidos = [] } = useQuery({ queryKey: ['pedidos'], queryFn: () => pagosService.getPedidos().then(d => d.filter(p => !p.estado?.toLowerCase().includes('anula'))) })
@@ -65,6 +66,7 @@ export function usePagos() {
   const pagosFiltrados = pagos.filter(p => {
     if (filtroEstado === 'pagado'  && !esPagado(p.estado))  return false
     if (filtroEstado === 'anulado' && !esAnulado(p.estado)) return false
+    if (filtroBusqueda && !`${p.id} ${p.cliente || ''}`.toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
     const fecha = getFechaPago(p)
     if (filtroDesde && fecha && new Date(fecha) < new Date(filtroDesde))                return false
     if (filtroHasta && fecha && new Date(fecha) > new Date(filtroHasta + 'T23:59:59')) return false
@@ -78,6 +80,7 @@ export function usePagos() {
     setForm, filtroEstado, setFiltroEstado,
     filtroDesde, setFiltroDesde,
     filtroHasta, setFiltroHasta,
+    filtroBusqueda, setFiltroBusqueda,
     totalPedido, totalPagado, montoPendiente, pagoCompleto,
     handleSubmit, anular, esPagado, esAnulado, getFechaPago,
     creando: crear.isPending, anulando: anular.isPending,
