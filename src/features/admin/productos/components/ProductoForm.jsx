@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan } from 'lucide-react'
- 
+import { Search, Scan, Plus, Trash2, ImageOff, Star } from 'lucide-react'
+
 function BuscadorSelect({ label, items, valorId, onSelect, placeholder }) {
   const [busq, setBusq] = useState('')
   const [abierto, setAbierto] = useState(false)
   const filtrados = items.filter(i => !busq || i.nombre.toLowerCase().includes(busq.toLowerCase())).slice(0, 8)
   const seleccionado = items.find(i => i.id === +valorId)
- 
+
   return (
     <div>
       <label className="campo-label">{label}</label>
@@ -37,7 +37,96 @@ function BuscadorSelect({ label, items, valorId, onSelect, placeholder }) {
     </div>
   )
 }
- 
+
+// Gestor de múltiples imágenes por URL
+function GestorImagenes({ imagenes, onChange }) {
+  const [nuevaUrl, setNuevaUrl] = useState('')
+
+  const agregar = () => {
+    const url = nuevaUrl.trim()
+    if (!url) return
+    if (imagenes.includes(url)) return
+    onChange([...imagenes, url])
+    setNuevaUrl('')
+  }
+
+  const quitar = idx => onChange(imagenes.filter((_, i) => i !== idx))
+
+  // mover a primera posición (imagen principal)
+  const hacerPrincipal = idx => {
+    const nueva = [...imagenes]
+    const [item] = nueva.splice(idx, 1)
+    nueva.unshift(item)
+    onChange(nueva)
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* input para agregar nueva URL */}
+      <div className="flex gap-2">
+        <input
+          value={nuevaUrl}
+          onChange={e => setNuevaUrl(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); agregar() } }}
+          className="campo-input text-xs"
+          placeholder="https://ejemplo.com/imagen.jpg" />
+        <button type="button" onClick={agregar}
+          className="btn-outline shrink-0 px-2.5">
+          <Plus size={14} />
+        </button>
+      </div>
+
+      {/* previews */}
+      {imagenes.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {imagenes.map((url, i) => (
+            <div key={i} className={`relative group rounded-lg overflow-hidden border-2 transition-colors ${
+              i === 0 ? 'border-primary' : 'border-gray-200 dark:border-dark-border'
+            }`}>
+              <img
+                src={url} alt=""
+                className="w-full h-20 object-cover"
+                onError={e => { e.target.src = ''; e.target.parentElement.classList.add('bg-dark-border') }}
+              />
+              {/* badge principal */}
+              {i === 0 && (
+                <div className="absolute top-1 left-1 bg-primary text-dark-bg text-xs px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
+                  <Star size={9} /> Principal
+                </div>
+              )}
+              {/* acciones al hacer hover */}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                {i !== 0 && (
+                  <button type="button" onClick={() => hacerPrincipal(i)}
+                    title="Hacer principal"
+                    className="p-1 rounded bg-primary text-dark-bg hover:bg-primary/80 transition-colors">
+                    <Star size={12} />
+                  </button>
+                )}
+                <button type="button" onClick={() => quitar(i)}
+                  title="Eliminar"
+                  className="p-1 rounded bg-red-500 text-white hover:bg-red-600 transition-colors">
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {imagenes.length === 0 && (
+        <div className="flex items-center justify-center gap-2 p-4 rounded-lg border-2 border-dashed border-gray-200 dark:border-dark-border text-gray-400 text-xs">
+          <ImageOff size={14} /> Sin imágenes — pega una URL arriba y presiona Enter o el botón +
+        </div>
+      )}
+
+      <p className="campo-hint">
+        La primera imagen es la principal. Pasa el cursor sobre una imagen para establecerla como principal o eliminarla.
+      </p>
+    </div>
+  )
+}
+
 export default function ProductoForm({ modal, form, setForm, errores, handleChange, handleSubmit, cerrarModal, guardando, categorias, proveedores, marcas }) {
   return (
     <Modal abierto={modal.abierto} onCerrar={cerrarModal}
@@ -69,28 +158,40 @@ export default function ProductoForm({ modal, form, setForm, errores, handleChan
           <BuscadorSelect label="Proveedor" items={proveedores} valorId={form.proveedor_id}
             onSelect={id => setForm(p => ({ ...p, proveedor_id: id }))} placeholder="Buscar proveedor..." />
           <div className="relative">
-            <label className="campo-label">Código de Barras</label>
-            <input value={form.codigo_barras} onChange={e => handleChange('codigo_barras', e.target.value)}
+            <label className="campo-label">Código de Barras (solo números)</label>
+            <input
+              value={form.codigo_barras}
+              onChange={e => { if (/^\d*$/.test(e.target.value)) handleChange('codigo_barras', e.target.value) }}
+              inputMode="numeric"
               className="campo-input pr-8" placeholder="Ej: 7702001234567" />
             <Scan size={13} className="absolute right-2 bottom-2.5 text-gray-400" />
-          </div>
-          <div className="col-span-2">
-            <label className="campo-label">URL de Imagen</label>
-            <input value={form.imagen_url} onChange={e => handleChange('imagen_url', e.target.value)}
-              className="campo-input" placeholder="https://ejemplo.com/imagen.jpg" />
-            {form.imagen_url && (
-              <img src={form.imagen_url} alt="preview" className="mt-2 h-20 w-20 object-cover rounded-lg border border-gray-200 dark:border-dark-border" onError={e => e.target.style.display='none'} />
-            )}
           </div>
           <div className="col-span-2">
             <label className="campo-label">Descripción</label>
             <textarea value={form.descripcion} onChange={e => handleChange('descripcion', e.target.value)}
               rows={2} className="campo-input resize-none" />
           </div>
+
+          {/* múltiples imágenes */}
+          <div className="col-span-2">
+            <label className="campo-label">
+              Imágenes ({(form.imagenes || []).length})
+            </label>
+            <GestorImagenes
+              imagenes={form.imagenes || []}
+              onChange={imgs => setForm(p => ({ ...p, imagenes: imgs, imagen_url: imgs[0] || '' }))}
+            />
+          </div>
         </div>
+
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-          <button type="button" onClick={cerrarModal} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
-          <button type="submit" disabled={guardando} className="btn-primary">{guardando ? 'Guardando...' : 'Aceptar'}</button>
+          <button type="button" onClick={cerrarModal}
+            className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">
+            Cancelar
+          </button>
+          <button type="submit" disabled={guardando} className="btn-primary">
+            {guardando ? 'Guardando...' : 'Aceptar'}
+          </button>
         </div>
       </form>
     </Modal>
