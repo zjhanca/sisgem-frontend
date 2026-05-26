@@ -1,6 +1,6 @@
 ﻿import { Plus, Eye, Download, Ban, XCircle } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
+import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { usePagos } from '../hooks/usePagos'
 import PagoForm    from '../components/PagoForm'
@@ -39,7 +39,7 @@ export default function Pagos() {
       )
     },
     // usa getFechaPago para intentar todos los posibles campos de fecha
-    { key: 'fecha', label: 'Fecha', render: r => formatFecha(getFechaPago(r)) || '—' },
+    { key: 'fecha', label: 'Fecha', render: r => formatFechaHora(getFechaPago(r)) || '—' },
   ]
 
   return (
