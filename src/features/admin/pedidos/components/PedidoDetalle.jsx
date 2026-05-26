@@ -22,9 +22,7 @@ export default function PedidoDetalle({
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div><p className="campo-label">Cliente</p><p className="font-medium">{pedido.cliente}</p></div>
             <div><p className="campo-label">Tipo</p>
-              <span className={pedido.tipo_venta === 'domicilio' ? 'badge-proceso' : 'badge-activo'}>
-                {pedido.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}
-              </span>
+              <span className="badge-activo">{pedido.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}</span>
             </div>
             <div><p className="campo-label">Total</p><p className="text-primary font-bold text-sm">{formatPrecio(pedido.total)}</p></div>
             <div><p className="campo-label">Fecha</p><p>{formatFechaHora(pedido.fecha_pedido)}</p></div>

@@ -15,16 +15,24 @@ export default function Ventas() {
     modalNuevo, modalDetalle, modalAnular, filtroEstado, filtroBusqueda,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto,
-    totalVenta, handleCrear, anular, getBadge, estados,
+    totalVenta, handleCrear, anular, cambiarEstado, getBadge, estados,
     creando, anulando,
   } = useVentas()
  
   const columnas = [
     { key: 'id',       label: '#' },
     { key: 'cliente',  label: 'Cliente' },
-    { key: 'tipo_venta', label: 'Tipo', render: r => <span className={r.tipo_venta === 'domicilio' ? 'badge-proceso' : 'badge-activo'}>{r.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}</span> },
+    { key: 'tipo_venta', label: 'Tipo', render: r => <span className="badge-activo">{r.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}</span> },
     { key: 'total',    label: 'Total', render: r => formatPrecio(r.total) },
-    { key: 'estado',   label: 'Estado', render: r => <span className={getBadge(r.estado)}>{r.estado || '—'}</span> },
+    { key: 'estado_id', label: 'Estado',
+      render: r => (
+        <select value={r.estado_id || ''} onChange={e => cambiarEstado.mutate({ id: r.id, estado_id: +e.target.value })}
+          onClick={e => e.stopPropagation()}
+          className="text-xs bg-transparent border border-gray-200 dark:border-dark-border rounded px-1 py-0.5 cursor-pointer">
+          {estados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+        </select>
+      )
+    },
     { key: 'fecha_pedido', label: 'Fecha', render: r => formatFechaHora(r.fecha_pedido) },
   ]
  

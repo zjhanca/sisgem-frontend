@@ -47,6 +47,12 @@ export function useVentas() {
     onSuccess: () => { qc.invalidateQueries(['pedidos']); setModalAnular({ abierto: false, venta: null }); toast.success('Venta anulada') },
   })
  
+  const cambiarEstado = useMutation({
+    mutationFn: ({ id, estado_id }) => ventasService.cambiarEstado(id, { estado_id }),
+    onSuccess: () => { qc.invalidateQueries(['pedidos']); toast.success('Estado actualizado') },
+    onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
+  })
+ 
   const clientesFiltrados = clientes.filter(c => !clienteBusqueda || `${c.nombre} ${c.apellido}`.toLowerCase().includes(clienteBusqueda.toLowerCase())).slice(0, 6)
  
   const buscarProducto = texto => {
@@ -97,7 +103,7 @@ export function useVentas() {
     modalNuevo, modalDetalle, modalAnular, filtroEstado, filtroBusqueda,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto,
-    totalVenta, handleCrear, anular, getBadge,
+    totalVenta, handleCrear, anular, cambiarEstado, getBadge,
     creando: crearVenta.isPending, anulando: anular.isPending,
   }
 }

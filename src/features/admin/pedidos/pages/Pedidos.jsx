@@ -34,11 +34,7 @@ export default function Pedidos() {
     { key: 'id',         label: '#' },
     { key: 'cliente',    label: 'Cliente' },
     { key: 'tipo_venta', label: 'Tipo',
-      render: r => (
-        <span className={r.tipo_venta === 'domicilio' ? 'badge-proceso' : 'badge-activo'}>
-          {r.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}
-        </span>
-      )
+      render: r => <span className="badge-activo">{r.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}</span>
     },
     { key: 'total',  label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado_id', label: 'Estado',
