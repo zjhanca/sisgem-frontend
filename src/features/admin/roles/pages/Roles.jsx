@@ -1,10 +1,11 @@
-﻿import { Plus, Edit2, ToggleLeft, ToggleRight, Eye, Trash2, Lock } from 'lucide-react'
+﻿import { Plus, Edit2, Eye, Trash2, Lock } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
+import EstadoToggle from '@shared/components/EstadoToggle'
 import { useRoles } from '../hooks/useRoles'
 import RolForm     from '../components/RolForm'
 import RolDetalle  from '../components/RolDetalle'
 import RolEliminar from '../components/RolEliminar'
- 
+
 export default function Roles() {
   const {
     roles, todosPermisos, gruposPermisos,
@@ -16,7 +17,7 @@ export default function Roles() {
     toggleEstado, eliminar, togglePermiso, toggleModulo,
     seleccionarTodos, limpiarTodos, guardando, eliminando,
   } = useRoles()
- 
+
   const columnas = [
     { key: 'nombre',         label: 'Rol' },
     { key: 'descripcion',    label: 'Descripción', render: r => r.descripcion || '—' },
@@ -25,14 +26,14 @@ export default function Roles() {
       render: r => <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span>
     },
   ]
- 
+
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Roles y Permisos</h1>
         <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo Rol</button>
       </div>
- 
+
       <Tabla columnas={columnas} datos={roles}
         acciones={fila => (
           esProtegido(fila.id) ? (
@@ -40,18 +41,18 @@ export default function Roles() {
           ) : (<>
             <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
             <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
-            <button onClick={() => toggleEstado.mutate(fila.id)}
-              className={`btn-ghost ${fila.estado ? 'hover:text-red-400' : 'hover:text-green-400'}`}
-              title={fila.estado ? 'Desactivar' : 'Activar'}>
-              {fila.estado ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-            </button>
+            <EstadoToggle
+              activo={fila.estado}
+              onChange={() => toggleEstado.mutate(fila.id)}
+              cargando={toggleEstado.isPending}
+            />
             <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400" title="Eliminar">
               <Trash2 size={14} />
             </button>
           </>)
         )}
       />
- 
+
       <RolForm modal={modal} form={form} setForm={setForm} errores={errores} tab={tab} setTab={setTab}
         permisosSeleccionados={permisosSeleccionados} gruposPermisos={gruposPermisos} todosPermisos={todosPermisos}
         handleSubmit={handleSubmit} cerrarModal={cerrarModal} guardando={guardando}
