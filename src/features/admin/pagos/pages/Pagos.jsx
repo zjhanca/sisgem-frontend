@@ -1,4 +1,4 @@
-﻿import { Plus, Eye, Download, Ban, CheckCircle, XCircle } from 'lucide-react'
+﻿import { Plus, Eye, Download, Ban, XCircle } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
@@ -6,7 +6,7 @@ import { usePagos } from '../hooks/usePagos'
 import PagoForm   from '../components/PagoForm'
 import PagoDetalle from '../components/PagoDetalle'
 import PagoAnular  from '../components/PagoAnular'
- 
+
 export default function Pagos() {
   const {
     pagosFiltrados, pedidos, form, errores,
@@ -17,7 +17,7 @@ export default function Pagos() {
     handleSubmit, anular, esPagado, esAnulado,
     creando, anulando,
   } = usePagos()
- 
+
   const columnas = [
     { key: 'id',        label: '#' },
     { key: 'pedido_id', label: 'Pedido', render: r => `#${r.pedido_id}` },
@@ -27,7 +27,7 @@ export default function Pagos() {
     { key: 'estado', label: 'Estado',
       render: r => (
         <div className="flex items-center gap-1">
-          {esAnulado(r.estado) ? <XCircle size={13} className="text-red-400" /> : <CheckCircle size={13} className="text-green-400" />}
+          {esAnulado(r.estado) && <XCircle size={13} className="text-red-400" />}
           <span className={esAnulado(r.estado) ? 'badge-anulado' : 'badge-activo'}>
             {esAnulado(r.estado) ? 'Anulado' : 'Pagado'}
           </span>
@@ -36,7 +36,7 @@ export default function Pagos() {
     },
     { key: 'created_at', label: 'Fecha', render: r => formatFecha(r.created_at) },
   ]
- 
+
   return (
     <div>
       <div className="page-header">
@@ -46,7 +46,7 @@ export default function Pagos() {
           <button onClick={() => setModalNuevo(true)} className="btn-primary"><Plus size={14} /> Nuevo Pago</button>
         </div>
       </div>
- 
+
       <div className="flex gap-2 mb-4">
         <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
           <option value="">Todos</option>
@@ -55,7 +55,7 @@ export default function Pagos() {
         </select>
         {filtroEstado && <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400">Limpiar</button>}
       </div>
- 
+
       <Tabla columnas={columnas} datos={pagosFiltrados} sinBusqueda
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, pago: fila })} className="btn-ghost"><Eye size={14} /></button>
@@ -65,7 +65,7 @@ export default function Pagos() {
           )}
         </>)}
       />
- 
+
       <PagoForm modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
         form={form} setForm={setForm} errores={errores} pedidos={pedidos}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}
