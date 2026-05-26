@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { clientesService } from '../services/clientesService'
 import toast from 'react-hot-toast'
@@ -26,6 +26,7 @@ const validarCampo = (campo, valor) => {
     case 'numero_documento':
       if (!valor) return ''
       if (!/^\d+$/.test(valor)) return 'Solo números'
+      if (valor.length < 5) return 'Mínimo 5 dígitos'
       return ''
     default: return ''
   }
@@ -39,7 +40,11 @@ export function useClientes() {
   const [form, setForm]                 = useState(formVacio)
   const [formDir, setFormDir]           = useState(dirVacia)
   const [errores, setErrores]           = useState({})
+  const [verificando, setVerificando]   = useState({})
   const [filtroEstado, setFiltroEstado] = useState('')
+ 
+  const timerEmail = useRef(null)
+  const timerDoc   = useRef(null)
  
   const { data: clientes = [] } = useQuery({ queryKey: ['clientes'], queryFn: clientesService.getAll })
   const { data: direcciones = [], refetch: refetchDir } = useQuery({
@@ -52,6 +57,30 @@ export function useClientes() {
     queryFn: () => clientesService.getPedidos(modalDetalle.item?.id),
     enabled: !!modalDetalle.item?.id,
   })
+ 
+  // verificar email duplicado (local)
+  const verificarEmail = useCallback((email, itemId) => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return
+    clearTimeout(timerEmail.current)
+    setVerificando(v => ({ ...v, email: true }))
+    timerEmail.current = setTimeout(() => {
+      const existe = clientes.find(c => c.email?.toLowerCase() === email.toLowerCase() && c.id !== itemId)
+      setVerificando(v => ({ ...v, email: false }))
+      if (existe) setErrores(p => ({ ...p, email: 'Este correo ya está registrado' }))
+    }, 400)
+  }, [clientes])
+ 
+  // verificar documento duplicado (local)
+  const verificarDoc = useCallback((doc, itemId) => {
+    if (!doc || doc.length < 5) return
+    clearTimeout(timerDoc.current)
+    setVerificando(v => ({ ...v, numero_documento: true }))
+    timerDoc.current = setTimeout(() => {
+      const existe = clientes.find(c => c.numero_documento === doc && c.id !== itemId)
+      setVerificando(v => ({ ...v, numero_documento: false }))
+      if (existe) setErrores(p => ({ ...p, numero_documento: 'Este documento ya está registrado' }))
+    }, 400)
+  }, [clientes])
  
   const guardar = useMutation({
     mutationFn: data => modal.item ? clientesService.update(modal.item.id, data) : clientesService.create(data),
@@ -78,9 +107,16 @@ export function useClientes() {
       limite_fiado: item.limite_fiado || '',
     } : formVacio)
     setErrores({})
+    setVerificando({})
     setModal({ abierto: true, item })
   }
-  const cerrarModal = () => { setModal({ abierto: false, item: null }); setErrores({}) }
+  const cerrarModal = () => {
+    setModal({ abierto: false, item: null })
+    setErrores({})
+    setVerificando({})
+    clearTimeout(timerEmail.current)
+    clearTimeout(timerDoc.current)
+  }
  
   const handleChange = (campo, valor) => {
     if ((campo === 'telefono' || campo === 'numero_documento') && valor && !/^\d*$/.test(valor)) return
@@ -88,6 +124,8 @@ export function useClientes() {
     setForm(nuevo)
     const err = validarCampo(campo, valor)
     setErrores(prev => ({ ...prev, [campo]: err }))
+    if (campo === 'email' && !err) verificarEmail(valor, modal.item?.id)
+    if (campo === 'numero_documento' && !err) verificarDoc(valor, modal.item?.id)
   }
  
   const handleSubmit = e => {
@@ -97,6 +135,7 @@ export function useClientes() {
     campos.forEach(c => { nuevosErrores[c] = validarCampo(c, form[c]) })
     setErrores(nuevosErrores)
     if (Object.values(nuevosErrores).some(Boolean)) return
+    if (Object.values(verificando).some(Boolean)) { toast.error('Espera, verificando datos...'); return }
     guardar.mutate(form)
   }
  
@@ -114,7 +153,7 @@ export function useClientes() {
  
   return {
     clientes: clientesFiltrados, historial, direcciones,
-    form, formDir, errores,
+    form, formDir, errores, verificando,
     modal, modalDetalle, modalDir,
     filtroEstado, setFiltroEstado,
     setModalDetalle, setModalDir, setFormDir,
@@ -122,4 +161,3 @@ export function useClientes() {
     toggleEstado, guardando: guardar.isPending, guardandoDir: guardarDir.isPending,
   }
 }
- 

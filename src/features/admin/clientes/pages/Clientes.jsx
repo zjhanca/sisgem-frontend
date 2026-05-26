@@ -16,7 +16,7 @@ export default function Clientes() {
     setModalDetalle, setModalDir, setFormDir,
     abrirModal, cerrarModal,
     handleChange, handleSubmit, handleSubmitDir,
-    toggleEstado, guardando, guardandoDir,
+    toggleEstado, guardando, guardandoDir, verificando,
   } = useClientes()
  
   const columnas = [
@@ -85,7 +85,7 @@ export default function Clientes() {
         </>)}
       />
  
-      <ClienteForm
+      <ClienteForm verificando={verificando}
         modal={modal} form={form} errores={errores}
         handleChange={handleChange} handleSubmit={handleSubmit}
         cerrarModal={cerrarModal} guardando={guardando}

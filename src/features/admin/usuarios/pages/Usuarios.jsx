@@ -13,7 +13,7 @@ export default function Usuarios() {
     setModalDetalle, setModalEliminar,
     filtroRol, setFiltroRol, filtroEstado, setFiltroEstado,
     abrirModal, cerrarModal, handleChange, handleSubmit,
-    toggleEstado, eliminar, guardando, eliminando,
+    toggleEstado, eliminar, guardando, eliminando, verificando,
   } = useUsuarios()
  
   const columnas = [
@@ -83,7 +83,7 @@ export default function Usuarios() {
         </>)}
       />
  
-      <UsuarioForm modal={modal} form={form} errores={errores} roles={roles}
+      <UsuarioForm verificando={verificando} modal={modal} form={form} errores={errores} roles={roles}
         handleChange={handleChange} handleSubmit={handleSubmit}
         cerrarModal={cerrarModal} guardando={guardando} />
       <UsuarioDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} />

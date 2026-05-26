@@ -41,73 +41,69 @@ export default function Tabla({
   }
  
   return (
-    <div className="space-y-3">
-      {/* barra superior — siempre visible, busqueda opcional */}
+    <div className="space-y-3 animate-fadeIn">
+      {/* barra superior */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         {!sinBusqueda ? (
           <div className="relative">
-            <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400 pointer-events-none" />
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               value={busqueda}
               onChange={e => handleBusqueda(e.target.value)}
               placeholder="Buscar..."
-              className="pl-8 pr-3 py-1.5 text-sm rounded-xl border border-gray-200
-                dark:border-dark-border bg-light-bg dark:bg-dark-bg
-                text-light-text dark:text-dark-text focus:outline-none
-                focus:border-primary/60 transition-colors w-56"
+              className="pl-8 pr-3 py-1.5 text-sm rounded-lg border
+                bg-light-bg dark:bg-dark-bg/60
+                border-gray-200 dark:border-dark-border
+                text-light-text dark:text-dark-text
+                placeholder:text-gray-400/60
+                focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
+                transition-all duration-150 w-52"
             />
           </div>
-        ) : (
-          <div />
-        )}
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          <span>{filtrados.length} registros</span>
+        ) : <div />}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 dark:text-dark-text/35">
+            {filtrados.length} registro{filtrados.length !== 1 ? 's' : ''}
+          </span>
           <select value={porPag} onChange={e => handlePorPag(e.target.value)}
-            className="campo-input w-20 text-xs py-1">
+            className="campo-input w-[90px] text-xs py-1 h-7">
             {[5, 10, 20, 50].map(n => <option key={n} value={n}>{n} / pág</option>)}
           </select>
         </div>
       </div>
  
       {/* tabla */}
-      <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-dark-border">
+      <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-dark-border/60 shadow-sm dark:shadow-none">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-light-bg dark:bg-dark-bg border-b border-gray-100 dark:border-dark-border">
+            <tr className="bg-light-bg dark:bg-dark-bg border-b border-gray-100 dark:border-dark-border/60">
               {columnas.map(col => (
-                <th key={col.key}
-                  className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500
-                    dark:text-dark-text/50 uppercase tracking-wide whitespace-nowrap">
-                  {col.label}
-                </th>
+                <th key={col.key} className="tabla-header">{col.label}</th>
               ))}
               {acciones && (
-                <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-500
-                  dark:text-dark-text/50 uppercase tracking-wide">
-                  Acciones
-                </th>
+                <th className="tabla-header text-right">Acciones</th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50 dark:divide-dark-border">
+          <tbody className="divide-y divide-gray-50 dark:divide-dark-border/30">
             {filasPagina.length === 0 ? (
               <tr>
                 <td colSpan={columnas.length + (acciones ? 1 : 0)}
-                  className="text-center py-10 text-sm text-gray-400 dark:text-dark-text/40">
+                  className="text-center py-12 text-sm text-gray-400 dark:text-dark-text/30">
                   {busqueda ? `Sin resultados para "${busqueda}"` : 'Sin registros'}
                 </td>
               </tr>
             ) : filasPagina.map((fila, i) => (
               <tr key={fila.id ?? i}
-                className="bg-light-card dark:bg-dark-card hover:bg-primary/5 transition-colors">
+                className="bg-light-card dark:bg-dark-card hover:bg-primary/4 transition-colors duration-100">
                 {columnas.map(col => (
-                  <td key={col.key} className="px-3 py-2.5 text-light-text dark:text-dark-text">
+                  <td key={col.key} className="tabla-celda">
                     {col.render ? col.render(fila) : (fila[col.key] ?? '—')}
                   </td>
                 ))}
                 {acciones && (
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center justify-end gap-1">
+                  <td className="tabla-celda">
+                    <div className="flex items-center justify-end gap-0.5">
                       {acciones(fila)}
                     </div>
                   </td>
@@ -118,51 +114,48 @@ export default function Tabla({
         </table>
       </div>
  
-      {/* paginación — siempre visible cuando hay más de 1 página */}
+      {/* paginación */}
       {totalPaginas > 1 && (
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <p className="text-xs text-gray-400 dark:text-dark-text/40">
-            Mostrando {inicio + 1}–{Math.min(inicio + porPag, filtrados.length)} de {filtrados.length}
+          <p className="text-xs text-gray-400 dark:text-dark-text/35">
+            {inicio + 1}–{Math.min(inicio + porPag, filtrados.length)} de {filtrados.length}
           </p>
           <div className="flex items-center gap-1">
-            <button onClick={() => setPagina(1)} disabled={paginaActual === 1}
-              className="p-1.5 rounded-lg border border-gray-200 dark:border-dark-border
-                text-gray-400 hover:border-primary/40 hover:text-primary transition-colors
-                disabled:opacity-30 disabled:cursor-not-allowed">
-              <ChevronsLeft size={13} />
-            </button>
-            <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={paginaActual === 1}
-              className="p-1.5 rounded-lg border border-gray-200 dark:border-dark-border
-                text-gray-400 hover:border-primary/40 hover:text-primary transition-colors
-                disabled:opacity-30 disabled:cursor-not-allowed">
-              <ChevronLeft size={13} />
-            </button>
+            {[
+              { icon: ChevronsLeft,  action: () => setPagina(1),                      disabled: paginaActual === 1 },
+              { icon: ChevronLeft,   action: () => setPagina(p => Math.max(1, p - 1)), disabled: paginaActual === 1 },
+            ].map((btn, i) => (
+              <button key={i} onClick={btn.action} disabled={btn.disabled}
+                className="p-1.5 rounded-lg border border-gray-200 dark:border-dark-border
+                  text-gray-400 hover:border-primary/40 hover:text-primary
+                  transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed">
+                <btn.icon size={12} />
+              </button>
+            ))}
             {paginasVisibles().map(n => (
               <button key={n} onClick={() => setPagina(n)}
-                className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
+                className={`w-7 h-7 rounded-lg text-xs font-medium transition-all duration-150 ${
                   n === paginaActual
-                    ? 'bg-primary text-dark-bg'
-                    : 'border border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'
+                    ? 'bg-primary text-dark-bg shadow-sm'
+                    : 'border border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40 hover:text-primary'
                 }`}>
                 {n}
               </button>
             ))}
-            <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual === totalPaginas}
-              className="p-1.5 rounded-lg border border-gray-200 dark:border-dark-border
-                text-gray-400 hover:border-primary/40 hover:text-primary transition-colors
-                disabled:opacity-30 disabled:cursor-not-allowed">
-              <ChevronRight size={13} />
-            </button>
-            <button onClick={() => setPagina(totalPaginas)} disabled={paginaActual === totalPaginas}
-              className="p-1.5 rounded-lg border border-gray-200 dark:border-dark-border
-                text-gray-400 hover:border-primary/40 hover:text-primary transition-colors
-                disabled:opacity-30 disabled:cursor-not-allowed">
-              <ChevronsRight size={13} />
-            </button>
+            {[
+              { icon: ChevronRight,  action: () => setPagina(p => Math.min(totalPaginas, p + 1)), disabled: paginaActual === totalPaginas },
+              { icon: ChevronsRight, action: () => setPagina(totalPaginas),                       disabled: paginaActual === totalPaginas },
+            ].map((btn, i) => (
+              <button key={i} onClick={btn.action} disabled={btn.disabled}
+                className="p-1.5 rounded-lg border border-gray-200 dark:border-dark-border
+                  text-gray-400 hover:border-primary/40 hover:text-primary
+                  transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed">
+                <btn.icon size={12} />
+              </button>
+            ))}
           </div>
         </div>
       )}
     </div>
   )
 }
- 
