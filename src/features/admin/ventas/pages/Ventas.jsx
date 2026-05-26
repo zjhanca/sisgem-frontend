@@ -22,7 +22,7 @@ export default function Ventas() {
   const columnas = [
     { key: 'id',       label: '#' },
     { key: 'cliente',  label: 'Cliente' },
-    { key: 'tipo_venta', label: 'Tipo', render: r => <span className="badge bg-primary/20 text-green-700 dark:text-primary">Mostrador</span> },
+    { key: 'tipo_venta', label: 'Tipo', render: r => <span className={r.tipo_venta === 'domicilio' ? 'badge-proceso' : 'badge-activo'}>{r.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}</span> },
     { key: 'total',    label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado',   label: 'Estado', render: r => <span className={getBadge(r.estado)}>{r.estado || '—'}</span> },
     { key: 'fecha_pedido', label: 'Fecha', render: r => formatFechaHora(r.fecha_pedido) },

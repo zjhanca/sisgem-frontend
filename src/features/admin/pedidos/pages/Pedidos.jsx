@@ -34,9 +34,11 @@ export default function Pedidos() {
     { key: 'id',         label: '#' },
     { key: 'cliente',    label: 'Cliente' },
     { key: 'tipo_venta', label: 'Tipo',
-      render: r => <span className={`badge ${r.tipo_venta==='domicilio' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' : 'bg-primary/20 text-green-700 dark:text-primary'}`}>
-        {r.tipo_venta==='domicilio' ? '🛵 Domicilio' : '🏪 Mostrador'}
-      </span>
+      render: r => (
+        <span className={r.tipo_venta === 'domicilio' ? 'badge-proceso' : 'badge-activo'}>
+          {r.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}
+        </span>
+      )
     },
     { key: 'total',  label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado_id', label: 'Estado',
@@ -218,4 +220,3 @@ export default function Pedidos() {
     </div>
   )
 }
- 

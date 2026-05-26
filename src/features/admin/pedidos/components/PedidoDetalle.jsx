@@ -22,8 +22,8 @@ export default function PedidoDetalle({
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div><p className="campo-label">Cliente</p><p className="font-medium">{pedido.cliente}</p></div>
             <div><p className="campo-label">Tipo</p>
-              <span className={`badge ${pedido.tipo_venta==='domicilio' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' : 'bg-primary/20 text-green-700 dark:text-primary'}`}>
-                {pedido.tipo_venta==='domicilio' ? '🛵 Domicilio' : '🏪 Mostrador'}
+              <span className={pedido.tipo_venta === 'domicilio' ? 'badge-proceso' : 'badge-activo'}>
+                {pedido.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}
               </span>
             </div>
             <div><p className="campo-label">Total</p><p className="text-primary font-bold text-sm">{formatPrecio(pedido.total)}</p></div>
@@ -79,4 +79,3 @@ export default function PedidoDetalle({
     </Modal>
   )
 }
- 

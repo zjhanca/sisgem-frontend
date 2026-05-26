@@ -1,5 +1,6 @@
-﻿import { Plus, Edit2, ToggleLeft, ToggleRight, Eye, Trash2 } from 'lucide-react'
+﻿import { Plus, Edit2, Eye, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
+import EstadoToggle from '@shared/components/EstadoToggle'
 import { useCategorias } from '../hooks/useCategorias'
 import CategoriaForm     from '../components/CategoriaForm'
 import CategoriaDetalle  from '../components/CategoriaDetalle'
@@ -53,12 +54,7 @@ export default function Categorias() {
             className="btn-ghost" title="Editar">
             <Edit2 size={14} />
           </button>
-          <button
-            onClick={() => toggleEstado.mutate(fila.id)}
-            className={`btn-ghost ${fila.estado ? 'hover:text-red-400' : 'hover:text-green-400'}`}
-            title={fila.estado ? 'Desactivar' : 'Activar'}>
-            {fila.estado ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-          </button>
+          <EstadoToggle activo={fila.estado} onChange={() => toggleEstado.mutate(fila.id)} cargando={toggleEstado.isPending} />
           <button
             onClick={() => setModalEliminar({ abierto: true, item: fila })}
             className="btn-ghost hover:text-red-400" title="Eliminar">
