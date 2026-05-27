@@ -13,7 +13,6 @@ export default function VentaForm({
     <Modal abierto={modalNuevo} onCerrar={cerrar} titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
       <form onSubmit={handleCrear} className="space-y-4">
         <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/30">
-          <span className="text-lg">🏪</span>
           <div>
             <p className="text-xs font-semibold text-primary">Venta en Mostrador</p>
             <p className="text-xs text-gray-500">Se registrará automáticamente como pagada</p>
