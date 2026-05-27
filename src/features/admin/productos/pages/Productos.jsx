@@ -7,7 +7,7 @@ import { useProductos } from '../hooks/useProductos'
 import ProductoForm    from '../components/ProductoForm'
 import ProductoDetalle from '../components/ProductoDetalle'
 import ProductoEliminar from '../components/ProductoEliminar'
- 
+
 export default function Productos() {
   const {
     productos, categorias, proveedores, marcas,
@@ -15,8 +15,9 @@ export default function Productos() {
     setForm, setModalDetalle, setModalEliminar,
     abrirModal, cerrarModal, handleChange, handleSubmit,
     toggleEstado, eliminar, guardando, eliminando,
+    verificandoCodigo,
   } = useProductos()
- 
+
   const columnas = [
     { key: 'imagen_url', label: 'Img',
       render: r => r.imagen_url
@@ -31,7 +32,7 @@ export default function Productos() {
     { key: 'stock',         label: 'Stock',     render: r => <span className={r.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{r.stock}</span> },
     { key: 'estado',        label: 'Estado',    render: r => <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span> },
   ]
- 
+
   return (
     <div>
       <div className="page-header">
@@ -41,7 +42,7 @@ export default function Productos() {
           <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo Producto</button>
         </div>
       </div>
- 
+
       <Tabla columnas={columnas} datos={productos}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost"><Eye size={14} /></button>
@@ -50,7 +51,7 @@ export default function Productos() {
           <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400"><Trash2 size={14} /></button>
         </>)}
       />
- 
+
       <ProductoForm modal={modal} form={form} setForm={setForm} errores={errores}
         handleChange={handleChange} handleSubmit={handleSubmit} cerrarModal={cerrarModal}
         guardando={guardando} categorias={categorias} proveedores={proveedores} marcas={marcas}
