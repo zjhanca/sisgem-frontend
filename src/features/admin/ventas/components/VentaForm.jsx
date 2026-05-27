@@ -26,6 +26,8 @@ export default function VentaForm({
     setClienteBusqueda('')
   }
 
+  const clienteSeleccionado = clientes.find(c => c.id === +form.cliente_id)
+
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
       <form onSubmit={handleCrear} className="space-y-4">
@@ -50,37 +52,38 @@ export default function VentaForm({
           </div>
 
           {form.tipo_cliente === 'registrado' ? (
-            <div className="relative" ref={dropdownRef}>
-              <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
-              <input
-                value={clienteBusqueda}
-                onChange={e => { setClienteBusqueda(e.target.value); setForm(f => ({ ...f, cliente_id: '' })) }}
-                className="campo-input pl-8 text-xs"
-                placeholder={form.cliente_id
-                  ? `✓ ${clientes.find(c => c.id === +form.cliente_id)?.nombre || ''} ${clientes.find(c => c.id === +form.cliente_id)?.apellido || ''}`
-                  : 'Buscar cliente por nombre...'}
-              />
-              {form.cliente_id && !clienteBusqueda && (
-                <button type="button"
-                  onClick={() => { setForm(f => ({ ...f, cliente_id: '' })); setClienteBusqueda('') }}
-                  className="absolute right-2 top-2 text-gray-400 hover:text-red-400 text-xs">✕</button>
-              )}
-              {clienteBusqueda && clientesFiltrados.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-30 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
-                  {clientesFiltrados.map(c => (
-                    <button key={c.id} type="button"
-                      onMouseDown={e => { e.preventDefault(); seleccionarCliente(c) }}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text dark:text-dark-text">
-                      <span>{c.nombre} {c.apellido}</span>
-                      {c.telefono && <span className="text-gray-400">{c.telefono}</span>}
-                    </button>
-                  ))}
+            <div className="space-y-1" ref={dropdownRef}>
+              {/* si hay cliente seleccionado, mostrar chip en lugar del input */}
+              {clienteSeleccionado && !clienteBusqueda ? (
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
+                  <span className="font-medium text-primary">{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</span>
+                  <button type="button"
+                    onClick={() => { setForm(f => ({ ...f, cliente_id: '' })); setClienteBusqueda('') }}
+                    className="text-gray-400 hover:text-red-400 ml-2">✕</button>
                 </div>
-              )}
-              {form.cliente_id && !clienteBusqueda && (
-                <p className="text-xs text-primary mt-1">
-                  ✓ {clientes.find(c => c.id === +form.cliente_id)?.nombre} {clientes.find(c => c.id === +form.cliente_id)?.apellido}
-                </p>
+              ) : (
+                <div className="relative">
+                  <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
+                  <input
+                    value={clienteBusqueda}
+                    onChange={e => { setClienteBusqueda(e.target.value); setForm(f => ({ ...f, cliente_id: '' })) }}
+                    autoFocus={!clienteSeleccionado}
+                    className="campo-input pl-8 text-xs"
+                    placeholder="Buscar cliente por nombre..."
+                  />
+                  {clienteBusqueda && clientesFiltrados.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 z-30 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                      {clientesFiltrados.map(c => (
+                        <button key={c.id} type="button"
+                          onMouseDown={e => { e.preventDefault(); seleccionarCliente(c) }}
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text dark:text-dark-text">
+                          <span>{c.nombre} {c.apellido}</span>
+                          {c.telefono && <span className="text-gray-400">{c.telefono}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           ) : (
@@ -107,7 +110,7 @@ export default function VentaForm({
                         {p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-gray-400 text-xs">Stock: {p.stock}</span>
+                        <span className="text-gray-400">Stock: {p.stock}</span>
                         <span className="text-primary">{formatPrecio(p.precio)}</span>
                       </div>
                     </button>
@@ -134,44 +137,43 @@ export default function VentaForm({
                     <div className="flex-1 min-w-0">
                       <p className="truncate">{p.nombre}</p>
                       {stock !== Infinity && (
-                        <p className={`text-xs mt-0.5 ${excede ? 'text-red-400' : 'text-gray-400'}`}>
-                          {excede ? `⚠ Solo hay ${stock} en stock` : `Stock: ${stock}`}
+                        <p className={`text-xs mt-0.5 ${excede ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
+                          {excede ? `⚠ Máx. ${stock}` : `Stock: ${stock}`}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 ml-2">
-                      {/* controles cantidad */}
-                      <div className="flex items-center gap-1">
-                        <button type="button"
-                          onClick={() => cambiarCantidad(i, p.cantidad - 1)}
-                          disabled={p.cantidad <= 1}
-                          className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5 disabled:opacity-40">
-                          -
-                        </button>
-                        {/* input numérico editable */}
-                        <input
-                          type="number"
-                          min={1}
-                          max={stock !== Infinity ? stock : undefined}
-                          value={p.cantidad}
-                          onChange={e => cambiarCantidad(i, e.target.value)}
-                          className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
-                            excede
-                              ? 'border-red-400 focus:ring-red-400/30 text-red-400'
-                              : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
-                          }`}
-                        />
-                        <button type="button"
-                          onClick={() => cambiarCantidad(i, p.cantidad + 1)}
-                          disabled={stock !== Infinity && p.cantidad >= stock}
-                          className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5 disabled:opacity-40">
-                          +
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {/* - */}
+                      <button type="button"
+                        onClick={() => cambiarCantidad(i, p.cantidad - 1)}
+                        disabled={p.cantidad <= 1}
+                        className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
+                        −
+                      </button>
+                      {/* input sin flechas */}
+                      <input
+                        type="number"
+                        min={1}
+                        max={stock !== Infinity ? stock : undefined}
+                        value={p.cantidad}
+                        onChange={e => cambiarCantidad(i, e.target.value)}
+                        className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                          excede
+                            ? 'border-red-400 focus:ring-red-400/30 text-red-400'
+                            : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
+                        }`}
+                      />
+                      {/* + */}
+                      <button type="button"
+                        onClick={() => cambiarCantidad(i, p.cantidad + 1)}
+                        disabled={stock !== Infinity && p.cantidad >= stock}
+                        className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
+                        +
+                      </button>
                       <span className={`font-medium w-16 text-right ${excede ? 'text-red-400' : 'text-primary'}`}>
                         {formatPrecio(p.precio_unitario * p.cantidad)}
                       </span>
-                      <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500">
+                      <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500 ml-0.5">
                         <Trash2 size={12} />
                       </button>
                     </div>
@@ -188,7 +190,8 @@ export default function VentaForm({
 
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
-          <button type="submit" disabled={creando || form.productos.some(p => p.cantidad > (p.stock ?? Infinity))}
+          <button type="submit"
+            disabled={creando || form.productos.some(p => p.cantidad > (p.stock ?? Infinity))}
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
           </button>

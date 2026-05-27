@@ -15,7 +15,7 @@ export default function Ventas() {
     modalNuevo, modalDetalle, modalAnular, filtroEstado, filtroBusqueda,
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
-    buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto,
+    buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
     totalVenta, handleCrear, anular, cambiarEstado, getBadge, estados,
     creando, anulando,
   } = useVentas()
@@ -91,7 +91,7 @@ export default function Ventas() {
         clientesFiltrados={clientesFiltrados} clienteBusqueda={clienteBusqueda} setClienteBusqueda={setClienteBusqueda}
         prodBusqueda={prodBusqueda} prodsFiltrados={prodsFiltrados}
         buscarProducto={buscarProducto} buscarPorCodigo={buscarPorCodigo}
-        agregarProducto={agregarProducto} quitarProducto={quitarProducto}
+        agregarProducto={agregarProducto} quitarProducto={quitarProducto} cambiarCantidad={cambiarCantidad}
         totalVenta={totalVenta} handleCrear={handleCrear} creando={creando} />
       <VentaDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} setModalAnular={setModalAnular} getBadge={getBadge} />
       <VentaAnular modalAnular={modalAnular} setModalAnular={setModalAnular} anular={anular} anulando={anulando} />
