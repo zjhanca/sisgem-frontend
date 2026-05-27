@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { productosService } from '../services/productosService'
 import toast from 'react-hot-toast'
@@ -24,12 +24,35 @@ export function useProductos() {
   const [modalDetalle, setModalDetalle]   = useState({ abierto: false, item: null })
   const [modalEliminar, setModalEliminar] = useState({ abierto: false, item: null })
   const [form, setForm]       = useState(formVacio)
-  const [errores, setErrores] = useState({})
+  const [errores, setErrores]             = useState({})
+  const [verificandoCodigo, setVerificandoCodigo] = useState(false)
+  const timerCodigo = useRef(null)
 
   const { data: productos = [] }   = useQuery({ queryKey: ['productos'],   queryFn: productosService.getAll })
   const { data: categorias = [] }  = useQuery({ queryKey: ['categorias'],  queryFn: productosService.getCategorias })
   const { data: proveedores = [] } = useQuery({ queryKey: ['proveedores'], queryFn: productosService.getProveedores })
   const { data: marcas = [] }      = useQuery({ queryKey: ['marcas'],      queryFn: productosService.getMarcas })
+
+  // verificar código de barras duplicado (contra lista local)
+  const verificarCodigo = useCallback((codigo, itemId) => {
+    if (!codigo || codigo.length < 3) {
+      setErrores(prev => ({ ...prev, codigo_barras: '' }))
+      setVerificandoCodigo(false)
+      return
+    }
+    clearTimeout(timerCodigo.current)
+    setVerificandoCodigo(true)
+    timerCodigo.current = setTimeout(() => {
+      const duplicado = productos.find(p =>
+        p.codigo_barras === codigo && p.id !== itemId
+      )
+      setVerificandoCodigo(false)
+      setErrores(prev => ({
+        ...prev,
+        codigo_barras: duplicado ? `Este código ya está asignado a "${duplicado.nombre}"` : ''
+      }))
+    }, 400)
+  }, [productos])
 
   const guardar = useMutation({
     mutationFn: data => {
@@ -92,11 +115,14 @@ export function useProductos() {
     setForm(nuevo)
     const e = validar(nuevo)
     setErrores(prev => ({ ...prev, [campo]: e[campo] || '' }))
+    if (campo === 'codigo_barras') verificarCodigo(valor, modal.item?.id)
   }
   const handleSubmit = e => {
     e.preventDefault()
     const e2 = validar(form)
     if (Object.keys(e2).length) { setErrores(e2); return }
+    if (errores.codigo_barras) return
+    if (verificandoCodigo) { return }
     guardar.mutate(form)
   }
 
@@ -107,5 +133,6 @@ export function useProductos() {
     abrirModal, cerrarModal, handleChange, handleSubmit,
     toggleEstado, eliminar,
     guardando: guardar.isPending, eliminando: eliminar.isPending,
+    verificandoCodigo,
   }
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Plus, Trash2, ImageOff, Star } from 'lucide-react'
+import { Search, Scan, Plus, Trash2, ImageOff, Star, Loader2, CheckCircle2 } from 'lucide-react'
 
 function BuscadorSelect({ label, items, valorId, onSelect, placeholder }) {
   const [busq, setBusq] = useState('')
@@ -127,7 +127,7 @@ function GestorImagenes({ imagenes, onChange }) {
   )
 }
 
-export default function ProductoForm({ modal, form, setForm, errores, handleChange, handleSubmit, cerrarModal, guardando, categorias, proveedores, marcas }) {
+export default function ProductoForm({ modal, form, setForm, errores, handleChange, handleSubmit, cerrarModal, guardando, categorias, proveedores, marcas, verificandoCodigo }) {
   return (
     <Modal abierto={modal.abierto} onCerrar={cerrarModal}
       titulo={modal.item ? 'Editar Producto' : 'Nuevo Producto'} ancho="max-w-2xl">
@@ -157,14 +157,26 @@ export default function ProductoForm({ modal, form, setForm, errores, handleChan
             onSelect={id => setForm(p => ({ ...p, marca_id: id }))} placeholder="Buscar marca..." />
           <BuscadorSelect label="Proveedor" items={proveedores} valorId={form.proveedor_id}
             onSelect={id => setForm(p => ({ ...p, proveedor_id: id }))} placeholder="Buscar proveedor..." />
-          <div className="relative">
+          <div>
             <label className="campo-label">Código de Barras (solo números)</label>
-            <input
-              value={form.codigo_barras}
-              onChange={e => { if (/^\d*$/.test(e.target.value)) handleChange('codigo_barras', e.target.value) }}
-              inputMode="numeric"
-              className="campo-input pr-8" placeholder="Ej: 7702001234567" />
-            <Scan size={13} className="absolute right-2 bottom-2.5 text-gray-400" />
+            <div className="relative">
+              <input
+                value={form.codigo_barras}
+                onChange={e => { if (/^\d*$/.test(e.target.value)) handleChange('codigo_barras', e.target.value) }}
+                inputMode="numeric"
+                className={`campo-input pr-8 ${errores.codigo_barras ? 'border-red-400' : (form.codigo_barras && !verificandoCodigo && !errores.codigo_barras ? 'border-primary/40' : '')}`}
+                placeholder="Ej: 7702001234567" />
+              <div className="absolute right-2 bottom-2.5 flex items-center">
+                {verificandoCodigo
+                  ? <Loader2 size={13} className="text-gray-400 animate-spin" />
+                  : form.codigo_barras && !errores.codigo_barras
+                    ? <CheckCircle2 size={13} className="text-primary" />
+                    : <Scan size={13} className="text-gray-400" />
+                }
+              </div>
+            </div>
+            {errores.codigo_barras && <p className="campo-error">{errores.codigo_barras}</p>}
+            {verificandoCodigo && <span className="campo-hint flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Verificando...</span>}
           </div>
           <div className="col-span-2">
             <label className="campo-label">Descripción</label>
@@ -189,7 +201,7 @@ export default function ProductoForm({ modal, form, setForm, errores, handleChan
             className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">
             Cancelar
           </button>
-          <button type="submit" disabled={guardando} className="btn-primary">
+          <button type="submit" disabled={guardando || !!errores.codigo_barras || verificandoCodigo} className="btn-primary disabled:opacity-50">
             {guardando ? 'Guardando...' : 'Aceptar'}
           </button>
         </div>
