@@ -4,13 +4,13 @@ import { formatPrecio } from '@shared/utils/validaciones'
 export default function PagoForm({
   modalNuevo, setModalNuevo, form, setForm, errores,
   pedidos, totalPedido, totalPagado, montoPendiente, pagoCompleto,
-  handleSubmit, creando, tipoPagoActual
+  handleSubmit, creando, tipoPagoActual, esFiado
 }) {
   const cerrar = () => { setModalNuevo(false) }
 
   const handleMonto = e => {
     const val = e.target.value
-    if (montoPendiente > 0 && +val > montoPendiente) {
+    if (!esFiado && montoPendiente > 0 && +val > montoPendiente) {
       setForm(p => ({ ...p, monto: montoPendiente }))
     } else {
       setForm(p => ({ ...p, monto: val }))
@@ -30,6 +30,12 @@ export default function PagoForm({
           {errores.pedido_id && <p className="campo-error">{errores.pedido_id}</p>}
         </div>
 
+        {esFiado && (
+          <div className="mb-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500">
+            <span className="font-medium">Cliente con fiado habilitado</span>
+            <span className="text-amber-400/70">— sin límite de monto</span>
+          </div>
+        )}
         {form.pedido_id && (
           <div className="p-3 rounded-lg bg-light-bg dark:bg-dark-bg text-xs space-y-1">
             <div className="flex justify-between"><span className="text-gray-400">Total pedido</span><span>{formatPrecio(totalPedido)}</span></div>
@@ -46,7 +52,6 @@ export default function PagoForm({
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="campo-label mb-0">Monto *</label>
-            {/* indicador en tiempo real */}
             {tipoPagoActual && (
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'
@@ -57,7 +62,7 @@ export default function PagoForm({
           </div>
           <input
             type="number" step="0.01" min="0.01"
-            max={montoPendiente > 0 ? montoPendiente : undefined}
+            max={!esFiado && montoPendiente > 0 ? montoPendiente : undefined}
             value={form.monto}
             onChange={handleMonto}
             className={`campo-input ${errores.monto ? 'border-red-400' : ''}`}
@@ -87,7 +92,7 @@ export default function PagoForm({
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button type="submit"
-            disabled={creando || pagoCompleto || (+form.monto > montoPendiente)}
+            disabled={creando || pagoCompleto || (!esFiado && +form.monto > montoPendiente)}
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
           </button>

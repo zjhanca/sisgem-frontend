@@ -52,7 +52,6 @@ export default function OrdCompra() {
         </select>
       )
     },
-    { key: 'fecha_limite_pago', label: 'Límite Pago', render: r => r.fecha_limite_pago ? formatFecha(r.fecha_limite_pago) : '—' },
   ]
 
   return (

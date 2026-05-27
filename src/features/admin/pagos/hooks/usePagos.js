@@ -19,6 +19,7 @@ export function usePagos() {
 
   const { data: pagos = [] }   = useQuery({ queryKey: ['pagos'],   queryFn: pagosService.getAll })
   const { data: pedidos = [] } = useQuery({ queryKey: ['pedidos'], queryFn: () => pagosService.getPedidos().then(d => d.filter(p => !p.estado?.toLowerCase().includes('anula'))) })
+
   const pagadoPorPedido = pedidos.reduce((acc, p) => {
     const activos = pagos.filter(pg => pg.pedido_id === p.id && !esAnulado(pg.estado))
     acc[p.id] = activos.reduce((s, pg) => s + +pg.monto, 0)
@@ -26,24 +27,13 @@ export function usePagos() {
   }, {})
 
   const pedidoSel      = pedidos.find(p => p.id === +form.pedido_id)
+  const esFiado        = !!pedidoSel?.permite_fiado
   const totalPedido    = pedidoSel?.total || 0
   const totalPagado    = pagadoPorPedido[+form.pedido_id] || 0
   const montoPendiente = Math.max(0, totalPedido - totalPagado)
   const pagoCompleto   = totalPedido > 0 && montoPendiente === 0
 
   const getFechaPago = p => p.fecha_pago || p.fecha || p.created_at || null
-
-  // determinar estado_id según si es pago total o abono
-  const getEstadoIdPago = (monto) => {
-    const esCompleto = +monto >= montoPendiente
-    if (esCompleto) {
-      const e = estadosPago.find(e => e.nombre?.toLowerCase().includes('paga') || e.nombre?.toLowerCase().includes('activ'))
-      return e?.id || null
-    } else {
-      const e = estadosPago.find(e => e.nombre?.toLowerCase().includes('abono'))
-      return e?.id || null
-    }
-  }
 
   const crear = useMutation({
     mutationFn: data => pagosService.create(data),
@@ -65,7 +55,7 @@ export function usePagos() {
     const e = {}
     if (!form.pedido_id)                 e.pedido_id = 'Selecciona un pedido'
     if (!form.monto || +form.monto <= 0) e.monto     = 'Monto inválido'
-    if (+form.monto > montoPendiente)    e.monto     = `El monto no puede superar ${montoPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}`
+    if (!esFiado && +form.monto > montoPendiente) e.monto = `El monto no puede superar ${montoPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}`
     if (pagoCompleto)                    e.monto     = 'El pedido ya está completamente pagado'
     return e
   }
@@ -80,7 +70,6 @@ export function usePagos() {
   function esAbono(n)   { return n && n.toLowerCase().includes('abono') }
   function esAnulado(n) { return n && (n.toLowerCase().includes('anula') || n.toLowerCase().includes('cancel')) }
 
-  // etiqueta del estado del pago
   const getEstadoPago = (estado) => {
     if (!estado) return { label: 'Pagado', clase: 'badge-activo' }
     if (esAnulado(estado)) return { label: 'Anulado', clase: 'badge-anulado' }
@@ -99,7 +88,6 @@ export function usePagos() {
     return true
   })
 
-  // indicador en tiempo real: si el monto actual sería abono o pago total
   const tipoPagoActual = form.monto && +form.monto > 0
     ? (+form.monto >= montoPendiente ? 'total' : 'abono')
     : null
@@ -112,7 +100,7 @@ export function usePagos() {
     filtroDesde, setFiltroDesde,
     filtroHasta, setFiltroHasta,
     filtroBusqueda, setFiltroBusqueda,
-    totalPedido, totalPagado, montoPendiente, pagoCompleto,
+    totalPedido, totalPagado, montoPendiente, pagoCompleto, esFiado,
     handleSubmit, anular, esPagado, esAbono, esAnulado, getFechaPago,
     getEstadoPago, tipoPagoActual,
     creando: crear.isPending, anulando: anular.isPending,
