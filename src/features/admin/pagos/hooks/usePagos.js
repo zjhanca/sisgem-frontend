@@ -50,6 +50,7 @@ export function usePagos() {
     const e = {}
     if (!form.pedido_id)                 e.pedido_id = 'Selecciona un pedido'
     if (!form.monto || +form.monto <= 0) e.monto     = 'Monto inválido'
+    if (+form.monto > montoPendiente)    e.monto     = `El monto no puede superar ${montoPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}`
     if (pagoCompleto)                    e.monto     = 'El pedido ya está completamente pagado'
     return e
   }
