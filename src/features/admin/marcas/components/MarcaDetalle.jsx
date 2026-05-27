@@ -1,10 +1,13 @@
 import Modal from '@shared/components/Modal'
 import { Edit2, ExternalLink } from 'lucide-react'
- 
+import { normalizarUrl } from '../hooks/useMarcas'
+
 export default function MarcaDetalle({ modalDetalle, setModalDetalle, abrirModal }) {
   const item = modalDetalle.item
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
- 
+
+  const urlFinal = item?.sitio_web ? normalizarUrl(item.sitio_web) : ''
+
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} titulo="Detalle de la Marca" ancho="max-w-lg">
       {item && (
@@ -21,16 +24,18 @@ export default function MarcaDetalle({ modalDetalle, setModalDetalle, abrirModal
               <span className={item.estado ? 'badge-activo' : 'badge-inactivo'}>{item.estado ? 'Activa' : 'Inactiva'}</span>
               {item.proveedor && <p className="text-xs text-gray-400 mt-1">Proveedor: {item.proveedor}</p>}
               {item.descripcion && <p className="text-xs text-gray-400 mt-1">{item.descripcion}</p>}
-              {item.sitio_web && (
-                <a href={item.sitio_web} target="_blank" rel="noopener noreferrer"
+              {urlFinal && (
+                <a href={urlFinal} target="_blank" rel="noopener noreferrer"
                   className="text-xs text-primary flex items-center gap-1 mt-1 hover:underline">
-                  <ExternalLink size={10} /> {item.sitio_web}
+                  <ExternalLink size={10} /> {urlFinal}
                 </a>
               )}
             </div>
           </div>
           <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
+            <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs">
+              <Edit2 size={12} /> Editar
+            </button>
           </div>
         </div>
       )}
