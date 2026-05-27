@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
 import { useTema } from '@shared/contexts/ThemeContext'
@@ -61,25 +61,12 @@ const estadoInicial = () => {
   return MENU.reduce((acc, g) => ({ ...acc, [g.id]: true }), {})
 }
 
-export default function AdminLayout() {
-  const { usuario, logout } = useAuth()
-  const { tema, toggleTema } = useTema()
-  const navigate = useNavigate()
-  const [collapsed, setCollapsed]         = useState(false)
-  const [menuMovil, setMenuMovil]         = useState(false)
-  const [gruposAbiertos, setGruposAbiertos] = useState(estadoInicial)
+// ── Sidebar como componente de nivel superior (fuera de AdminLayout)
+// Así React nunca lo desmonta al re-renderizar AdminLayout
+function SidebarContent({ collapsed, mobile, usuario, tema, toggleTema, handleLogout, toggleCollapse, gruposAbiertos, toggleGrupo }) {
+  const navRef = useRef(null)
 
-  const toggleGrupo = useCallback(id => {
-    setGruposAbiertos(prev => {
-      const nuevo = { ...prev, [id]: !prev[id] }
-      try { localStorage.setItem('sisgem-menu-grupos', JSON.stringify(nuevo)) } catch {}
-      return nuevo
-    })
-  }, [])
-
-  const handleLogout = () => { logout(); navigate('/login') }
-
-  const Sidebar = ({ mobile = false }) => (
+  return (
     <div className={`flex flex-col h-full bg-dark-bg border-r border-dark-border
       ${mobile ? 'w-72' : collapsed ? 'w-16' : 'w-60'} transition-all duration-200`}>
 
@@ -92,15 +79,15 @@ export default function AdminLayout() {
           <span className="font-bold text-primary text-base">SISGEM</span>
         )}
         {!mobile && (
-          <button onClick={() => setCollapsed(c => !c)}
+          <button onClick={toggleCollapse}
             className="ml-auto text-dark-text/40 hover:text-primary transition-colors">
             {collapsed ? <ChevronRight size={14} /> : <ChevronRight size={14} className="rotate-180" />}
           </button>
         )}
       </div>
 
-      {/* menú */}
-      <nav className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
+      {/* menú — ref para preservar scroll */}
+      <nav ref={navRef} className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
         {MENU.map(grupo => {
           const abierto = gruposAbiertos[grupo.id] ?? true
 
@@ -183,22 +170,48 @@ export default function AdminLayout() {
       </div>
     </div>
   )
+}
+
+export default function AdminLayout() {
+  const { usuario, logout } = useAuth()
+  const { tema, toggleTema } = useTema()
+  const navigate = useNavigate()
+  const [collapsed, setCollapsed]           = useState(false)
+  const [menuMovil, setMenuMovil]           = useState(false)
+  const [gruposAbiertos, setGruposAbiertos] = useState(estadoInicial)
+
+  const toggleGrupo = useCallback(id => {
+    setGruposAbiertos(prev => {
+      const nuevo = { ...prev, [id]: !prev[id] }
+      try { localStorage.setItem('sisgem-menu-grupos', JSON.stringify(nuevo)) } catch {}
+      return nuevo
+    })
+  }, [])
+
+  const handleLogout    = useCallback(() => { logout(); navigate('/login') }, [logout, navigate])
+  const toggleCollapse  = useCallback(() => setCollapsed(c => !c), [])
+  const cerrarMovil     = useCallback(() => setMenuMovil(false), [])
+
+  const sidebarProps = {
+    usuario, tema, toggleTema, handleLogout,
+    toggleCollapse, gruposAbiertos, toggleGrupo,
+  }
 
   return (
     <div className="flex h-screen bg-dark-bg overflow-hidden">
 
-      {/* sidebar desktop */}
+      {/* sidebar desktop — siempre montado, nunca se desmonta */}
       <div className="hidden md:flex shrink-0">
-        <Sidebar />
+        <SidebarContent {...sidebarProps} collapsed={collapsed} mobile={false} />
       </div>
 
       {/* sidebar móvil */}
       {menuMovil && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMenuMovil(false)} />
+          <div className="absolute inset-0 bg-black/50" onClick={cerrarMovil} />
           <div className="absolute left-0 top-0 bottom-0 flex">
-            <Sidebar mobile />
-            <button onClick={() => setMenuMovil(false)} className="mt-4 ml-2 p-1.5 text-white">
+            <SidebarContent {...sidebarProps} collapsed={false} mobile />
+            <button onClick={cerrarMovil} className="mt-4 ml-2 p-1.5 text-white">
               <X size={18} />
             </button>
           </div>
