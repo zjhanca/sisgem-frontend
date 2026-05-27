@@ -1,7 +1,8 @@
+import { useRef, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
 import { Search, Scan, Trash2 } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
- 
+
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
   clientes, clientesFiltrados, clienteBusqueda, setClienteBusqueda,
@@ -9,6 +10,23 @@ export default function VentaForm({
   agregarProducto, quitarProducto, totalVenta, handleCrear, creando
 }) {
   const cerrar = () => { setModalNuevo(false); setForm({ tipo_cliente:'registrado', cliente_id:'', cliente_nombre:'', productos:[] }) }
+  const dropdownRef = useRef(null)
+
+  // cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handler = e => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
+        setClienteBusqueda('')
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [setClienteBusqueda])
+
+  const seleccionarCliente = c => {
+    setForm(f => ({ ...f, cliente_id: c.id }))
+    setClienteBusqueda('') // limpia el input y cierra el dropdown
+  }
+
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
       <form onSubmit={handleCrear} className="space-y-4">
@@ -18,7 +36,7 @@ export default function VentaForm({
             <p className="text-xs text-gray-500">Se registrará automáticamente como pagada</p>
           </div>
         </div>
- 
+
         <div>
           <label className="campo-label">Cliente</label>
           <div className="flex gap-2 mb-2">
@@ -30,25 +48,42 @@ export default function VentaForm({
               </button>
             ))}
           </div>
+
           {form.tipo_cliente === 'registrado' ? (
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
-              <input value={clienteBusqueda} onChange={e => setClienteBusqueda(e.target.value)}
-                className="campo-input pl-8 text-xs" placeholder="Buscar cliente por nombre..." />
+              <input
+                value={clienteBusqueda}
+                onChange={e => { setClienteBusqueda(e.target.value); setForm(f => ({ ...f, cliente_id: '' })) }}
+                className="campo-input pl-8 text-xs"
+                placeholder={form.cliente_id
+                  ? `✓ ${clientes.find(c => c.id === +form.cliente_id)?.nombre || ''} ${clientes.find(c => c.id === +form.cliente_id)?.apellido || ''}`
+                  : 'Buscar cliente por nombre...'}
+              />
+              {/* botón limpiar selección */}
+              {form.cliente_id && !clienteBusqueda && (
+                <button type="button"
+                  onClick={() => { setForm(f => ({ ...f, cliente_id: '' })); setClienteBusqueda('') }}
+                  className="absolute right-2 top-2 text-gray-400 hover:text-red-400 text-xs">✕</button>
+              )}
+              {/* dropdown */}
               {clienteBusqueda && clientesFiltrados.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 z-30 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                   {clientesFiltrados.map(c => (
                     <button key={c.id} type="button"
-                      onClick={() => { setForm(f => ({ ...f, cliente_id: c.id })); setClienteBusqueda(`${c.nombre} ${c.apellido}`) }}
-                      className={`w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between ${form.cliente_id === c.id ? 'text-primary' : 'text-light-text dark:text-dark-text'}`}>
+                      onMouseDown={e => { e.preventDefault(); seleccionarCliente(c) }}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text dark:text-dark-text">
                       <span>{c.nombre} {c.apellido}</span>
                       {c.telefono && <span className="text-gray-400">{c.telefono}</span>}
                     </button>
                   ))}
                 </div>
               )}
-              {form.cliente_id && (
-                <p className="text-xs text-primary mt-1">✓ {clientes.find(c => c.id === +form.cliente_id)?.nombre} {clientes.find(c => c.id === +form.cliente_id)?.apellido}</p>
+              {/* confirmación seleccionado */}
+              {form.cliente_id && !clienteBusqueda && (
+                <p className="text-xs text-primary mt-1">
+                  ✓ {clientes.find(c => c.id === +form.cliente_id)?.nombre} {clientes.find(c => c.id === +form.cliente_id)?.apellido}
+                </p>
               )}
             </div>
           ) : (
@@ -56,7 +91,7 @@ export default function VentaForm({
               className="campo-input" placeholder="Nombre del cliente" />
           )}
         </div>
- 
+
         <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-2">
           <p className="text-xs font-semibold">Productos</p>
           <div className="flex gap-2">
@@ -104,7 +139,7 @@ export default function VentaForm({
             </div>
           )}
         </div>
- 
+
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button type="submit" disabled={creando} className="btn-primary">{creando ? 'Registrando...' : 'Aceptar'}</button>
