@@ -129,16 +129,15 @@ export default function VentaForm({
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {form.productos.map((p, i) => {
                 const stock = p.stock ?? Infinity
-                const excede = p.cantidad > stock
+                const cantInvalida = !p.cantidad || +p.cantidad < 1
+                const excede = !cantInvalida && p.cantidad > stock || !p.cantidad || +p.cantidad < 1
                 return (
-                  <div key={i} className={`flex justify-between items-center text-xs p-2 rounded transition-colors ${
-                    excede ? 'bg-red-500/10 border border-red-400/30' : 'bg-light-bg dark:bg-dark-bg'
-                  }`}>
+                  <div key={i} className="flex flex-col gap-0.5">
                     <div className="flex-1 min-w-0">
                       <p className="truncate">{p.nombre}</p>
                       {stock !== Infinity && (
                         <p className={`text-xs mt-0.5 ${excede ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
-                          {excede ? `⚠ Máx. ${stock}` : `Stock: ${stock}`}
+                          {(!p.cantidad || +p.cantidad < 1) ? '⚠ Cantidad inválida' : excede ? `⚠ Máx. ${stock}` : `Stock: ${stock}`}
                         </p>
                       )}
                     </div>
@@ -169,7 +168,7 @@ export default function VentaForm({
                           if (!e.target.value || +e.target.value < 1) cambiarCantidad(i, 1)
                         }}
                         className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
-                          excede
+                          (excede || cantInvalida)
                             ? 'border-red-400 focus:ring-red-400/30 text-red-400'
                             : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
                         }`}
@@ -188,6 +187,12 @@ export default function VentaForm({
                         <Trash2 size={12} />
                       </button>
                     </div>
+                  {(cantInvalida || excede) && (
+                    <p className="text-xs text-red-400 flex items-center gap-1 px-1">
+                      <span>⚠</span>
+                      {cantInvalida ? 'La cantidad debe ser al menos 1' : `Solo hay ${stock} unidades en stock`}
+                    </p>
+                  )}
                   </div>
                 )
               })}
@@ -202,7 +207,7 @@ export default function VentaForm({
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button type="submit"
-            disabled={creando || form.productos.some(p => p.cantidad > (p.stock ?? Infinity))}
+            disabled={creando || form.productos.some(p => !p.cantidad || +p.cantidad < 1 || p.cantidad > (p.stock ?? Infinity))}
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
           </button>

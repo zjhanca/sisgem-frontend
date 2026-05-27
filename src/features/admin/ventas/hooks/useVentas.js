@@ -124,8 +124,9 @@ export function useVentas() {
     if (form.tipo_cliente === 'registrado' && !form.cliente_id) { toast.error('Selecciona un cliente'); return }
     if (form.tipo_cliente === 'manual' && !form.cliente_nombre.trim()) { toast.error('Ingresa el nombre del cliente'); return }
     if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
-    // validación final de stock
+    // validación final
     for (const p of form.productos) {
+      if (!p.cantidad || +p.cantidad < 1) { toast.error(`${p.nombre}: la cantidad debe ser al menos 1`); return }
       const stock = p.stock ?? getStock(p.producto_id)
       if (p.cantidad > stock) { toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return }
     }
