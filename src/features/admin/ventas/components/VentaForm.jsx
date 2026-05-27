@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Trash2 } from 'lucide-react'
+import { Search, Scan, Trash2, CreditCard, Clock } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function VentaForm({
@@ -9,7 +9,10 @@ export default function VentaForm({
   prodBusqueda, prodsFiltrados, buscarProducto, buscarPorCodigo,
   agregarProducto, quitarProducto, cambiarCantidad, totalVenta, handleCrear, creando
 }) {
-  const cerrar = () => { setModalNuevo(false); setForm({ tipo_cliente:'registrado', cliente_id:'', cliente_nombre:'', productos:[] }) }
+  const cerrar = () => {
+    setModalNuevo(false)
+    setForm({ tipo_cliente:'registrado', cliente_id:'', cliente_nombre:'', productos:[], tipo_pago:'total' })
+  }
   const dropdownRef = useRef(null)
 
   useEffect(() => {
@@ -22,19 +25,36 @@ export default function VentaForm({
   }, [setClienteBusqueda])
 
   const seleccionarCliente = c => {
-    setForm(f => ({ ...f, cliente_id: c.id }))
+    setForm(f => ({ ...f, cliente_id: c.id, tipo_pago: 'total' }))
     setClienteBusqueda('')
   }
 
   const clienteSeleccionado = clientes.find(c => c.id === +form.cliente_id)
+  const permitefiado = clienteSeleccionado?.permite_fiado
 
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
       <form onSubmit={handleCrear} className="space-y-4">
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/30">
+
+        {/* banner tipo pago */}
+        <div className={`flex items-center gap-2 p-3 rounded-xl border ${
+          form.tipo_pago === 'fiado'
+            ? 'bg-amber-500/10 border-amber-500/30'
+            : 'bg-primary/10 border-primary/30'
+        }`}>
+          {form.tipo_pago === 'fiado'
+            ? <Clock size={15} className="text-amber-500 shrink-0" />
+            : <CreditCard size={15} className="text-primary shrink-0" />
+          }
           <div>
-            <p className="text-xs font-semibold text-primary">Venta en Mostrador</p>
-            <p className="text-xs text-gray-500">Se registrará automáticamente como pagada</p>
+            <p className={`text-xs font-semibold ${form.tipo_pago === 'fiado' ? 'text-amber-500' : 'text-primary'}`}>
+              {form.tipo_pago === 'fiado' ? 'Venta a Crédito (Fiado)' : 'Venta en Mostrador'}
+            </p>
+            <p className="text-xs text-gray-500">
+              {form.tipo_pago === 'fiado'
+                ? 'El cliente pagará después — quedará como pendiente'
+                : 'Se registrará automáticamente como pagada'}
+            </p>
           </div>
         </div>
 
@@ -44,7 +64,7 @@ export default function VentaForm({
           <div className="flex gap-2 mb-2">
             {[{ val:'registrado', label:'Cliente Registrado' }, { val:'manual', label:'Nombre Manual' }].map(t => (
               <button key={t.val} type="button"
-                onClick={() => { setForm(f => ({ ...f, tipo_cliente: t.val, cliente_id: '', cliente_nombre: '' })); setClienteBusqueda('') }}
+                onClick={() => { setForm(f => ({ ...f, tipo_cliente: t.val, cliente_id: '', cliente_nombre: '', tipo_pago: 'total' })); setClienteBusqueda('') }}
                 className={`px-3 py-1 text-xs rounded-full border ${form.tipo_cliente === t.val ? 'bg-primary text-dark-bg border-primary' : 'border-gray-200 dark:border-dark-border text-gray-500'}`}>
                 {t.label}
               </button>
@@ -55,9 +75,12 @@ export default function VentaForm({
             <div className="space-y-1" ref={dropdownRef}>
               {clienteSeleccionado && !clienteBusqueda ? (
                 <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
-                  <span className="font-medium text-primary">{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-primary">{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</span>
+                    {permitefiado && <span className="badge-pendiente">Fiado habilitado</span>}
+                  </div>
                   <button type="button"
-                    onClick={() => { setForm(f => ({ ...f, cliente_id: '' })); setClienteBusqueda('') }}
+                    onClick={() => { setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' })); setClienteBusqueda('') }}
                     className="text-gray-400 hover:text-red-400 ml-2">✕</button>
                 </div>
               ) : (
@@ -65,7 +88,7 @@ export default function VentaForm({
                   <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
                   <input
                     value={clienteBusqueda}
-                    onChange={e => { setClienteBusqueda(e.target.value); setForm(f => ({ ...f, cliente_id: '' })) }}
+                    onChange={e => { setClienteBusqueda(e.target.value); setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' })) }}
                     className="campo-input pl-8 text-xs"
                     placeholder="Buscar cliente por nombre..."
                   />
@@ -75,12 +98,43 @@ export default function VentaForm({
                         <button key={c.id} type="button"
                           onMouseDown={e => { e.preventDefault(); seleccionarCliente(c) }}
                           className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text dark:text-dark-text">
-                          <span>{c.nombre} {c.apellido}</span>
+                          <div className="flex items-center gap-2">
+                            <span>{c.nombre} {c.apellido}</span>
+                            {c.permite_fiado && <span className="badge-pendiente text-xs">Fiado</span>}
+                          </div>
                           {c.telefono && <span className="text-gray-400">{c.telefono}</span>}
                         </button>
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* selector tipo pago — solo si hay cliente seleccionado */}
+              {clienteSeleccionado && (
+                <div className="flex gap-2 pt-1">
+                  <button type="button"
+                    onClick={() => setForm(f => ({ ...f, tipo_pago: 'total' }))}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs rounded-lg border transition-all ${
+                      form.tipo_pago === 'total'
+                        ? 'bg-primary text-dark-bg border-primary font-medium'
+                        : 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'
+                    }`}>
+                    <CreditCard size={12} /> Pago Total
+                  </button>
+                  <button type="button"
+                    disabled={!permitefiado}
+                    onClick={() => permitefiado && setForm(f => ({ ...f, tipo_pago: 'fiado' }))}
+                    title={!permitefiado ? 'Este cliente no tiene habilitado el fiado' : ''}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs rounded-lg border transition-all ${
+                      form.tipo_pago === 'fiado'
+                        ? 'bg-amber-500 text-white border-amber-500 font-medium'
+                        : permitefiado
+                          ? 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-amber-400/50 hover:text-amber-500'
+                          : 'border-gray-200 dark:border-dark-border text-gray-300 dark:text-dark-text/20 cursor-not-allowed opacity-50'
+                    }`}>
+                    <Clock size={12} /> Fiado
+                  </button>
                 </div>
               )}
             </div>
@@ -132,7 +186,6 @@ export default function VentaForm({
                 const hayError = cantInvalida || excede
                 return (
                   <div key={i} className="flex flex-col">
-                    {/* fila — diseño original */}
                     <div className="flex justify-between items-center text-xs p-2 rounded bg-light-bg dark:bg-dark-bg">
                       <span className="flex-1 truncate">{p.nombre}</span>
                       <div className="flex items-center gap-2 shrink-0">
@@ -140,31 +193,20 @@ export default function VentaForm({
                           <button type="button"
                             onClick={() => cambiarCantidad(i, Math.max(1, (+p.cantidad || 2) - 1))}
                             disabled={!p.cantidad || +p.cantidad <= 1}
-                            className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
-                            −
-                          </button>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            value={p.cantidad}
+                            className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">−</button>
+                          <input type="text" inputMode="numeric" value={p.cantidad}
                             onChange={e => {
                               const val = e.target.value
                               if (val === '') { cambiarCantidad(i, ''); return }
                               if (/^\d+$/.test(val)) cambiarCantidad(i, val)
                             }}
-
                             className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
-                              hayError
-                                ? 'border-red-400 focus:ring-red-400/30 text-red-400'
-                                : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
-                            }`}
-                          />
+                              hayError ? 'border-red-400 focus:ring-red-400/30 text-red-400' : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
+                            }`} />
                           <button type="button"
                             onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
                             disabled={stock !== Infinity && +p.cantidad >= stock}
-                            className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
-                            +
-                          </button>
+                            className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">+</button>
                         </div>
                         <span className={`font-medium w-16 text-right ${hayError ? 'text-red-400' : 'text-primary'}`}>
                           {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
@@ -174,7 +216,6 @@ export default function VentaForm({
                         </button>
                       </div>
                     </div>
-                    {/* alerta pequeña solo si hay error */}
                     {hayError && (
                       <p className="text-xs text-red-400 px-2 pb-0.5">
                         ⚠ {cantInvalida ? 'La cantidad debe ser al menos 1' : `Solo hay ${stock} unidades disponibles`}
@@ -195,8 +236,8 @@ export default function VentaForm({
           <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button type="submit"
             disabled={creando || form.productos.some(p => !p.cantidad || +p.cantidad < 1 || (p.stock !== undefined && +p.cantidad > p.stock))}
-            className="btn-primary disabled:opacity-50">
-            {creando ? 'Registrando...' : 'Aceptar'}
+            className={`btn-primary disabled:opacity-50 ${form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''}`}>
+            {creando ? 'Registrando...' : form.tipo_pago === 'fiado' ? 'Registrar Fiado' : 'Aceptar'}
           </button>
         </div>
       </form>

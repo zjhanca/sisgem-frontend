@@ -1,4 +1,4 @@
-﻿import { Plus, Eye, Download, Ban, XCircle } from 'lucide-react'
+﻿import { Plus, Eye, Download, Ban } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
@@ -6,7 +6,7 @@ import { usePagos } from '../hooks/usePagos'
 import PagoForm    from '../components/PagoForm'
 import PagoDetalle from '../components/PagoDetalle'
 import PagoAnular  from '../components/PagoAnular'
- 
+
 export default function Pagos() {
   const {
     pagosFiltrados, pedidos, form, errores,
@@ -17,12 +17,13 @@ export default function Pagos() {
     filtroHasta, setFiltroHasta,
     filtroBusqueda, setFiltroBusqueda,
     totalPedido, totalPagado, montoPendiente, pagoCompleto,
-    handleSubmit, anular, esPagado, esAnulado, getFechaPago,
+    handleSubmit, anular, esAnulado, getFechaPago,
+    getEstadoPago, tipoPagoActual,
     creando, anulando,
   } = usePagos()
- 
+
   const hayFiltros = filtroEstado || filtroDesde || filtroHasta || filtroBusqueda
- 
+
   const columnas = [
     { key: 'id',        label: '#' },
     { key: 'pedido_id', label: 'Pedido',  render: r => `#${r.pedido_id}` },
@@ -30,19 +31,14 @@ export default function Pagos() {
     { key: 'monto',     label: 'Monto',   render: r => formatPrecio(r.monto) },
     { key: 'metodo',    label: 'Método',  render: r => r.metodo || '—' },
     { key: 'estado', label: 'Estado',
-      render: r => (
-        <div className="flex items-center gap-1">
-          {esAnulado(r.estado) && <XCircle size={13} className="text-red-400" />}
-          <span className={esAnulado(r.estado) ? 'badge-anulado' : 'badge-activo'}>
-            {esAnulado(r.estado) ? 'Anulado' : 'Pagado'}
-          </span>
-        </div>
-      )
+      render: r => {
+        const { label, clase } = getEstadoPago(r.estado)
+        return <span className={clase}>{label}</span>
+      }
     },
-    // usa getFechaPago para intentar todos los posibles campos de fecha
     { key: 'fecha', label: 'Fecha', render: r => formatFechaHora(getFechaPago(r)) || '—' },
   ]
- 
+
   return (
     <div>
       <div className="page-header">
@@ -56,8 +52,7 @@ export default function Pagos() {
           </button>
         </div>
       </div>
- 
-      {/* filtros */}
+
       <div className="flex gap-2 mb-4 flex-wrap items-end">
         <div>
           <p className="campo-label mb-0.5">Buscar</p>
@@ -69,6 +64,7 @@ export default function Pagos() {
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
             <option value="">Todos</option>
             <option value="pagado">Pagados</option>
+            <option value="abono">Abonos</option>
             <option value="anulado">Anulados</option>
           </select>
         </div>
@@ -84,12 +80,10 @@ export default function Pagos() {
         </div>
         {hayFiltros && (
           <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta(''); setFiltroBusqueda('') }}
-            className="btn-ghost text-xs text-red-400 self-end">
-            Limpiar
-          </button>
+            className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
         )}
       </div>
- 
+
       <Tabla columnas={columnas} datos={pagosFiltrados} sinBusqueda
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, pago: fila })} className="btn-ghost"><Eye size={14} /></button>
@@ -99,11 +93,12 @@ export default function Pagos() {
           )}
         </>)}
       />
- 
+
       <PagoForm modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
         form={form} setForm={setForm} errores={errores} pedidos={pedidos}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}
-        pagoCompleto={pagoCompleto} handleSubmit={handleSubmit} creando={creando} />
+        pagoCompleto={pagoCompleto} handleSubmit={handleSubmit} creando={creando}
+        tipoPagoActual={tipoPagoActual} />
       <PagoDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         setModalAnular={setModalAnular} esAnulado={esAnulado} />
       <PagoAnular modalAnular={modalAnular} setModalAnular={setModalAnular}

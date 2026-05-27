@@ -12,7 +12,10 @@ export function useVentas() {
   const [filtroBusqueda, setFiltroBusqueda] = useState('')
   const [filtroDesde, setFiltroDesde]   = useState('')
   const [filtroHasta, setFiltroHasta]   = useState('')
-  const [form, setForm] = useState({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [] })
+  const [form, setForm] = useState({
+    tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '',
+    productos: [], tipo_pago: 'total', // 'total' | 'fiado'
+  })
   const [prodBusqueda, setProdBusqueda]       = useState('')
   const [prodsFiltrados, setProdsFiltrados]   = useState([])
   const [clienteBusqueda, setClienteBusqueda] = useState('')
@@ -22,24 +25,32 @@ export function useVentas() {
   const { data: productos = [] } = useQuery({ queryKey: ['productos'],      queryFn: ventasService.getProductos })
   const { data: estados = [] }   = useQuery({ queryKey: ['estados-pedido'], queryFn: ventasService.getEstados })
 
-  const estadoPagado = estados.find(e => e.nombre?.toLowerCase().includes('paga') || e.nombre?.toLowerCase().includes('complet'))
+  const estadoPagado   = estados.find(e => e.nombre?.toLowerCase().includes('paga') || e.nombre?.toLowerCase().includes('complet'))
+  const estadoPendiente = estados.find(e => e.nombre?.toLowerCase().includes('pendiente'))
 
-  // obtener stock real de un producto por su id
   const getStock = producto_id => productos.find(p => p.id === producto_id)?.stock ?? Infinity
 
   const crearVenta = useMutation({
     mutationFn: async data => {
       const res = await ventasService.create({ ...data, tipo_venta: 'mostrador' })
       const pedido_id = res.data.pedido_id
-      if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
-      await ventasService.registrarPago({ pedido_id, monto: data._total, metodo: 'efectivo' })
+
+      if (data._tipo_pago === 'fiado') {
+        // fiado: dejar en pendiente, no registrar pago
+        if (estadoPendiente) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPendiente.id })
+      } else {
+        // pago total: marcar pagado y registrar pago
+        if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
+        await ventasService.registrarPago({ pedido_id, monto: data._total, metodo: 'efectivo' })
+      }
       return res.data
     },
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       qc.invalidateQueries(['pedidos']); qc.invalidateQueries(['productos']); qc.invalidateQueries(['pagos'])
-      setModalNuevo(false); setForm({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [] })
+      setModalNuevo(false)
+      setForm({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [], tipo_pago: 'total' })
       setProdBusqueda(''); setClienteBusqueda('')
-      toast.success('Venta registrada y marcada como pagada')
+      toast.success(vars._tipo_pago === 'fiado' ? 'Venta registrada como fiado' : 'Venta registrada y marcada como pagada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
@@ -79,31 +90,24 @@ export function useVentas() {
     const stock = prod.stock ?? getStock(prod.id)
     const existe = form.productos.find(p => p.producto_id === prod.id)
     if (existe) {
-      if (existe.cantidad >= stock) {
-        toast.error(`Stock insuficiente — solo hay ${stock} unidades`)
-        return
-      }
+      if (existe.cantidad >= stock) { toast.error(`Stock insuficiente — solo hay ${stock} unidades`); return }
       setForm(f => ({ ...f, productos: f.productos.map(p =>
         p.producto_id === prod.id ? { ...p, cantidad: p.cantidad + 1 } : p
       )}))
     } else {
       if (stock < 1) { toast.error('Sin stock disponible'); return }
       setForm(f => ({ ...f, productos: [...f.productos, {
-        producto_id: prod.id,
-        cantidad: 1,
+        producto_id: prod.id, cantidad: 1,
         precio_unitario: parseFloat(prod.precio),
-        nombre: prod.nombre,
-        stock, // guardamos el stock para validar en el form
+        nombre: prod.nombre, stock,
       }]}))
     }
     setProdBusqueda(''); setProdsFiltrados([])
   }
 
-  // cambia cantidad con validación de stock y mínimo 1
   const cambiarCantidad = (idx, nuevaCantidad) => {
     const prod = form.productos[idx]
     const stock = prod.stock ?? getStock(prod.producto_id)
-    // si viene vacío, guardar vacío temporalmente (el blur lo corrige)
     if (nuevaCantidad === '') {
       setForm(f => ({ ...f, productos: f.productos.map((p, i) => i === idx ? { ...p, cantidad: '' } : p) }))
       return
@@ -111,33 +115,38 @@ export function useVentas() {
     const num = Math.max(1, +nuevaCantidad || 1)
     const cant = Math.min(num, stock)
     if (+nuevaCantidad > stock) toast.error(`Stock insuficiente — máximo ${stock} unidades`)
-    setForm(f => ({ ...f, productos: f.productos.map((p, i) =>
-      i === idx ? { ...p, cantidad: cant } : p
-    )}))
+    setForm(f => ({ ...f, productos: f.productos.map((p, i) => i === idx ? { ...p, cantidad: cant } : p) }))
   }
 
   const quitarProducto = idx => setForm(f => ({ ...f, productos: f.productos.filter((_, i) => i !== idx) }))
-  const totalVenta = form.productos.reduce((s, p) => s + p.precio_unitario * p.cantidad, 0)
+  const totalVenta = form.productos.reduce((s, p) => s + p.precio_unitario * (+p.cantidad || 0), 0)
 
   const handleCrear = e => {
     e.preventDefault()
     if (form.tipo_cliente === 'registrado' && !form.cliente_id) { toast.error('Selecciona un cliente'); return }
     if (form.tipo_cliente === 'manual' && !form.cliente_nombre.trim()) { toast.error('Ingresa el nombre del cliente'); return }
     if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
-    // validación final
     for (const p of form.productos) {
       if (!p.cantidad || +p.cantidad < 1) { toast.error(`${p.nombre}: la cantidad debe ser al menos 1`); return }
       const stock = p.stock ?? getStock(p.producto_id)
       if (p.cantidad > stock) { toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return }
     }
     crearVenta.mutate({
-      cliente_id:    form.tipo_cliente === 'registrado' ? form.cliente_id    : null,
-      cliente_nombre:form.tipo_cliente === 'manual'     ? form.cliente_nombre : null,
-      productos: form.productos, _total: totalVenta,
+      cliente_id:     form.tipo_cliente === 'registrado' ? form.cliente_id    : null,
+      cliente_nombre: form.tipo_cliente === 'manual'     ? form.cliente_nombre : null,
+      productos:      form.productos,
+      _total:         totalVenta,
+      _tipo_pago:     form.tipo_pago,
     })
   }
 
-  const getBadge = n => { if (!n) return 'badge-pendiente'; const l=n.toLowerCase(); if(l.includes('anula')) return 'badge-anulado'; if(l.includes('entrega')||l.includes('paga')||l.includes('complet')) return 'badge-activo'; return 'badge-pendiente' }
+  const getBadge = n => {
+    if (!n) return 'badge-pendiente'
+    const l = n.toLowerCase()
+    if (l.includes('anula')) return 'badge-anulado'
+    if (l.includes('entrega') || l.includes('paga') || l.includes('complet')) return 'badge-activo'
+    return 'badge-pendiente'
+  }
 
   const ventasFiltradas = ventas.filter(v => {
     if (filtroEstado && v.estado_id !== +filtroEstado) return false

@@ -1,12 +1,15 @@
 import Modal from '@shared/components/Modal'
 import { formatPrecio } from '@shared/utils/validaciones'
 
-export default function PagoForm({ modalNuevo, setModalNuevo, form, setForm, errores, pedidos, totalPedido, totalPagado, montoPendiente, pagoCompleto, handleSubmit, creando }) {
+export default function PagoForm({
+  modalNuevo, setModalNuevo, form, setForm, errores,
+  pedidos, totalPedido, totalPagado, montoPendiente, pagoCompleto,
+  handleSubmit, creando, tipoPagoActual
+}) {
   const cerrar = () => { setModalNuevo(false) }
 
   const handleMonto = e => {
     const val = e.target.value
-    // no permitir valor mayor al pendiente
     if (montoPendiente > 0 && +val > montoPendiente) {
       setForm(p => ({ ...p, monto: montoPendiente }))
     } else {
@@ -41,7 +44,17 @@ export default function PagoForm({ modalNuevo, setModalNuevo, form, setForm, err
         )}
 
         <div>
-          <label className="campo-label">Monto *</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="campo-label mb-0">Monto *</label>
+            {/* indicador en tiempo real */}
+            {tipoPagoActual && (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'
+              }`}>
+                {tipoPagoActual === 'total' ? '✓ Pago total' : '~ Abono parcial'}
+              </span>
+            )}
+          </div>
           <input
             type="number" step="0.01" min="0.01"
             max={montoPendiente > 0 ? montoPendiente : undefined}
@@ -52,9 +65,6 @@ export default function PagoForm({ modalNuevo, setModalNuevo, form, setForm, err
             disabled={pagoCompleto}
           />
           {errores.monto && <p className="campo-error">{errores.monto}</p>}
-          {!pagoCompleto && montoPendiente > 0 && form.monto && +form.monto > montoPendiente && (
-            <p className="campo-error">El monto no puede superar {formatPrecio(montoPendiente)}</p>
-          )}
           {!pagoCompleto && montoPendiente > 0 && (
             <button type="button" onClick={() => setForm(p => ({ ...p, monto: montoPendiente }))}
               className="text-xs text-primary mt-1 hover:underline">
