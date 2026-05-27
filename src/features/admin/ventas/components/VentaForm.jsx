@@ -138,7 +138,7 @@ export default function VentaForm({
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="flex items-center gap-1">
                           <button type="button"
-                            onClick={() => cambiarCantidad(i, (+p.cantidad || 1) - 1)}
+                            onClick={() => cambiarCantidad(i, Math.max(1, (+p.cantidad || 2) - 1))}
                             disabled={!p.cantidad || +p.cantidad <= 1}
                             className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
                             −
@@ -152,9 +152,7 @@ export default function VentaForm({
                               if (val === '') { cambiarCantidad(i, ''); return }
                               if (/^\d+$/.test(val)) cambiarCantidad(i, val)
                             }}
-                            onBlur={e => {
-                              if (!e.target.value || +e.target.value < 1) cambiarCantidad(i, 1)
-                            }}
+
                             className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
                               hayError
                                 ? 'border-red-400 focus:ring-red-400/30 text-red-400'
