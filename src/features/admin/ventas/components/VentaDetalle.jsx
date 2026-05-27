@@ -12,7 +12,7 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
         <div className="space-y-3 text-xs">
           <div className="grid grid-cols-2 gap-3">
             <div><p className="campo-label">Cliente</p><p className="font-medium">{venta.cliente}</p></div>
-            <div><p className="campo-label">Tipo</p><span className="badge bg-primary/20 text-green-700 dark:text-primary">🏪 Mostrador</span></div>
+            <div><p className="campo-label">Tipo</p><span className="badge bg-primary/20 text-green-700 dark:text-primary">Mostrador</span></div>
             <div><p className="campo-label">Estado</p><span className={getBadge(venta.estado)}>{venta.estado}</span></div>
             <div><p className="campo-label">Total</p><p className="text-primary font-bold text-sm">{formatPrecio(venta.total)}</p></div>
             <div className="col-span-2"><p className="campo-label">Fecha</p><p>{formatFechaHora(venta.fecha_pedido)}</p></div>
