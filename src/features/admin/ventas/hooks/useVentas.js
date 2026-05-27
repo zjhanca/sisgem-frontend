@@ -10,6 +10,8 @@ export function useVentas() {
   const [modalAnular, setModalAnular]   = useState({ abierto: false, venta: null })
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroBusqueda, setFiltroBusqueda] = useState('')
+  const [filtroDesde, setFiltroDesde]   = useState('')
+  const [filtroHasta, setFiltroHasta]   = useState('')
   const [form, setForm] = useState({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [] })
   const [prodBusqueda, setProdBusqueda]       = useState('')
   const [prodsFiltrados, setProdsFiltrados]   = useState([])
@@ -93,6 +95,8 @@ export function useVentas() {
   const ventasFiltradas = ventas.filter(v => {
     if (filtroEstado && v.estado_id !== +filtroEstado) return false
     if (filtroBusqueda && !`${v.id} ${v.cliente}`.toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
+    if (filtroDesde && v.fecha_pedido && new Date(v.fecha_pedido) < new Date(filtroDesde)) return false
+    if (filtroHasta && v.fecha_pedido && new Date(v.fecha_pedido) > new Date(filtroHasta)) return false
     return true
   })
  
@@ -101,6 +105,7 @@ export function useVentas() {
     clientesFiltrados, prodBusqueda, prodsFiltrados, clienteBusqueda,
     setProdBusqueda, setClienteBusqueda, setProdsFiltrados,
     modalNuevo, modalDetalle, modalAnular, filtroEstado, filtroBusqueda,
+    filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto,
     totalVenta, handleCrear, anular, cambiarEstado, getBadge,

@@ -6,7 +6,7 @@ import { usePagos } from '../hooks/usePagos'
 import PagoForm    from '../components/PagoForm'
 import PagoDetalle from '../components/PagoDetalle'
 import PagoAnular  from '../components/PagoAnular'
-
+ 
 export default function Pagos() {
   const {
     pagosFiltrados, pedidos, form, errores,
@@ -20,9 +20,9 @@ export default function Pagos() {
     handleSubmit, anular, esPagado, esAnulado, getFechaPago,
     creando, anulando,
   } = usePagos()
-
+ 
   const hayFiltros = filtroEstado || filtroDesde || filtroHasta || filtroBusqueda
-
+ 
   const columnas = [
     { key: 'id',        label: '#' },
     { key: 'pedido_id', label: 'Pedido',  render: r => `#${r.pedido_id}` },
@@ -42,7 +42,7 @@ export default function Pagos() {
     // usa getFechaPago para intentar todos los posibles campos de fecha
     { key: 'fecha', label: 'Fecha', render: r => formatFechaHora(getFechaPago(r)) || '—' },
   ]
-
+ 
   return (
     <div>
       <div className="page-header">
@@ -56,7 +56,7 @@ export default function Pagos() {
           </button>
         </div>
       </div>
-
+ 
       {/* filtros */}
       <div className="flex gap-2 mb-4 flex-wrap items-end">
         <div>
@@ -74,12 +74,12 @@ export default function Pagos() {
         </div>
         <div>
           <p className="campo-label mb-0.5">Desde</p>
-          <input type="date" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)}
+          <input type="datetime-local" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)}
             className="campo-input text-xs" />
         </div>
         <div>
           <p className="campo-label mb-0.5">Hasta</p>
-          <input type="date" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)}
+          <input type="datetime-local" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)}
             className="campo-input text-xs" />
         </div>
         {hayFiltros && (
@@ -89,7 +89,7 @@ export default function Pagos() {
           </button>
         )}
       </div>
-
+ 
       <Tabla columnas={columnas} datos={pagosFiltrados} sinBusqueda
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, pago: fila })} className="btn-ghost"><Eye size={14} /></button>
@@ -99,7 +99,7 @@ export default function Pagos() {
           )}
         </>)}
       />
-
+ 
       <PagoForm modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
         form={form} setForm={setForm} errores={errores} pedidos={pedidos}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}
