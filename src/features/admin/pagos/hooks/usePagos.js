@@ -19,8 +19,6 @@ export function usePagos() {
 
   const { data: pagos = [] }   = useQuery({ queryKey: ['pagos'],   queryFn: pagosService.getAll })
   const { data: pedidos = [] } = useQuery({ queryKey: ['pedidos'], queryFn: () => pagosService.getPedidos().then(d => d.filter(p => !p.estado?.toLowerCase().includes('anula'))) })
-  const { data: estadosPago = [] } = useQuery({ queryKey: ['estados-pago'], queryFn: pagosService.getEstadosPago })
-
   const pagadoPorPedido = pedidos.reduce((acc, p) => {
     const activos = pagos.filter(pg => pg.pedido_id === p.id && !esAnulado(pg.estado))
     acc[p.id] = activos.reduce((s, pg) => s + +pg.monto, 0)
@@ -48,10 +46,7 @@ export function usePagos() {
   }
 
   const crear = useMutation({
-    mutationFn: data => {
-      const estado_id = getEstadoIdPago(data.monto)
-      return pagosService.create({ ...data, ...(estado_id ? { estado_id } : {}) })
-    },
+    mutationFn: data => pagosService.create(data),
     onSuccess: () => {
       qc.invalidateQueries(['pagos']); qc.invalidateQueries(['pedidos'])
       setModalNuevo(false); setForm(formVacio)
