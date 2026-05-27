@@ -53,7 +53,6 @@ export default function VentaForm({
 
           {form.tipo_cliente === 'registrado' ? (
             <div className="space-y-1" ref={dropdownRef}>
-              {/* si hay cliente seleccionado, mostrar chip en lugar del input */}
               {clienteSeleccionado && !clienteBusqueda ? (
                 <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
                   <span className="font-medium text-primary">{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</span>
@@ -67,7 +66,6 @@ export default function VentaForm({
                   <input
                     value={clienteBusqueda}
                     onChange={e => { setClienteBusqueda(e.target.value); setForm(f => ({ ...f, cliente_id: '' })) }}
-                    autoFocus={!clienteSeleccionado}
                     className="campo-input pl-8 text-xs"
                     placeholder="Buscar cliente por nombre..."
                   />
@@ -130,69 +128,60 @@ export default function VentaForm({
               {form.productos.map((p, i) => {
                 const stock = p.stock ?? Infinity
                 const cantInvalida = !p.cantidad || +p.cantidad < 1
-                const excede = !cantInvalida && p.cantidad > stock || !p.cantidad || +p.cantidad < 1
+                const excede = !cantInvalida && stock !== Infinity && +p.cantidad > stock
+                const hayError = cantInvalida || excede
                 return (
-                  <div key={i} className="flex flex-col gap-0.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate">{p.nombre}</p>
-                      {stock !== Infinity && (
-                        <p className={`text-xs mt-0.5 ${excede ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
-                          {(!p.cantidad || +p.cantidad < 1) ? '⚠ Cantidad inválida' : excede ? `⚠ Máx. ${stock}` : `Stock: ${stock}`}
-                        </p>
-                      )}
+                  <div key={i} className="flex flex-col">
+                    {/* fila — diseño original */}
+                    <div className="flex justify-between items-center text-xs p-2 rounded bg-light-bg dark:bg-dark-bg">
+                      <span className="flex-1 truncate">{p.nombre}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1">
+                          <button type="button"
+                            onClick={() => cambiarCantidad(i, (+p.cantidad || 1) - 1)}
+                            disabled={!p.cantidad || +p.cantidad <= 1}
+                            className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
+                            −
+                          </button>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={p.cantidad}
+                            onChange={e => {
+                              const val = e.target.value
+                              if (val === '') { cambiarCantidad(i, ''); return }
+                              if (/^\d+$/.test(val)) cambiarCantidad(i, val)
+                            }}
+                            onBlur={e => {
+                              if (!e.target.value || +e.target.value < 1) cambiarCantidad(i, 1)
+                            }}
+                            className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
+                              hayError
+                                ? 'border-red-400 focus:ring-red-400/30 text-red-400'
+                                : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
+                            }`}
+                          />
+                          <button type="button"
+                            onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
+                            disabled={stock !== Infinity && +p.cantidad >= stock}
+                            className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
+                            +
+                          </button>
+                        </div>
+                        <span className={`font-medium w-16 text-right ${hayError ? 'text-red-400' : 'text-primary'}`}>
+                          {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
+                        </span>
+                        <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                      {/* - */}
-                      <button type="button"
-                        onClick={() => cambiarCantidad(i, p.cantidad - 1)}
-                        disabled={p.cantidad <= 1}
-                        className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
-                        −
-                      </button>
-                      {/* input sin flechas */}
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={p.cantidad}
-                        onChange={e => {
-                          const val = e.target.value
-                          // permitir campo vacío mientras escribe
-                          if (val === '' || val === '0') {
-                            cambiarCantidad(i, val === '' ? '' : 1)
-                            return
-                          }
-                          if (/^\d+$/.test(val)) cambiarCantidad(i, val)
-                        }}
-                        onBlur={e => {
-                          // al salir si quedó vacío, poner 1
-                          if (!e.target.value || +e.target.value < 1) cambiarCantidad(i, 1)
-                        }}
-                        className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
-                          (excede || cantInvalida)
-                            ? 'border-red-400 focus:ring-red-400/30 text-red-400'
-                            : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
-                        }`}
-                      />
-                      {/* + */}
-                      <button type="button"
-                        onClick={() => cambiarCantidad(i, p.cantidad + 1)}
-                        disabled={stock !== Infinity && p.cantidad >= stock}
-                        className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">
-                        +
-                      </button>
-                      <span className={`font-medium w-16 text-right ${excede ? 'text-red-400' : 'text-primary'}`}>
-                        {formatPrecio(p.precio_unitario * p.cantidad)}
-                      </span>
-                      <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500 ml-0.5">
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  {(cantInvalida || excede) && (
-                    <p className="text-xs text-red-400 flex items-center gap-1 px-1">
-                      <span>⚠</span>
-                      {cantInvalida ? 'La cantidad debe ser al menos 1' : `Solo hay ${stock} unidades en stock`}
-                    </p>
-                  )}
+                    {/* alerta pequeña solo si hay error */}
+                    {hayError && (
+                      <p className="text-xs text-red-400 px-2 pb-0.5">
+                        ⚠ {cantInvalida ? 'La cantidad debe ser al menos 1' : `Solo hay ${stock} unidades disponibles`}
+                      </p>
+                    )}
                   </div>
                 )
               })}
@@ -207,7 +196,7 @@ export default function VentaForm({
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button type="submit"
-            disabled={creando || form.productos.some(p => !p.cantidad || +p.cantidad < 1 || p.cantidad > (p.stock ?? Infinity))}
+            disabled={creando || form.productos.some(p => !p.cantidad || +p.cantidad < 1 || (p.stock !== undefined && +p.cantidad > p.stock))}
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
           </button>
