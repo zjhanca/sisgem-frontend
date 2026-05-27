@@ -13,7 +13,7 @@ export default function Proveedores() {
     modal, modalDetalle, modalEliminar,
     setModalDetalle, setModalEliminar,
     abrirModal, cerrarModal, handleChange, handleSubmit,
-    toggleEstado, eliminar, guardando, eliminando,
+    toggleEstado, eliminar, guardando, eliminando, verificando,
   } = useProveedores()
  
   const columnas = [
@@ -49,7 +49,8 @@ export default function Proveedores() {
       />
  
       <ProveedorForm modal={modal} form={form} errores={errores}
-        handleChange={handleChange} handleSubmit={handleSubmit} cerrarModal={cerrarModal} guardando={guardando} />
+        handleChange={handleChange} handleSubmit={handleSubmit} cerrarModal={cerrarModal} guardando={guardando}
+        verificando={verificando} />
       <ProveedorDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} toggleEstado={toggleEstado} />
       <ProveedorEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />
     </div>
