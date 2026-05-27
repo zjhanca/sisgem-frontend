@@ -7,12 +7,11 @@ export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
   clientes, clientesFiltrados, clienteBusqueda, setClienteBusqueda,
   prodBusqueda, prodsFiltrados, buscarProducto, buscarPorCodigo,
-  agregarProducto, quitarProducto, totalVenta, handleCrear, creando
+  agregarProducto, quitarProducto, cambiarCantidad, totalVenta, handleCrear, creando
 }) {
   const cerrar = () => { setModalNuevo(false); setForm({ tipo_cliente:'registrado', cliente_id:'', cliente_nombre:'', productos:[] }) }
   const dropdownRef = useRef(null)
 
-  // cerrar dropdown al hacer click fuera
   useEffect(() => {
     const handler = e => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target))
@@ -24,7 +23,7 @@ export default function VentaForm({
 
   const seleccionarCliente = c => {
     setForm(f => ({ ...f, cliente_id: c.id }))
-    setClienteBusqueda('') // limpia el input y cierra el dropdown
+    setClienteBusqueda('')
   }
 
   return (
@@ -37,6 +36,7 @@ export default function VentaForm({
           </div>
         </div>
 
+        {/* cliente */}
         <div>
           <label className="campo-label">Cliente</label>
           <div className="flex gap-2 mb-2">
@@ -60,13 +60,11 @@ export default function VentaForm({
                   ? `✓ ${clientes.find(c => c.id === +form.cliente_id)?.nombre || ''} ${clientes.find(c => c.id === +form.cliente_id)?.apellido || ''}`
                   : 'Buscar cliente por nombre...'}
               />
-              {/* botón limpiar selección */}
               {form.cliente_id && !clienteBusqueda && (
                 <button type="button"
                   onClick={() => { setForm(f => ({ ...f, cliente_id: '' })); setClienteBusqueda('') }}
                   className="absolute right-2 top-2 text-gray-400 hover:text-red-400 text-xs">✕</button>
               )}
-              {/* dropdown */}
               {clienteBusqueda && clientesFiltrados.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-30 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                   {clientesFiltrados.map(c => (
@@ -79,7 +77,6 @@ export default function VentaForm({
                   ))}
                 </div>
               )}
-              {/* confirmación seleccionado */}
               {form.cliente_id && !clienteBusqueda && (
                 <p className="text-xs text-primary mt-1">
                   ✓ {clientes.find(c => c.id === +form.cliente_id)?.nombre} {clientes.find(c => c.id === +form.cliente_id)?.apellido}
@@ -92,6 +89,7 @@ export default function VentaForm({
           )}
         </div>
 
+        {/* productos */}
         <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-2">
           <p className="text-xs font-semibold">Productos</p>
           <div className="flex gap-2">
@@ -104,8 +102,14 @@ export default function VentaForm({
                   {prodsFiltrados.map(p => (
                     <button key={p.id} type="button" onClick={() => agregarProducto(p)}
                       className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between">
-                      <div><span>{p.nombre}</span>{p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}</div>
-                      <span className="text-primary">{formatPrecio(p.precio)}</span>
+                      <div>
+                        <span>{p.nombre}</span>
+                        {p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-gray-400 text-xs">Stock: {p.stock}</span>
+                        <span className="text-primary">{formatPrecio(p.precio)}</span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -117,24 +121,66 @@ export default function VentaForm({
               <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
             </div>
           </div>
+
           {form.productos.length > 0 && (
-            <div className="space-y-1 max-h-36 overflow-y-auto">
-              {form.productos.map((p, i) => (
-                <div key={i} className="flex justify-between items-center text-xs p-2 rounded bg-light-bg dark:bg-dark-bg">
-                  <span className="flex-1 truncate">{p.nombre}</span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => setForm(f => ({ ...f, productos: f.productos.map((pp,ii) => ii===i ? {...pp, cantidad: Math.max(1,pp.cantidad-1)} : pp) }))} className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5">-</button>
-                      <span className="w-5 text-center">{p.cantidad}</span>
-                      <button type="button" onClick={() => setForm(f => ({ ...f, productos: f.productos.map((pp,ii) => ii===i ? {...pp, cantidad:pp.cantidad+1} : pp) }))} className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5">+</button>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {form.productos.map((p, i) => {
+                const stock = p.stock ?? Infinity
+                const excede = p.cantidad > stock
+                return (
+                  <div key={i} className={`flex justify-between items-center text-xs p-2 rounded transition-colors ${
+                    excede ? 'bg-red-500/10 border border-red-400/30' : 'bg-light-bg dark:bg-dark-bg'
+                  }`}>
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate">{p.nombre}</p>
+                      {stock !== Infinity && (
+                        <p className={`text-xs mt-0.5 ${excede ? 'text-red-400' : 'text-gray-400'}`}>
+                          {excede ? `⚠ Solo hay ${stock} en stock` : `Stock: ${stock}`}
+                        </p>
+                      )}
                     </div>
-                    <span className="text-primary font-medium w-16 text-right">{formatPrecio(p.precio_unitario * p.cantidad)}</span>
-                    <button type="button" onClick={() => quitarProducto(i)} className="text-red-400"><Trash2 size={12} /></button>
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      {/* controles cantidad */}
+                      <div className="flex items-center gap-1">
+                        <button type="button"
+                          onClick={() => cambiarCantidad(i, p.cantidad - 1)}
+                          disabled={p.cantidad <= 1}
+                          className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5 disabled:opacity-40">
+                          -
+                        </button>
+                        {/* input numérico editable */}
+                        <input
+                          type="number"
+                          min={1}
+                          max={stock !== Infinity ? stock : undefined}
+                          value={p.cantidad}
+                          onChange={e => cambiarCantidad(i, e.target.value)}
+                          className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
+                            excede
+                              ? 'border-red-400 focus:ring-red-400/30 text-red-400'
+                              : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
+                          }`}
+                        />
+                        <button type="button"
+                          onClick={() => cambiarCantidad(i, p.cantidad + 1)}
+                          disabled={stock !== Infinity && p.cantidad >= stock}
+                          className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border text-center text-xs leading-5 disabled:opacity-40">
+                          +
+                        </button>
+                      </div>
+                      <span className={`font-medium w-16 text-right ${excede ? 'text-red-400' : 'text-primary'}`}>
+                        {formatPrecio(p.precio_unitario * p.cantidad)}
+                      </span>
+                      <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
               <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-200 dark:border-dark-border">
-                <span>Total</span><span className="text-primary">{formatPrecio(totalVenta)}</span>
+                <span>Total</span>
+                <span className="text-primary">{formatPrecio(totalVenta)}</span>
               </div>
             </div>
           )}
@@ -142,7 +188,10 @@ export default function VentaForm({
 
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
-          <button type="submit" disabled={creando} className="btn-primary">{creando ? 'Registrando...' : 'Aceptar'}</button>
+          <button type="submit" disabled={creando || form.productos.some(p => p.cantidad > (p.stock ?? Infinity))}
+            className="btn-primary disabled:opacity-50">
+            {creando ? 'Registrando...' : 'Aceptar'}
+          </button>
         </div>
       </form>
     </Modal>
