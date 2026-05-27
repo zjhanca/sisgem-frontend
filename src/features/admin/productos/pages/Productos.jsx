@@ -30,7 +30,7 @@ export default function Productos() {
     { key: 'marca',         label: 'Marca',     render: r => r.marca || '—' },
     { key: 'precio',        label: 'Precio',    render: r => formatPrecio(r.precio) },
     { key: 'stock',         label: 'Stock',     render: r => <span className={r.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{r.stock}</span> },
-    { key: 'estado',        label: 'Estado',    render: r => <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span> },
+    { key: 'estado',        label: 'Estado',    render: r => r.stock <= 0 ? <span className='badge-anulado'>Sin stock</span> : <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span> },
   ]
 
   return (
@@ -47,7 +47,7 @@ export default function Productos() {
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost"><Eye size={14} /></button>
           <button onClick={() => abrirModal(fila)} className="btn-ghost"><Edit2 size={14} /></button>
-          <EstadoToggle activo={fila.estado} onChange={() => toggleEstado.mutate(fila.id)} cargando={toggleEstado.isPending} />
+          <EstadoToggle activo={fila.estado} onChange={() => toggleEstado.mutate(fila.id)} cargando={toggleEstado.isPending} disabled={fila.stock <= 0} />
           <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400"><Trash2 size={14} /></button>
         </>)}
       />
