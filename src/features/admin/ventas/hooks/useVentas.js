@@ -103,7 +103,13 @@ export function useVentas() {
   const cambiarCantidad = (idx, nuevaCantidad) => {
     const prod = form.productos[idx]
     const stock = prod.stock ?? getStock(prod.producto_id)
-    const cant = Math.max(1, Math.min(+nuevaCantidad || 1, stock))
+    // si viene vacío, guardar vacío temporalmente (el blur lo corrige)
+    if (nuevaCantidad === '') {
+      setForm(f => ({ ...f, productos: f.productos.map((p, i) => i === idx ? { ...p, cantidad: '' } : p) }))
+      return
+    }
+    const num = Math.max(1, +nuevaCantidad || 1)
+    const cant = Math.min(num, stock)
     if (+nuevaCantidad > stock) toast.error(`Stock insuficiente — máximo ${stock} unidades`)
     setForm(f => ({ ...f, productos: f.productos.map((p, i) =>
       i === idx ? { ...p, cantidad: cant } : p

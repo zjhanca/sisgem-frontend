@@ -152,12 +152,23 @@ export default function VentaForm({
                       </button>
                       {/* input sin flechas */}
                       <input
-                        type="number"
-                        min={1}
-                        max={stock !== Infinity ? stock : undefined}
+                        type="text"
+                        inputMode="numeric"
                         value={p.cantidad}
-                        onChange={e => cambiarCantidad(i, e.target.value)}
-                        className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                        onChange={e => {
+                          const val = e.target.value
+                          // permitir campo vacío mientras escribe
+                          if (val === '' || val === '0') {
+                            cambiarCantidad(i, val === '' ? '' : 1)
+                            return
+                          }
+                          if (/^\d+$/.test(val)) cambiarCantidad(i, val)
+                        }}
+                        onBlur={e => {
+                          // al salir si quedó vacío, poner 1
+                          if (!e.target.value || +e.target.value < 1) cambiarCantidad(i, 1)
+                        }}
+                        className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
                           excede
                             ? 'border-red-400 focus:ring-red-400/30 text-red-400'
                             : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
