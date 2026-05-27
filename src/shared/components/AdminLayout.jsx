@@ -3,12 +3,12 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
 import { useTema } from '@shared/contexts/ThemeContext'
 import {
-  LayoutDashboard, ShoppingCart, BarChart2,
+  LayoutDashboard, BarChart2,
   Package, Tag, Grid3X3, Users, Shield,
   Building2, ClipboardList, CreditCard, Menu, X,
   Sun, Moon, LogOut, ChevronDown, ChevronRight, Store
 } from 'lucide-react'
- 
+
 const MENU = [
   {
     id: 'principal',
@@ -21,9 +21,8 @@ const MENU = [
     id: 'ventas',
     label: 'Gestión de Ventas',
     items: [
-      { to: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart },
-      { to: '/admin/ventas',  label: 'Ventas',  icon: BarChart2 },
-      { to: '/admin/pagos',   label: 'Pagos',   icon: CreditCard },
+      { to: '/admin/ventas', label: 'Ventas', icon: BarChart2 },
+      { to: '/admin/pagos',  label: 'Pagos',  icon: CreditCard },
     ]
   },
   {
@@ -53,8 +52,7 @@ const MENU = [
     ]
   },
 ]
- 
-// estado inicial de grupos — todos abiertos por defecto
+
 const estadoInicial = () => {
   try {
     const saved = localStorage.getItem('sisgem-menu-grupos')
@@ -62,16 +60,15 @@ const estadoInicial = () => {
   } catch {}
   return MENU.reduce((acc, g) => ({ ...acc, [g.id]: true }), {})
 }
- 
+
 export default function AdminLayout() {
   const { usuario, logout } = useAuth()
   const { tema, toggleTema } = useTema()
   const navigate = useNavigate()
-  const [collapsed, setCollapsed]     = useState(false)
-  const [menuMovil, setMenuMovil]     = useState(false)
-  // estado de grupos en el padre — no se pierde al re-render
+  const [collapsed, setCollapsed]         = useState(false)
+  const [menuMovil, setMenuMovil]         = useState(false)
   const [gruposAbiertos, setGruposAbiertos] = useState(estadoInicial)
- 
+
   const toggleGrupo = useCallback(id => {
     setGruposAbiertos(prev => {
       const nuevo = { ...prev, [id]: !prev[id] }
@@ -79,13 +76,13 @@ export default function AdminLayout() {
       return nuevo
     })
   }, [])
- 
+
   const handleLogout = () => { logout(); navigate('/login') }
- 
+
   const Sidebar = ({ mobile = false }) => (
     <div className={`flex flex-col h-full bg-dark-bg border-r border-dark-border
       ${mobile ? 'w-72' : collapsed ? 'w-16' : 'w-60'} transition-all duration-200`}>
- 
+
       {/* logo */}
       <div className={`flex items-center gap-2 p-4 border-b border-dark-border ${collapsed && !mobile ? 'justify-center' : ''}`}>
         <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
@@ -101,12 +98,12 @@ export default function AdminLayout() {
           </button>
         )}
       </div>
- 
+
       {/* menú */}
       <nav className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
         {MENU.map(grupo => {
           const abierto = gruposAbiertos[grupo.id] ?? true
- 
+
           if (collapsed && !mobile) {
             return (
               <div key={grupo.id} className="mb-1">
@@ -124,7 +121,7 @@ export default function AdminLayout() {
               </div>
             )
           }
- 
+
           return (
             <div key={grupo.id} className="mb-2">
               <button
@@ -132,10 +129,7 @@ export default function AdminLayout() {
                 className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold
                   text-dark-text/40 uppercase tracking-wider hover:text-dark-text/60 transition-colors">
                 <span>{grupo.label}</span>
-                {abierto
-                  ? <ChevronDown size={11} />
-                  : <ChevronRight size={11} />
-                }
+                {abierto ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
               </button>
               {abierto && (
                 <div className="mt-0.5 space-y-0.5">
@@ -158,7 +152,7 @@ export default function AdminLayout() {
           )
         })}
       </nav>
- 
+
       {/* footer usuario */}
       <div className={`p-3 border-t border-dark-border ${collapsed && !mobile ? 'flex flex-col items-center gap-2' : 'space-y-2'}`}>
         {(!collapsed || mobile) && (
@@ -189,15 +183,15 @@ export default function AdminLayout() {
       </div>
     </div>
   )
- 
+
   return (
     <div className="flex h-screen bg-dark-bg overflow-hidden">
- 
+
       {/* sidebar desktop */}
       <div className="hidden md:flex shrink-0">
         <Sidebar />
       </div>
- 
+
       {/* sidebar móvil */}
       {menuMovil && (
         <div className="fixed inset-0 z-50 md:hidden">
@@ -210,7 +204,7 @@ export default function AdminLayout() {
           </div>
         </div>
       )}
- 
+
       {/* contenido */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* topbar móvil */}
@@ -220,7 +214,7 @@ export default function AdminLayout() {
           </button>
           <span className="font-bold text-primary">SISGEM</span>
         </div>
- 
+
         {/* página */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <Outlet />
