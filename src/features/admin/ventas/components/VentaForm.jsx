@@ -170,9 +170,24 @@ export default function VentaForm({
                 </div>
               )}
             </div>
+
+            {/* código de barras solo números */}
             <div className="relative">
-              <input placeholder="Cód. barras" className="campo-input w-28 text-xs pr-7"
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo(e.target.value); e.target.value='' } }} />
+              <input
+                placeholder="Cód. barras"
+                className="campo-input w-28 text-xs pr-7"
+                inputMode="numeric"
+                onInput={e => {
+                  e.target.value = e.target.value.replace(/\D/g, '')
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    buscarPorCodigo(e.target.value)
+                    e.target.value = ''
+                  }
+                }}
+              />
               <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
             </div>
           </div>
@@ -194,6 +209,7 @@ export default function VentaForm({
                             onClick={() => cambiarCantidad(i, Math.max(1, (+p.cantidad || 2) - 1))}
                             disabled={!p.cantidad || +p.cantidad <= 1}
                             className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">−</button>
+
                           <input type="text" inputMode="numeric" value={p.cantidad}
                             onChange={e => {
                               const val = e.target.value
@@ -203,19 +219,23 @@ export default function VentaForm({
                             className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
                               hayError ? 'border-red-400 focus:ring-red-400/30 text-red-400' : 'border-gray-200 dark:border-dark-border focus:ring-primary/20'
                             }`} />
+
                           <button type="button"
                             onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
                             disabled={stock !== Infinity && +p.cantidad >= stock}
                             className="w-5 h-5 rounded bg-gray-200 dark:bg-dark-border flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20 transition-colors">+</button>
                         </div>
+
                         <span className={`font-medium w-16 text-right ${hayError ? 'text-red-400' : 'text-primary'}`}>
                           {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
                         </span>
+
                         <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500">
                           <Trash2 size={12} />
                         </button>
                       </div>
                     </div>
+
                     {hayError && (
                       <p className="text-xs text-red-400 px-2 pb-0.5">
                         ⚠ {cantInvalida ? 'La cantidad debe ser al menos 1' : `Solo hay ${stock} unidades disponibles`}
@@ -224,6 +244,7 @@ export default function VentaForm({
                   </div>
                 )
               })}
+
               <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-200 dark:border-dark-border">
                 <span>Total</span>
                 <span className="text-primary">{formatPrecio(totalVenta)}</span>
@@ -233,10 +254,14 @@ export default function VentaForm({
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-          <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
+          <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">
+            Cancelar
+          </button>
+
           <button type="submit"
             disabled={creando || form.productos.some(p => !p.cantidad || +p.cantidad < 1 || (p.stock !== undefined && +p.cantidad > p.stock))}
             className={`btn-primary disabled:opacity-50 ${form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''}`}>
+
             {creando ? 'Registrando...' : form.tipo_pago === 'fiado' ? 'Registrar Fiado' : 'Aceptar'}
           </button>
         </div>
