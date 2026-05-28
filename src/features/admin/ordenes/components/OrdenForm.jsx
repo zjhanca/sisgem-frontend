@@ -78,28 +78,7 @@ export default function OrdenForm({
           </div>
         </div>
 
-        {/* estado + fecha límite */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="campo-label">Estado</label>
-            <select value={form.estado}
-              onChange={e => setForm(p => ({ ...p, estado: e.target.value }))}
-              className="campo-input text-xs">
-              <option value="pendiente">Pendiente</option>
-              <option value="activo">Activo</option>
-              
-              
-            </select>
-          </div>
-          {form.estado === 'pendiente' && (
-            <div>
-              <label className="campo-label">Fecha Límite de Pago</label>
-              <input type="date" value={form.fecha_limite_pago}
-                onChange={e => setForm(p => ({ ...p, fecha_limite_pago: e.target.value }))}
-                className="campo-input text-xs" />
-            </div>
-          )}
-        </div>
+
 
         {/* productos */}
         <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-3">

@@ -169,12 +169,7 @@ export default function OrdCompra() {
                   {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
-              <div className="col-span-2">
-                <label className="campo-label">Fecha Límite de Pago</label>
-                <input type="date" value={formEditar.fecha_limite_pago || ''}
-                  onChange={e => setFormEditar(p => ({ ...p, fecha_limite_pago: e.target.value }))}
-                  className="campo-input text-xs" />
-              </div>
+
               <div className="col-span-2">
                 <label className="campo-label">Notas</label>
                 <textarea value={formEditar.notas || ''} rows={2}
