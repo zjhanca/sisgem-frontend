@@ -6,8 +6,7 @@ import toast from 'react-hot-toast'
  
 const formVacio = {
   nombre: '', apellido: '', email: '', password: '', confirmar: '',
-  telefono: '', tipo_documento: 'CC', numero_documento: '',
-  direccion: '', barrio: ''
+  telefono: '', tipo_documento: 'CC', numero_documento: ''
 }
  
 const validarCampo = (campo, valor, form) => {
@@ -77,8 +76,6 @@ export function useRegister() {
         telefono:         form.telefono || null,
         tipo_documento:   form.tipo_documento,
         numero_documento: form.numero_documento || null,
-        direccion:        form.direccion || null,
-        barrio:           form.barrio || null,
         rol_id:           2, // rol Cliente — asignado automáticamente al registrarse
       })
       if (data.ok) {
@@ -93,4 +90,3 @@ export function useRegister() {
  
   return { form, errores, cargando, handleChange, handleSubmit }
 }
- 

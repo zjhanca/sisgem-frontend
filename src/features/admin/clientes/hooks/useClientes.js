@@ -8,8 +8,6 @@ const formVacio = {
   tipo_documento: 'CC', numero_documento: '',
   permite_fiado: false, limite_fiado: '',
 }
-const dirVacia = { direccion: '', barrio: '', indicaciones: '' }
- 
 const validarCampo = (campo, valor) => {
   switch (campo) {
     case 'nombre':   return !valor.trim() ? 'El nombre es obligatorio' : ''
@@ -36,9 +34,7 @@ export function useClientes() {
   const qc = useQueryClient()
   const [modal, setModal]               = useState({ abierto: false, item: null })
   const [modalDetalle, setModalDetalle] = useState({ abierto: false, item: null })
-  const [modalDir, setModalDir]         = useState({ abierto: false, cliente: null })
   const [form, setForm]                 = useState(formVacio)
-  const [formDir, setFormDir]           = useState(dirVacia)
   const [errores, setErrores]           = useState({})
   const [verificando, setVerificando]   = useState({})
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -47,11 +43,6 @@ export function useClientes() {
   const timerDoc   = useRef(null)
  
   const { data: clientes = [] } = useQuery({ queryKey: ['clientes'], queryFn: clientesService.getAll })
-  const { data: direcciones = [], refetch: refetchDir } = useQuery({
-    queryKey: ['dirs-cliente', modalDir.cliente?.id],
-    queryFn: () => clientesService.getDirecciones(modalDir.cliente?.id),
-    enabled: !!modalDir.cliente?.id,
-  })
   const { data: historial = [] } = useQuery({
     queryKey: ['historial-cliente', modalDetalle.item?.id],
     queryFn: () => clientesService.getPedidos(modalDetalle.item?.id),
@@ -86,11 +77,6 @@ export function useClientes() {
     mutationFn: data => modal.item ? clientesService.update(modal.item.id, data) : clientesService.create(data),
     onSuccess: () => { qc.invalidateQueries(['clientes']); cerrarModal(); toast.success('Cliente guardado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar'),
-  })
-  const guardarDir = useMutation({
-    mutationFn: data => clientesService.addDireccion(modalDir.cliente.id, data),
-    onSuccess: () => { refetchDir(); setFormDir(dirVacia); toast.success('Dirección guardada') },
-    onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
   const toggleEstado = useMutation({
     mutationFn: clientesService.toggleEstado,
@@ -139,12 +125,6 @@ export function useClientes() {
     guardar.mutate(form)
   }
  
-  const handleSubmitDir = e => {
-    e.preventDefault()
-    if (!formDir.direccion.trim()) { toast.error('La dirección es obligatoria'); return }
-    guardarDir.mutate(formDir)
-  }
- 
   const clientesFiltrados = clientes.filter(c => {
     if (filtroEstado === 'activo'   && !c.estado) return false
     if (filtroEstado === 'inactivo' &&  c.estado) return false
@@ -152,12 +132,12 @@ export function useClientes() {
   })
  
   return {
-    clientes: clientesFiltrados, historial, direcciones,
-    form, formDir, errores, verificando,
-    modal, modalDetalle, modalDir,
+    clientes: clientesFiltrados, historial,
+    form, errores, verificando,
+    modal, modalDetalle,
     filtroEstado, setFiltroEstado,
-    setModalDetalle, setModalDir, setFormDir,
-    abrirModal, cerrarModal, handleChange, handleSubmit, handleSubmitDir,
-    toggleEstado, guardando: guardar.isPending, guardandoDir: guardarDir.isPending,
+    setModalDetalle,
+    abrirModal, cerrarModal, handleChange, handleSubmit,
+    toggleEstado, guardando: guardar.isPending,
   }
 }

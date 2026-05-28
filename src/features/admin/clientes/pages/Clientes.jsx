@@ -1,26 +1,25 @@
-﻿import { Plus, Edit2, Eye, MapPin, Download } from 'lucide-react'
+﻿import { Plus, Edit2, Eye, Download } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import EstadoToggle from '@shared/components/EstadoToggle'
 import { descargarPDF } from '@shared/utils/reportes'
 import { useClientes } from '../hooks/useClientes'
-import ClienteForm        from '../components/ClienteForm'
-import ClienteDetalle     from '../components/ClienteDetalle'
-import ClienteDirecciones from '../components/ClienteDirecciones'
- 
+import ClienteForm    from '../components/ClienteForm'
+import ClienteDetalle from '../components/ClienteDetalle'
+
 export default function Clientes() {
   const {
-    clientes, historial, direcciones,
-    form, formDir, errores,
-    modal, modalDetalle, modalDir,
+    clientes, historial,
+    form, errores,
+    modal, modalDetalle,
     filtroEstado, setFiltroEstado,
-    setModalDetalle, setModalDir, setFormDir,
+    setModalDetalle,
     abrirModal, cerrarModal,
-    handleChange, handleSubmit, handleSubmitDir,
-    toggleEstado, guardando, guardandoDir, verificando,
+    handleChange, handleSubmit,
+    toggleEstado, guardando, verificando,
   } = useClientes()
- 
+
   const columnas = [
-    { key: 'nombre',   label: 'Nombre', render: r => `${r.nombre} ${r.apellido}` },
+    { key: 'nombre', label: 'Nombre', render: r => `${r.nombre} ${r.apellido}` },
     { key: 'numero_documento', label: 'Documento',
       render: r => r.numero_documento ? `${r.tipo_documento}: ${r.numero_documento}` : '—' },
     { key: 'email',    label: 'Correo',   render: r => r.email    || '—' },
@@ -34,7 +33,7 @@ export default function Clientes() {
       render: r => <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span>
     },
   ]
- 
+
   return (
     <div>
       <div className="page-header">
@@ -48,8 +47,7 @@ export default function Clientes() {
           </button>
         </div>
       </div>
- 
-      {/* filtro estado */}
+
       <div className="flex gap-2 mb-4 items-end">
         <div>
           <p className="campo-label mb-0.5">Estado</p>
@@ -60,19 +58,14 @@ export default function Clientes() {
           </select>
         </div>
         {filtroEstado && (
-          <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400 self-end">
-            Limpiar
-          </button>
+          <button onClick={() => setFiltroEstado('')} className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
         )}
       </div>
- 
+
       <Tabla columnas={columnas} datos={clientes}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle">
             <Eye size={14} />
-          </button>
-          <button onClick={() => setModalDir({ abierto: true, cliente: fila })} className="btn-ghost" title="Direcciones">
-            <MapPin size={14} />
           </button>
           <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar">
             <Edit2 size={14} />
@@ -84,7 +77,7 @@ export default function Clientes() {
           />
         </>)}
       />
- 
+
       <ClienteForm verificando={verificando}
         modal={modal} form={form} errores={errores}
         handleChange={handleChange} handleSubmit={handleSubmit}
@@ -93,11 +86,6 @@ export default function Clientes() {
       <ClienteDetalle
         modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         abrirModal={abrirModal} historial={historial}
-      />
-      <ClienteDirecciones
-        modalDir={modalDir} setModalDir={setModalDir}
-        direcciones={direcciones} formDir={formDir} setFormDir={setFormDir}
-        handleSubmitDir={handleSubmitDir} guardandoDir={guardandoDir}
       />
     </div>
   )

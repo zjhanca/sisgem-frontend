@@ -1,11 +1,11 @@
 import Modal from '@shared/components/Modal'
 import { Edit2 } from 'lucide-react'
 import { formatFecha, formatPrecio } from '@shared/utils/validaciones'
- 
+
 export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirModal, historial }) {
   const item = modalDetalle.item
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
- 
+
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar}
       titulo="Detalle del Cliente" ancho="max-w-lg">
@@ -22,6 +22,28 @@ export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirMod
             <div><p className="campo-label">Teléfono</p><p>{item.telefono || '—'}</p></div>
             <div className="col-span-2"><p className="campo-label">Correo</p><p>{item.email || '—'}</p></div>
           </div>
+
+          {/* sección fiado */}
+          <div className={`p-3 rounded-xl border text-sm ${
+            item.permite_fiado
+              ? 'bg-amber-500/5 border-amber-500/20'
+              : 'bg-light-bg dark:bg-dark-bg border-gray-200 dark:border-dark-border'
+          }`}>
+            <div className="flex items-center justify-between">
+              <p className="campo-label mb-0">Fiado</p>
+              <span className={item.permite_fiado ? 'badge-activo' : 'text-xs text-gray-400'}>
+                {item.permite_fiado ? 'Habilitado' : 'No habilitado'}
+              </span>
+            </div>
+            {item.permite_fiado && (
+              <p className="text-xs text-gray-400 mt-1">
+                Límite: <span className="text-amber-500 font-medium">
+                  {item.limite_fiado ? formatPrecio(item.limite_fiado) : 'Sin límite'}
+                </span>
+              </p>
+            )}
+          </div>
+
           <div>
             <p className="campo-label mb-2">Historial de Pedidos ({historial.length})</p>
             {historial.length === 0
@@ -39,6 +61,7 @@ export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirMod
               )
             }
           </div>
+
           <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-dark-border">
             <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs">
               <Edit2 size={12} /> Editar

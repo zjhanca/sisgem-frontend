@@ -110,9 +110,25 @@ export default function Ventas() {
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost"><Eye size={14} /></button>
           <button onClick={() => descargarPDF(`/reportes/pedido/${fila.id}`, `comprobante-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
-          {!fila.estado?.toLowerCase().includes('anula') && (
-            <button onClick={() => setModalAnular({ abierto: true, venta: fila })} className="btn-ghost hover:text-red-400"><Ban size={14} /></button>
-          )}
+          {(() => {
+            const esAnulada = fila.estado?.toLowerCase().includes('anula')
+            if (esAnulada) return null
+            const esFiado = fila.permite_fiado && fila.estado?.toLowerCase().includes('pendiente')
+            if (esFiado) {
+              const horas = (new Date() - new Date(fila.fecha_pedido)) / (1000 * 60 * 60)
+              if (horas > 48) return (
+                <button disabled title="Solo se puede anular dentro de las primeras 48 horas"
+                  className="btn-ghost opacity-30 cursor-not-allowed"><Ban size={14} /></button>
+              )
+            }
+            return (
+              <button onClick={() => setModalAnular({ abierto: true, venta: fila })}
+                className="btn-ghost hover:text-red-400"
+                title={esFiado ? `Anular fiado (quedan ${Math.max(0, Math.ceil(48 - (new Date() - new Date(fila.fecha_pedido)) / (1000 * 60 * 60)))}h)` : 'Anular'}>
+                <Ban size={14} />
+              </button>
+            )
+          })()}
         </>)}
       />
 

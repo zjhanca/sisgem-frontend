@@ -75,22 +75,6 @@ export default function Register() {
               </div>
             </div>
  
-            {/* ubicación */}
-            <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Ubicación en Medellín</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="campo-label">Dirección</label>
-                  <input value={form.direccion} onChange={e => handleChange('direccion', e.target.value)}
-                    className="campo-input" placeholder="Ej: Calle 50 # 40-10" />
-                </div>
-                <div className="col-span-2">
-                  <label className="campo-label">Barrio</label>
-                  <input value={form.barrio} onChange={e => handleChange('barrio', e.target.value)}
-                    className="campo-input" placeholder="Ej: Laureles, El Poblado..." />
-                </div>
-              </div>
-            </div>
  
             {/* datos de acceso */}
             <div>
