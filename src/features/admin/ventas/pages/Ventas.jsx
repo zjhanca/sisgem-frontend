@@ -7,16 +7,14 @@ import VentaForm    from '../components/VentaForm'
 import VentaDetalle from '../components/VentaDetalle'
 import VentaAnular  from '../components/VentaAnular'
 
-// capitalizar primera letra
 const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''
 
-// badge según estado
 const getBadgeEstado = nombre => {
-  if (!nombre) return 'badge-pendiente'
+  if (!nombre) return { clase: 'badge-pendiente', label: 'Pendiente' }
   const l = nombre.toLowerCase()
-  if (l.includes('anula'))   return 'badge-anulado'
-  if (l.includes('complet') || l.includes('paga')) return 'badge-activo'
-  return 'badge-pendiente'
+  if (l.includes('anula'))                          return { clase: 'badge-anulado',  label: 'Anulado' }
+  if (l.includes('complet') || l.includes('paga'))  return { clase: 'badge-activo',   label: 'Completado' }
+  return { clase: 'badge-pendiente', label: 'Pendiente' }
 }
 
 export default function Ventas() {
@@ -28,53 +26,34 @@ export default function Ventas() {
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, cambiarEstado, getBadge, estados,
+    totalVenta, handleCrear, anular, getBadge, estados,
     creando, anulando,
   } = useVentas()
 
-  // solo mostrar Pendiente, Completado y Anulado (sin otros)
   const estadosVenta = estados.filter(e => {
     const n = e.nombre?.toLowerCase()
     return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula')
   })
 
   const columnas = [
-    { key: 'id',       label: '#' },
-    { key: 'cliente',  label: 'Cliente' },
+    { key: 'id',      label: '#' },
+    { key: 'cliente', label: 'Cliente' },
     { key: 'tipo_venta', label: 'Tipo',
       render: r => <span className="badge-activo">{r.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}</span>
     },
     { key: 'total', label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado_id', label: 'Estado',
       render: r => {
-        const esAnulado = r.estado?.toLowerCase().includes('anula')
+        const { clase, label } = getBadgeEstado(r.estado)
+        const esFiadoPendiente = r.permite_fiado && r.estado?.toLowerCase().includes('pendiente')
         return (
-          <div className="flex gap-1 flex-wrap" onClick={e => e.stopPropagation()}>
-            {estadosVenta
-              .filter(e => !e.nombre?.toLowerCase().includes('anula')) // pendiente y completado como botones
-              .map(e => {
-                const activo = r.estado_id === e.id
-                const isPendiente = e.nombre?.toLowerCase().includes('pendiente')
-                return (
-                  <button key={e.id} type="button"
-                    disabled={esAnulado || activo}
-                    onClick={() => !activo && cambiarEstado.mutate({ id: r.id, estado_id: e.id })}
-                    className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-all disabled:cursor-default ${
-                      activo
-                        ? isPendiente
-                          ? 'bg-amber-500/20 border-amber-500/40 text-amber-500'
-                          : 'bg-primary/20 border-primary/40 text-primary'
-                        : esAnulado
-                          ? 'opacity-30 border-gray-200 dark:border-dark-border text-gray-400'
-                          : 'border-gray-200 dark:border-dark-border text-gray-400 hover:border-primary/40 hover:text-primary'
-                    }`}>
-                    {capitalizar(e.nombre)}
-                  </button>
-                )
-              })
-            }
-            {/* badge anulado si está anulado */}
-            {esAnulado && <span className="badge-anulado">Anulado</span>}
+          <div className="flex items-center gap-1.5">
+            <span className={clase}>{label}</span>
+            {esFiadoPendiente && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 font-medium">
+                Fiado
+              </span>
+            )}
           </div>
         )
       }

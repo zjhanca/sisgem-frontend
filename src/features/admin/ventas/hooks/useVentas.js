@@ -164,7 +164,7 @@ export function useVentas() {
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, cambiarEstado, getBadge,
+    totalVenta, handleCrear, anular, getBadge,
     creando: crearVenta.isPending, anulando: anular.isPending,
   }
 }
