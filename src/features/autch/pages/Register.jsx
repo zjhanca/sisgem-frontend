@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
-import { Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle, XCircle, Loader2, CheckCircle2 } from 'lucide-react'
 import { useState } from 'react'
 import { useRegister } from '../Hooks/useRegister'
- 
+
 function Requisito({ ok, texto }) {
   return (
     <div className={`flex items-center gap-1 text-xs ${ok ? 'text-green-500' : 'text-gray-400'}`}>
@@ -10,19 +10,26 @@ function Requisito({ ok, texto }) {
     </div>
   )
 }
- 
+
+function CampoEstado({ verificando, error, valor, valido }) {
+  if (verificando) return <span className="campo-hint flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Verificando...</span>
+  if (error) return <p className="campo-error">{error}</p>
+  if (valido && valor) return <span className="campo-success flex items-center gap-1"><CheckCircle2 size={10} /> Disponible</span>
+  return null
+}
+
 export default function Register() {
-  const { form, errores, cargando, handleChange, handleSubmit } = useRegister()
+  const { form, errores, verificando, cargando, handleChange, handleSubmit } = useRegister()
   const [verPass, setVerPass]   = useState(false)
   const [verConf, setVerConf]   = useState(false)
   const [focusPass, setFocusPass] = useState(false)
- 
+
   const passReqs = {
     largo:     form.password.length >= 6,
     mayuscula: /[A-Z]/.test(form.password),
     numero:    /[0-9]/.test(form.password),
   }
- 
+
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-lg">
@@ -32,7 +39,7 @@ export default function Register() {
         </div>
         <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-dark-border">
           <form onSubmit={handleSubmit} className="space-y-4">
- 
+
             {/* datos personales */}
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Datos Personales</p>
@@ -60,10 +67,18 @@ export default function Register() {
                 </div>
                 <div>
                   <label className="campo-label">Número Documento</label>
-                  <input value={form.numero_documento} onChange={e => handleChange('numero_documento', e.target.value)}
-                    className={'campo-input ' + (errores.numero_documento ? 'border-red-400' : '')}
-                    placeholder="Solo números" maxLength={15} inputMode="numeric" />
-                  {errores.numero_documento && <p className="campo-error">{errores.numero_documento}</p>}
+                  <div className="relative">
+                    <input value={form.numero_documento} onChange={e => handleChange('numero_documento', e.target.value)}
+                      className={'campo-input pr-7 ' + (errores.numero_documento ? 'border-red-400' : (!errores.numero_documento && form.numero_documento && !verificando.numero_documento ? 'border-primary/40' : ''))}
+                      placeholder="Solo números" maxLength={15} inputMode="numeric" />
+                    {verificando.numero_documento && <Loader2 size={12} className="absolute right-2.5 top-2.5 text-gray-400 animate-spin" />}
+                  </div>
+                  <CampoEstado
+                    verificando={verificando.numero_documento}
+                    error={errores.numero_documento}
+                    valor={form.numero_documento}
+                    valido={!errores.numero_documento && form.numero_documento?.length >= 5}
+                  />
                 </div>
                 <div className="col-span-2">
                   <label className="campo-label">Teléfono (10 dígitos)</label>
@@ -74,17 +89,25 @@ export default function Register() {
                 </div>
               </div>
             </div>
- 
- 
+
             {/* datos de acceso */}
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Datos de Acceso</p>
               <div className="space-y-3">
                 <div>
                   <label className="campo-label">Correo Electrónico *</label>
-                  <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)}
-                    className={'campo-input ' + (errores.email ? 'border-red-400' : '')} placeholder="correo@ejemplo.com" />
-                  {errores.email && <p className="campo-error">{errores.email}</p>}
+                  <div className="relative">
+                    <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)}
+                      className={'campo-input pr-7 ' + (errores.email ? 'border-red-400' : (!errores.email && form.email && !verificando.email ? 'border-primary/40' : ''))}
+                      placeholder="correo@ejemplo.com" />
+                    {verificando.email && <Loader2 size={12} className="absolute right-2.5 top-2.5 text-gray-400 animate-spin" />}
+                  </div>
+                  <CampoEstado
+                    verificando={verificando.email}
+                    error={errores.email}
+                    valor={form.email}
+                    valido={!errores.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -126,8 +149,10 @@ export default function Register() {
                 </div>
               </div>
             </div>
- 
-            <button type="submit" disabled={cargando} className="btn-primary w-full justify-center py-2.5 text-sm disabled:opacity-50">
+
+            <button type="submit"
+              disabled={cargando || !!errores.email || !!errores.numero_documento || Object.values(verificando).some(Boolean)}
+              className="btn-primary w-full justify-center py-2.5 text-sm disabled:opacity-50">
               {cargando ? 'Creando Cuenta...' : 'Crear Cuenta'}
             </button>
             <p className="text-center text-xs text-gray-500 dark:text-dark-text/60">
