@@ -3,7 +3,8 @@ import { useAuth } from '@shared/contexts/AuthContext'
 import AdminLayout  from '@shared/components/AdminLayout'
 import Login        from '@features/autch/pages/Login'
 import Register     from '@features/autch/pages/Register'
-import Recuperar    from '@features/autch/pages/Recuperar'
+import Recuperar      from '@features/autch/pages/Recuperar'
+import ResetPassword  from '@features/autch/pages/ResetPassword'
 import Home         from '@features/tienda/pages/Home'
 import Catalogo     from '@features/tienda/pages/Catalogo'
 import PanelCliente from '@features/tienda/pages/PanelCliente'
@@ -40,7 +41,8 @@ export default function AppRoutes() {
       <Route path='/productos' element={<Catalogo />} />
       <Route path='/login'     element={<Login />} />
       <Route path='/register'  element={<Register />} />
-      <Route path='/recuperar' element={<Recuperar />} />
+      <Route path='/recuperar'      element={<Recuperar />} />
+      <Route path='/reset-password' element={<ResetPassword />} />
       <Route path='/perfil'    element={<RutaCliente><PanelCliente /></RutaCliente>} />
       <Route path='/admin' element={<RutaAdmin><AdminLayout /></RutaAdmin>}>
         <Route index             element={<Dashboard />} />
@@ -54,7 +56,6 @@ export default function AppRoutes() {
         <Route path='proveedores'element={<Proveedores />} />
         <Route path='usuarios'   element={<Usuarios />} />
         <Route path='roles'      element={<Roles />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />
     </Routes>
