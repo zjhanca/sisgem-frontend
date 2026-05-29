@@ -20,7 +20,7 @@ export default function OrdCompra() {
     facturaPreview, handleFacturaChange,
     prodBusqueda, prodsFiltrados, provBusqueda, provsFiltrados, provSeleccionado,
     buscarProveedor, buscarProducto, buscarPorCodigo, agregarItem, quitarItem,
-    setProvSeleccionado, setProvBusqueda, setProdBusqueda,
+    setProvSeleccionado, setProvBusqueda, setProdBusqueda, setProdsFiltrados,
     totalOrden, handleCrear, handleEditar, abrirEditar,
     cambiarEstado, anular,
     ESTADOS_ORDEN, getEstadoId, getKeyEstado,
@@ -132,7 +132,7 @@ export default function OrdCompra() {
         provBusqueda={provBusqueda} provsFiltrados={provsFiltrados} provSeleccionado={provSeleccionado}
         buscarProveedor={buscarProveedor} buscarProducto={buscarProducto} buscarPorCodigo={buscarPorCodigo}
         agregarItem={agregarItem} quitarItem={quitarItem}
-        setProvSeleccionado={setProvSeleccionado} setProvBusqueda={setProvBusqueda} setProdBusqueda={setProdBusqueda}
+        setProvSeleccionado={setProvSeleccionado} setProvBusqueda={setProvBusqueda} setProdBusqueda={setProdBusqueda} setProdsFiltrados={setProdsFiltrados}
         totalOrden={totalOrden} handleCrear={handleCrear} creando={creando}
         handleFacturaChange={handleFacturaChange} facturaPreview={facturaPreview}
       />

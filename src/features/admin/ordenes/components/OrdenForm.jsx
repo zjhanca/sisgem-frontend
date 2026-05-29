@@ -26,31 +26,30 @@ export default function OrdenForm({
         {/* proveedor */}
         <div>
           <label className="campo-label">Proveedor *</label>
-          <div className="relative">
-            <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
-            <input value={provSeleccionado ? provSeleccionado.nombre : provBusqueda}
-              onChange={e => buscarProveedor(e.target.value)}
-              className="campo-input pl-8 text-xs" placeholder="Buscar proveedor por nombre..." />
-            {provSeleccionado && (
+          {provSeleccionado ? (
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
+              <span className="font-medium text-primary">{provSeleccionado.nombre}</span>
               <button type="button"
                 onClick={() => { setProvSeleccionado(null); setProvBusqueda(''); setForm(p => ({ ...p, proveedor_id: '' })) }}
-                className="absolute right-2 top-2 text-gray-400 hover:text-red-400 text-xs">✕</button>
-            )}
-            {provBusqueda && !provSeleccionado && provsFiltrados.length > 0 && (
-              <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
-                {provsFiltrados.map(p => (
-                  <button key={p.id} type="button"
-                    onClick={() => { setForm(f => ({ ...f, proveedor_id: p.id })); setProvSeleccionado(p); setProvBusqueda('') }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 text-light-text dark:text-dark-text">
-                    {p.nombre}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          {form.proveedor_id && (
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs mt-1">
-              <span className="font-medium text-primary">✓ {provSeleccionado?.nombre}</span>
+                className="text-gray-400 hover:text-red-400 ml-2">✕</button>
+            </div>
+          ) : (
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
+              <input value={provBusqueda}
+                onChange={e => buscarProveedor(e.target.value)}
+                className="campo-input pl-8 text-xs" placeholder="Buscar proveedor por nombre..." />
+              {provBusqueda && provsFiltrados.length > 0 && (
+                <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                  {provsFiltrados.map(p => (
+                    <button key={p.id} type="button"
+                      onMouseDown={e => { e.preventDefault(); setForm(f => ({ ...f, proveedor_id: p.id })); setProvSeleccionado(p); setProvBusqueda('') }}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 text-light-text dark:text-dark-text">
+                      {p.nombre}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -85,7 +84,7 @@ export default function OrdenForm({
                 <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                   {prodsFiltrados.map(p => (
                     <button key={p.id} type="button"
-                      onClick={() => { setItemForm(f => ({ ...f, producto_id: p.id, costo_unitario: p.precio })); setProdBusqueda(p.nombre) }}
+                      onClick={() => { setItemForm(f => ({ ...f, producto_id: p.id, costo_unitario: p.precio })); setProdBusqueda(''); setProdsFiltrados([]) }}
                       className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text dark:text-dark-text">
                       <span>{p.nombre}{p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}</span>
                       <span className="text-primary">Stock: {p.stock}</span>
