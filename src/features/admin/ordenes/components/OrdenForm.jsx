@@ -9,7 +9,7 @@ export default function OrdenForm({
   proveedores, productos, prodBusqueda, prodsFiltrados, provBusqueda,
   provsFiltrados, provSeleccionado, buscarProveedor, buscarProducto,
   buscarPorCodigo, agregarItem, quitarItem, setProvSeleccionado,
-  setProvBusqueda, setProdBusqueda, totalOrden, handleCrear, creando,
+  setProvBusqueda, setProdBusqueda, setProdsFiltrados, totalOrden, handleCrear, creando,
   handleFacturaChange, facturaPreview,
 }) {
   const cerrar = () => {
@@ -84,7 +84,7 @@ export default function OrdenForm({
                 <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                   {prodsFiltrados.map(p => (
                     <button key={p.id} type="button"
-                      onClick={() => { setItemForm(f => ({ ...f, producto_id: p.id, costo_unitario: p.precio })); setProdBusqueda(''); setProdsFiltrados([]) }}
+                      onMouseDown={e => { e.preventDefault(); setItemForm(f => ({ ...f, producto_id: p.id, costo_unitario: p.precio })); setProdBusqueda(''); setProdsFiltrados([]) }}
                       className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text dark:text-dark-text">
                       <span>{p.nombre}{p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}</span>
                       <span className="text-primary">Stock: {p.stock}</span>
