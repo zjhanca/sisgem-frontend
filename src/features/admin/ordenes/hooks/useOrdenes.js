@@ -210,7 +210,7 @@ export function useOrdenes() {
     facturaPreview, handleFacturaChange,
     prodBusqueda, prodsFiltrados, provBusqueda, provsFiltrados, provSeleccionado,
     buscarProveedor, buscarProducto, buscarPorCodigo, agregarItem, quitarItem,
-    setProvSeleccionado, setProvBusqueda, setProdBusqueda,
+    setProvSeleccionado, setProvBusqueda, setProdBusqueda, setProdsFiltrados,
     totalOrden, handleCrear, handleEditar, abrirEditar,
     cambiarEstado, anular,
     ESTADOS_ORDEN, getEstadoId, getKeyEstado,
