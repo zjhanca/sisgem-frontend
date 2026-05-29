@@ -79,6 +79,7 @@ export default function OrdenForm({
             <div className="flex-1 relative">
               <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
               <input value={prodBusqueda} onChange={e => buscarProducto(e.target.value)}
+                onBlur={() => setTimeout(() => setProdsFiltrados([]), 150)}
                 className="campo-input pl-8 text-xs" placeholder="Buscar por nombre o código..." />
               {prodsFiltrados.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-20 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
