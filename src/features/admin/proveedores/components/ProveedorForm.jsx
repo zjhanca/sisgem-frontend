@@ -39,6 +39,8 @@ export default function ProveedorForm({ modal, form, errores, verificando = {}, 
                 onChange={e => handleChange('documento', e.target.value)}
                 className={`campo-input pr-7 ${errores.documento ? 'border-red-400' : (!errores.documento && form.documento && !verificando.documento ? 'border-primary/40' : '')}`}
                 placeholder="Ej: 900123456"
+                inputMode="numeric"
+                onKeyPress={e => { if (!/[0-9]/.test(e.key)) e.preventDefault() }}
               />
               {verificando.documento && <Loader2 size={12} className="absolute right-2.5 top-2.5 text-gray-400 animate-spin" />}
             </div>

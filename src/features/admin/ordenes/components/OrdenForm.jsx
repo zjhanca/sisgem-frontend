@@ -14,18 +14,9 @@ export default function OrdenForm({
 }) {
   const cerrar = () => {
     setModalNuevo(false)
-    setForm({ proveedor_id: '', productos: [], fecha_compra: '', metodo_pago: 'Efectivo', estado: 'pendiente', fecha_limite_pago: '', notas: '' })
+    setForm({ proveedor_id: '', productos: [], fecha_compra: '', metodo_pago: 'Efectivo', estado: 'pendiente', notas: '' })
     setProvBusqueda('')
     setProvSeleccionado(null)
-  }
-
-  const handleCodigoBarras = e => {
-    // solo permitir números en código de barras
-    e.target.value = e.target.value.replace(/\D/g, '')
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      if (e.target.value) { buscarPorCodigo(e.target.value); e.target.value = '' }
-    }
   }
 
   return (
@@ -57,7 +48,11 @@ export default function OrdenForm({
               </div>
             )}
           </div>
-          {form.proveedor_id && <p className="text-xs text-primary mt-1">✓ Proveedor: {provSeleccionado?.nombre}</p>}
+          {form.proveedor_id && (
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs mt-1">
+              <span className="font-medium text-primary">✓ {provSeleccionado?.nombre}</span>
+            </div>
+          )}
         </div>
 
         {/* fecha + método pago */}
@@ -77,8 +72,6 @@ export default function OrdenForm({
             </select>
           </div>
         </div>
-
-
 
         {/* productos */}
         <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-3">
@@ -101,13 +94,12 @@ export default function OrdenForm({
                 </div>
               )}
             </div>
-            {/* código de barras solo números */}
             <div className="relative">
               <input
                 placeholder="Cód. barras"
                 inputMode="numeric"
                 className="campo-input w-28 text-xs pr-7"
-                onChange={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
+                onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
                 onKeyDown={e => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
@@ -154,7 +146,7 @@ export default function OrdenForm({
           )}
         </div>
 
-        {/* subir factura */}
+        {/* factura */}
         <div>
           <label className="campo-label">Factura (PDF o imagen)</label>
           <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-dark-border hover:border-primary/40 transition-colors">
