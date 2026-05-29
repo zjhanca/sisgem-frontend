@@ -54,6 +54,7 @@ export default function AppRoutes() {
         <Route path='proveedores'element={<Proveedores />} />
         <Route path='usuarios'   element={<Usuarios />} />
         <Route path='roles'      element={<Roles />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />
     </Routes>
