@@ -19,6 +19,7 @@ export default function Pagos() {
     totalPedido, totalPagado, montoPendiente, pagoCompleto, esFiado,
     handleSubmit, anular, esAnulado, getFechaPago,
     getEstadoPago, tipoPagoActual,
+    pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
     creando, anulando,
   } = usePagos()
 
@@ -98,7 +99,9 @@ export default function Pagos() {
         form={form} setForm={setForm} errores={errores} pedidos={pedidos}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}
         pagoCompleto={pagoCompleto} handleSubmit={handleSubmit} creando={creando}
-        tipoPagoActual={tipoPagoActual} esFiado={esFiado} />
+        tipoPagoActual={tipoPagoActual} esFiado={esFiado}
+        pedidoBusqueda={pedidoBusqueda} setPedidoBusqueda={setPedidoBusqueda}
+        pedidoDropdown={pedidoDropdown} setPedidoDropdown={setPedidoDropdown} />
       <PagoDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         setModalAnular={setModalAnular} esAnulado={esAnulado} />
       <PagoAnular modalAnular={modalAnular} setModalAnular={setModalAnular}

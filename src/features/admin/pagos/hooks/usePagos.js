@@ -16,15 +16,28 @@ export function usePagos() {
   const [filtroDesde, setFiltroDesde]   = useState('')
   const [filtroHasta, setFiltroHasta]   = useState('')
   const [filtroBusqueda, setFiltroBusqueda] = useState('')
+  const [pedidoBusqueda, setPedidoBusqueda] = useState('')
+  const [pedidoDropdown, setPedidoDropdown] = useState(false)
 
   const { data: pagos = [] }   = useQuery({ queryKey: ['pagos'],   queryFn: pagosService.getAll })
-  const { data: pedidos = [] } = useQuery({ queryKey: ['pedidos'], queryFn: () => pagosService.getPedidos().then(d => d.filter(p => !p.estado?.toLowerCase().includes('anula'))) })
+  const { data: todosLosPedidos = [] } = useQuery({ queryKey: ['pedidos'], queryFn: pagosService.getPedidos })
 
-  const pagadoPorPedido = pedidos.reduce((acc, p) => {
-    const activos = pagos.filter(pg => pg.pedido_id === p.id && !esAnulado(pg.estado))
-    acc[p.id] = activos.reduce((s, pg) => s + +pg.monto, 0)
-    return acc
-  }, {})
+  // solo pedidos con saldo pendiente (fiados o abonos parciales) — excluir completados y anulados
+  const pagadoPorPedidoCalc = (pedidosList, pagosList) =>
+    pedidosList.reduce((acc, p) => {
+      const activos = pagosList.filter(pg => pg.pedido_id === p.id && !esAnulado(pg.estado))
+      acc[p.id] = activos.reduce((s, pg) => s + +pg.monto, 0)
+      return acc
+    }, {})
+
+  const pedidos = todosLosPedidos.filter(p => {
+    const estadoNom = p.estado?.toLowerCase() || ''
+    if (estadoNom.includes('anula')) return false
+    if (estadoNom.includes('complet') || estadoNom.includes('paga')) return false
+    return true
+  })
+
+  const pagadoPorPedido = pagadoPorPedidoCalc(todosLosPedidos, pagos)
 
   const pedidoSel      = pedidos.find(p => p.id === +form.pedido_id)
   const esFiado        = !!pedidoSel?.permite_fiado
@@ -39,7 +52,7 @@ export function usePagos() {
     mutationFn: data => pagosService.create(data),
     onSuccess: () => {
       qc.invalidateQueries(['pagos']); qc.invalidateQueries(['pedidos'])
-      setModalNuevo(false); setForm(formVacio)
+      setModalNuevo(false); setForm(formVacio); setPedidoBusqueda('')
       toast.success('Pago registrado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
@@ -102,6 +115,7 @@ export function usePagos() {
     filtroBusqueda, setFiltroBusqueda,
     totalPedido, totalPagado, montoPendiente, pagoCompleto, esFiado,
     handleSubmit, anular, esPagado, esAbono, esAnulado, getFechaPago,
+    pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
     getEstadoPago, tipoPagoActual,
     creando: crear.isPending, anulando: anular.isPending,
   }
