@@ -34,7 +34,8 @@ export function useClientes() {
   const qc = useQueryClient()
   const [modal, setModal]               = useState({ abierto: false, item: null })
   const [modalDetalle, setModalDetalle] = useState({ abierto: false, item: null })
-  const [form, setForm]                 = useState(formVacio)
+  const [modalEliminar, setModalEliminar] = useState({ abierto: false, item: null })
+  const [form, setForm]                   = useState(formVacio)
   const [errores, setErrores]           = useState({})
   const [verificando, setVerificando]   = useState({})
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -77,6 +78,11 @@ export function useClientes() {
     mutationFn: data => modal.item ? clientesService.update(modal.item.id, data) : clientesService.create(data),
     onSuccess: () => { qc.invalidateQueries(['clientes']); cerrarModal(); toast.success('Cliente guardado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar'),
+  })
+  const eliminar = useMutation({
+    mutationFn: id => clientesService.delete(id),
+    onSuccess: () => { qc.invalidateQueries(['clientes']); setModalEliminar({ abierto: false, item: null }); toast.success('Cliente eliminado') },
+    onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar'),
   })
   const toggleEstado = useMutation({
     mutationFn: clientesService.toggleEstado,
@@ -138,6 +144,8 @@ export function useClientes() {
     filtroEstado, setFiltroEstado,
     setModalDetalle,
     abrirModal, cerrarModal, handleChange, handleSubmit,
-    toggleEstado, guardando: guardar.isPending,
+    toggleEstado, eliminar, eliminando: eliminar.isPending,
+    modalEliminar, setModalEliminar,
+    guardando: guardar.isPending,
   }
 }

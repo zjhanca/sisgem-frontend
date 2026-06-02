@@ -54,7 +54,7 @@ export default function Productos() {
 
       <ProductoForm modal={modal} form={form} setForm={setForm} errores={errores}
         handleChange={handleChange} handleSubmit={handleSubmit} cerrarModal={cerrarModal}
-        guardando={guardando} categorias={categorias} proveedores={proveedores} marcas={marcas}
+        guardando={guardando} categorias={categorias} marcas={marcas}
         verificandoCodigo={verificandoCodigo} />
       <ProductoDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} />
       <ProductoEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />

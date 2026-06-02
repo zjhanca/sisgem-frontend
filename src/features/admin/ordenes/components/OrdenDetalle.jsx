@@ -31,23 +31,29 @@ export default function OrdenDetalle({
           <div className="pt-2 border-t border-gray-200 dark:border-dark-border">
             <p className="campo-label mb-1">Estado</p>
             {esAnulada ? (
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-400/20 text-xs text-red-500">
-                Esta orden está anulada y no puede ser modificada.
-              </div>
+              <span className="badge-anulado">Anulado</span>
             ) : (
-              <select
-                value={getEstadoId(getKeyEstado(orden.estado)) || ''}
-                onChange={e => {
-                  if (e.target.value) cambiarEstado.mutate({ id: orden.id, estado_id: +e.target.value })
-                }}
-                onClick={e => e.stopPropagation()}
-                className="campo-input text-sm w-full">
+              <div className="flex gap-2">
                 {ESTADOS_ORDEN.filter(e => e.key !== 'anulado').map(e => {
                   const id = getEstadoId(e.key)
                   if (!id) return null
-                  return <option key={e.key} value={id}>{e.label}</option>
+                  const activo = getKeyEstado(orden.estado) === e.key
+                  return (
+                    <button key={e.key} type="button"
+                      disabled={activo}
+                      onClick={() => !activo && cambiarEstado.mutate({ id: orden.id, estado_id: id })}
+                      className={`text-xs px-3 py-1 rounded-full border font-medium transition-all disabled:cursor-default ${
+                        activo
+                          ? e.key === 'pendiente'
+                            ? 'bg-amber-500/20 border-amber-500/40 text-amber-500'
+                            : 'bg-primary/20 border-primary/40 text-primary'
+                          : 'border-gray-200 dark:border-dark-border text-gray-400 hover:border-primary/40 hover:text-primary'
+                      }`}>
+                      {e.label}
+                    </button>
+                  )
                 })}
-              </select>
+              </div>
             )}
           </div>
 

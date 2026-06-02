@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 // estados reales del backend: pendiente(10), activo(11), anulado(12)
 const ESTADOS_ORDEN = [
   { key: 'pendiente', label: 'Pendiente', color: 'yellow' },
-  { key: 'activo',    label: 'Activo',    color: 'blue'   },
+  { key: 'activo',    label: 'Completado', color: 'green'  },
   { key: 'anulado',   label: 'Anulado',   color: 'gray'   },
 ]
 

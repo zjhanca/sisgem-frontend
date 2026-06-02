@@ -10,7 +10,7 @@ export default function OrdenForm({
   provsFiltrados, provSeleccionado, buscarProveedor, buscarProducto,
   buscarPorCodigo, agregarItem, quitarItem, setProvSeleccionado,
   setProvBusqueda, setProdBusqueda, setProdsFiltrados, totalOrden, handleCrear, creando,
-  handleFacturaChange, facturaPreview,
+  handleFacturaChange, facturaPreview, onCrearProducto,
 }) {
   const cerrar = () => {
     setModalNuevo(false)
@@ -74,7 +74,15 @@ export default function OrdenForm({
 
         {/* productos */}
         <div className="p-3 rounded-xl border border-gray-200 dark:border-dark-border space-y-3">
-          <p className="text-xs font-semibold">Productos</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold">Productos</p>
+            {onCrearProducto && (
+              <button type="button" onClick={onCrearProducto}
+                className="text-xs flex items-center gap-1 text-primary/70 hover:text-primary transition-colors">
+                + Crear nuevo producto
+              </button>
+            )}
+          </div>
           <div className="flex gap-2">
             <div className="flex-1 relative">
               {itemForm.producto_id ? (

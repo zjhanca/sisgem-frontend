@@ -1,10 +1,11 @@
-﻿import { Plus, Edit2, Eye, Download } from 'lucide-react'
+﻿import { Plus, Edit2, Eye, Download, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import EstadoToggle from '@shared/components/EstadoToggle'
 import { descargarPDF } from '@shared/utils/reportes'
 import { useClientes } from '../hooks/useClientes'
 import ClienteForm    from '../components/ClienteForm'
-import ClienteDetalle from '../components/ClienteDetalle'
+import ClienteDetalle  from '../components/ClienteDetalle'
+import ClienteEliminar from '../components/ClienteEliminar'
 
 export default function Clientes() {
   const {
@@ -16,6 +17,7 @@ export default function Clientes() {
     abrirModal, cerrarModal,
     handleChange, handleSubmit,
     toggleEstado, guardando, verificando,
+    eliminar, eliminando, modalEliminar, setModalEliminar,
   } = useClientes()
 
   const columnas = [
@@ -75,6 +77,7 @@ export default function Clientes() {
             onChange={() => toggleEstado.mutate(fila.id)}
             cargando={toggleEstado.isPending}
           />
+          <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400" title="Eliminar"><Trash2 size={14} /></button>
         </>)}
       />
 
@@ -86,6 +89,10 @@ export default function Clientes() {
       <ClienteDetalle
         modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         abrirModal={abrirModal} historial={historial}
+      />
+      <ClienteEliminar
+        modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
+        eliminar={eliminar} eliminando={eliminando}
       />
     </div>
   )

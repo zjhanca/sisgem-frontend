@@ -1,4 +1,5 @@
-﻿import { Plus, Eye, Download, Clock, XCircle, AlertTriangle, Edit2, CheckCircle, Truck } from 'lucide-react'
+﻿import { useState } from 'react'
+import { Plus, Eye, Download, XCircle, AlertTriangle, Edit2, Package } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
@@ -6,8 +7,18 @@ import { descargarPDF } from '@shared/utils/reportes'
 import { useOrdenes } from '../hooks/useOrdenes'
 import OrdenForm    from '../components/OrdenForm'
 import OrdenDetalle from '../components/OrdenDetalle'
+import ProductoForm from '../../productos/components/ProductoForm'
+import { useProductos } from '../../productos/hooks/useProductos'
 
 const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
+
+const getBadgeOrden = nombre => {
+  if (!nombre) return { clase: 'badge-pendiente', label: 'Pendiente' }
+  const l = nombre.toLowerCase()
+  if (l.includes('anula'))   return { clase: 'badge-anulado',  label: 'Anulado' }
+  if (l.includes('complet')) return { clase: 'badge-activo',   label: 'Completado' }
+  return { clase: 'badge-pendiente', label: 'Pendiente' }
+}
 
 export default function OrdCompra() {
   const {
@@ -27,30 +38,27 @@ export default function OrdCompra() {
     creando, editando, anulando,
   } = useOrdenes()
 
+  // hook de productos para el modal de crear producto rápido
+  const {
+    modal: modalProd, form: formProd, setForm: setFormProd, errores: erroresProd,
+    handleChange: handleChangeProd, handleSubmit: handleSubmitProd,
+    cerrarModal: cerrarModalProd, guardando: guardandoProd,
+    categorias, marcas, verificandoCodigo, abrirModal: abrirModalProd,
+  } = useProductos()
+
+  const [modalCrearProd, setModalCrearProd] = useState(false)
+
   const columnas = [
-    { key: 'id',             label: '#' },
-    { key: 'proveedor',      label: 'Proveedor' },
-    { key: 'registrado_por', label: 'Registrado por', render: r => r.registrado_por || '—' },
-    { key: 'fecha_compra',   label: 'Fecha Compra',   render: r => formatFecha(r.fecha_compra || r.created_at) },
-    { key: 'metodo_pago',    label: 'Método Pago',    render: r => r.metodo_pago || '—' },
-    { key: 'total',          label: 'Total',          render: r => formatPrecio(r.total) },
-    { key: 'estado_id', label: 'Estado',
-      render: r => (
-        <select
-          value={getEstadoId(getKeyEstado(r.estado)) || ''}
-          onChange={e => {
-            if (e.target.value) cambiarEstado.mutate({ id: r.id, estado_id: +e.target.value })
-          }}
-          onClick={e => e.stopPropagation()}
-          disabled={getKeyEstado(r.estado) === 'anulado'}
-          className="text-xs bg-transparent border border-gray-200 dark:border-dark-border rounded px-1 py-0.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-          {ESTADOS_ORDEN.map(e => {
-            const id = getEstadoId(e.key)
-            if (!id) return null
-            return <option key={e.key} value={id}>{e.label}</option>
-          })}
-        </select>
-      )
+    { key: 'id',           label: '#' },
+    { key: 'proveedor',    label: 'Proveedor' },
+    { key: 'fecha_compra', label: 'Fecha', render: r => formatFecha(r.fecha_compra || r.created_at) },
+    { key: 'metodo_pago',  label: 'Método', render: r => r.metodo_pago || '—' },
+    { key: 'total',        label: 'Total',  render: r => formatPrecio(r.total) },
+    { key: 'estado', label: 'Estado',
+      render: r => {
+        const { clase, label } = getBadgeOrden(r.estado)
+        return <span className={clase}>{label}</span>
+      }
     },
   ]
 
@@ -62,26 +70,26 @@ export default function OrdCompra() {
           <button onClick={() => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
+          <button onClick={() => { abrirModalProd(); setModalCrearProd(true) }}
+            className="btn-outline">
+            <Package size={14} /> Nuevo Producto
+          </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
             <Plus size={14} /> Nueva Orden
           </button>
         </div>
       </div>
 
-      {/* alerta vencidas */}
       {ordenesVencidas > 0 && (
         <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-400/20">
           <AlertTriangle size={16} className="text-red-500 shrink-0" />
           <p className="text-sm text-red-600 dark:text-red-400">
             <span className="font-semibold">{ordenesVencidas}</span> orden{ordenesVencidas > 1 ? 'es' : ''} con factura vencida
           </p>
-          <button onClick={() => setFiltroEstado('vencida')} className="ml-auto text-xs text-red-500 hover:underline">
-            Ver vencidas →
-          </button>
+          <button onClick={() => setFiltroEstado('vencida')} className="ml-auto text-xs text-red-500 hover:underline">Ver vencidas →</button>
         </div>
       )}
 
-      {/* filtros */}
       <div className="flex gap-2 mb-4 flex-wrap items-end">
         <div>
           <p className="campo-label mb-0.5">Estado</p>
@@ -105,25 +113,15 @@ export default function OrdCompra() {
 
       <Tabla columnas={columnas} datos={ordenesFiltradas}
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, orden: fila })}
-            className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
-          <button onClick={() => abrirEditar(fila)}
-            className="btn-ghost" title="Editar"
-            disabled={getKeyEstado(fila.estado) === 'anulado'}>
-            <Edit2 size={14} />
-          </button>
-          <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)}
-            className="btn-ghost" title="Descargar PDF"><Download size={14} /></button>
+          <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
+          <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar" disabled={getKeyEstado(fila.estado) === 'anulado'}><Edit2 size={14} /></button>
+          <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
           {getKeyEstado(fila.estado) !== 'anulado' && (
-            <button onClick={() => setModalAnular({ abierto: true, orden: fila })}
-              className="btn-ghost hover:text-red-400" title="Anular">
-              <XCircle size={14} />
-            </button>
+            <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><XCircle size={14} /></button>
           )}
         </>)}
       />
 
-      {/* modal nueva orden */}
       <OrdenForm
         modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
         form={form} setForm={setForm} itemForm={itemForm} setItemForm={setItemForm}
@@ -132,12 +130,13 @@ export default function OrdCompra() {
         provBusqueda={provBusqueda} provsFiltrados={provsFiltrados} provSeleccionado={provSeleccionado}
         buscarProveedor={buscarProveedor} buscarProducto={buscarProducto} buscarPorCodigo={buscarPorCodigo}
         agregarItem={agregarItem} quitarItem={quitarItem}
-        setProvSeleccionado={setProvSeleccionado} setProvBusqueda={setProvBusqueda} setProdBusqueda={setProdBusqueda} setProdsFiltrados={setProdsFiltrados}
+        setProvSeleccionado={setProvSeleccionado} setProvBusqueda={setProvBusqueda}
+        setProdBusqueda={setProdBusqueda} setProdsFiltrados={setProdsFiltrados}
         totalOrden={totalOrden} handleCrear={handleCrear} creando={creando}
         handleFacturaChange={handleFacturaChange} facturaPreview={facturaPreview}
+        onCrearProducto={() => { abrirModalProd(); setModalCrearProd(true) }}
       />
 
-      {/* modal detalle */}
       <OrdenDetalle
         modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         cambiarEstado={cambiarEstado} ESTADOS_ORDEN={ESTADOS_ORDEN}
@@ -169,7 +168,6 @@ export default function OrdCompra() {
                   {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
-
               <div className="col-span-2">
                 <label className="campo-label">Notas</label>
                 <textarea value={formEditar.notas || ''} rows={2}
@@ -180,15 +178,13 @@ export default function OrdCompra() {
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
               <button type="button" onClick={() => setModalEditar({ abierto: false, orden: null })}
                 className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
-              <button type="submit" disabled={editando} className="btn-primary">
-                {editando ? 'Guardando...' : 'Aceptar'}
-              </button>
+              <button type="submit" disabled={editando} className="btn-primary">{editando ? 'Guardando...' : 'Aceptar'}</button>
             </div>
           </form>
         )}
       </Modal>
 
-      {/* modal confirmar anular */}
+      {/* modal anular */}
       <Modal abierto={modalAnular.abierto} onCerrar={() => setModalAnular({ abierto: false, orden: null })}
         titulo="Anular Orden" ancho="max-w-sm">
         {modalAnular.orden && (
@@ -207,6 +203,19 @@ export default function OrdCompra() {
           </div>
         )}
       </Modal>
+
+      {/* modal crear producto rápido */}
+      {modalCrearProd && (
+        <ProductoForm
+          modal={{ ...modalProd, abierto: true }}
+          form={formProd} setForm={setFormProd} errores={erroresProd}
+          handleChange={handleChangeProd}
+          handleSubmit={e => { handleSubmitProd(e); setModalCrearProd(false) }}
+          cerrarModal={() => { cerrarModalProd(); setModalCrearProd(false) }}
+          guardando={guardandoProd} categorias={categorias} marcas={marcas}
+          verificandoCodigo={verificandoCodigo}
+        />
+      )}
     </div>
   )
 }

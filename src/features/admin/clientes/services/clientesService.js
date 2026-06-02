@@ -8,4 +8,5 @@ export const clientesService = {
   getDirecciones: id         => api.get(`/clientes/${id}/direcciones`).then(r => r.data.datos),
   addDireccion:   (id, data) => api.post(`/clientes/${id}/direcciones`, data),
   getPedidos:     id         => api.get(`/pedidos?cliente_id=${id}`).then(r => r.data.datos),
+  delete:         id         => api.delete(`/clientes/${id}`),
 }

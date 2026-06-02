@@ -4,17 +4,15 @@ import { productosService } from '../services/productosService'
 import toast from 'react-hot-toast'
 
 const formVacio = {
-  nombre: '', descripcion: '', precio: '', stock: '',
+  nombre: '', descripcion: '', precio: 0, stock: 0,
   categoria_id: '', proveedor_id: '', marca_id: '',
   codigo_barras: '', imagen_url: '',
-  imagenes: [], // array de URLs de imágenes
+  imagenes: [],
 }
 
 const validar = form => {
   const e = {}
-  if (!form.nombre.trim())                  e.nombre = 'El nombre es obligatorio'
-  if (!form.precio || +form.precio <= 0)    e.precio = 'Precio inválido'
-  if (form.stock === '' || +form.stock < 0) e.stock  = 'Stock inválido'
+  if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio'
   return e
 }
 
