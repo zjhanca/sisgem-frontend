@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react'
-import { Plus, Eye, Download, XCircle, AlertTriangle, Edit2 } from 'lucide-react'
+import { Plus, Eye, Download, Ban, AlertTriangle, Edit2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
@@ -56,34 +56,21 @@ export default function OrdCompra() {
     { key: 'total',        label: 'Total',  render: r => formatPrecio(r.total) },
     { key: 'estado', label: 'Estado',
       render: r => {
-        const esAnulada = r.estado?.toLowerCase().includes('anula')
+        const esAnulada   = r.estado?.toLowerCase().includes('anula')
         const esCompletada = r.estado?.toLowerCase().includes('complet')
-        if (esAnulada) return <span className="badge-anulado">Anulado</span>
+        if (esAnulada)   return <span className="badge-anulado">Anulado</span>
+        if (esCompletada) return <span className="badge-activo">Completado</span>
         return (
-          <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-            {/* Pendiente: solo se muestra como badge si está pendiente, no es clickeable si está completado */}
-            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
-              !esCompletada
-                ? 'bg-amber-500/20 border-amber-500/40 text-amber-500'
-                : 'border-gray-200 dark:border-dark-border text-gray-300 dark:text-dark-text/20'
-            }`}>
-              Pendiente
-            </span>
-            {/* Completado: clickeable solo si está pendiente */}
-            <button type="button"
-              disabled={esCompletada}
-              onClick={() => {
-                const id = getEstadoId('activo')
-                if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
-              }}
-              className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-all ${
-                esCompletada
-                  ? 'bg-primary/20 border-primary/40 text-primary cursor-default'
-                  : 'border-gray-200 dark:border-dark-border text-gray-400 hover:border-primary/40 hover:text-primary cursor-pointer'
-              }`}>
-              Completado
-            </button>
-          </div>
+          <button type="button"
+            onClick={e => {
+              e.stopPropagation()
+              const id = getEstadoId('activo') || getEstadoId('complet')
+              if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
+            }}
+            title="Clic para marcar como Completado"
+            className="badge-pendiente hover:opacity-80 transition-opacity cursor-pointer">
+            Pendiente
+          </button>
         )
       }
     },
@@ -140,7 +127,7 @@ export default function OrdCompra() {
           <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar" disabled={getKeyEstado(fila.estado) === 'anulado'}><Edit2 size={14} /></button>
           <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
           {getKeyEstado(fila.estado) !== 'anulado' && (
-            <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><XCircle size={14} /></button>
+            <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><Ban size={14} /></button>
           )}
         </>)}
       />
