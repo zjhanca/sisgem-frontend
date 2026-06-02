@@ -1,4 +1,4 @@
-﻿import { DollarSign, ShoppingCart, Clock, TrendingUp, Calendar, Download } from 'lucide-react'
+﻿import { DollarSign, Clock, TrendingUp, Calendar, FileText } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 import { useDashboard } from '../hooks/useDashboard'
 import DashboardStatCard      from '../components/DashboardStatCard'
@@ -6,7 +6,7 @@ import DashboardVentas        from '../components/DashboardVentas'
 import DashboardTopProductos  from '../components/DashboardTopProductos'
 import DashboardTipoVenta     from '../components/DashboardTipoVenta'
 import DashboardVentasMes     from '../components/DashboardVentasMes'
- 
+
 export default function Dashboard() {
   const {
     data, isLoading, ventasMes, ventasGrafica,
@@ -14,29 +14,31 @@ export default function Dashboard() {
     periodoVentas, setPeriodoVentas,
     descargarReporte,
   } = useDashboard()
- 
+
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
       <p className="text-sm text-gray-400 dark:text-dark-text/40">Cargando...</p>
     </div>
   )
- 
+
   if (!data) return null
- 
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="page-title">Dashboard</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarReporte('semana')} className="btn-outline text-xs">
-            <Download size={12} /> Reporte Semanal
+          <button onClick={() => descargarReporte('semana')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-dark-border text-gray-500 dark:text-dark-text/60 hover:border-primary/40 hover:text-primary transition-all">
+            <FileText size={12} /> Semanal
           </button>
-          <button onClick={() => descargarReporte('mes')} className="btn-outline text-xs">
-            <Download size={12} /> Reporte Mensual
+          <button onClick={() => descargarReporte('mes')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-dark-border text-gray-500 dark:text-dark-text/60 hover:border-primary/40 hover:text-primary transition-all">
+            <FileText size={12} /> Mensual
           </button>
         </div>
       </div>
- 
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <DashboardStatCard
           icon={DollarSign} label="Ventas Hoy"
@@ -61,18 +63,18 @@ export default function Dashboard() {
           color="bg-blue-500/20"
         />
       </div>
- 
+
       <DashboardVentas
         ventasGrafica={ventasGrafica}
         periodoVentas={periodoVentas}
         setPeriodoVentas={setPeriodoVentas}
       />
- 
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <DashboardTopProductos productos={data.productos_top} />
         <DashboardTipoVenta ventasPorTipo={data.ventas_por_tipo} />
       </div>
- 
+
       <DashboardVentasMes ventasMes={ventasMes} />
     </div>
   )

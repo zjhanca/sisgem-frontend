@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react'
-import { Plus, Eye, Download, XCircle, AlertTriangle, Edit2, Package } from 'lucide-react'
+import { Plus, Eye, Download, XCircle, AlertTriangle, Edit2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
@@ -70,11 +70,7 @@ export default function OrdCompra() {
           <button onClick={() => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
-          <button onClick={() => { abrirModalProd(); setModalCrearProd(true) }}
-            className="btn-outline">
-            <Package size={14} /> Nuevo Producto
-          </button>
-          <button onClick={() => setModalNuevo(true)} className="btn-primary">
+<button onClick={() => setModalNuevo(true)} className="btn-primary">
             <Plus size={14} /> Nueva Orden
           </button>
         </div>
