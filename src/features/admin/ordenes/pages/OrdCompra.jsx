@@ -53,6 +53,7 @@ export default function OrdCompra() {
     { key: 'proveedor',    label: 'Proveedor' },
     { key: 'fecha_compra', label: 'Fecha', render: r => formatFecha(r.fecha_compra || r.created_at) },
     { key: 'metodo_pago',  label: 'Método', render: r => r.metodo_pago || '—' },
+    { key: 'registrado_por_nombre', label: 'Registrado por', render: r => r.registrado_por_nombre || '—' },
     { key: 'total',        label: 'Total',  render: r => formatPrecio(r.total) },
     { key: 'estado', label: 'Estado',
       render: r => {

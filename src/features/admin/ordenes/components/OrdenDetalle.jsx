@@ -23,7 +23,7 @@ export default function OrdenDetalle({
             <div><p className="campo-label">Fecha Compra</p><p>{formatFecha(orden.fecha_compra || orden.created_at)}</p></div>
             {orden.metodo_pago      && <div><p className="campo-label">Método Pago</p><p>{orden.metodo_pago}</p></div>}
             {orden.fecha_limite_pago && <div><p className="campo-label">Límite Pago</p><p>{formatFecha(orden.fecha_limite_pago)}</p></div>}
-            {orden.registrado_por   && <div><p className="campo-label">Registrado por</p><p>{orden.registrado_por}</p></div>}
+            {(orden.registrado_por_nombre || orden.registrado_por) && <div><p className="campo-label">Registrado por</p><p>{orden.registrado_por_nombre || orden.registrado_por}</p></div>}
             {orden.notas && <div className="col-span-2"><p className="campo-label">Notas</p><p className="text-gray-500 italic">{orden.notas}</p></div>}
           </div>
 
