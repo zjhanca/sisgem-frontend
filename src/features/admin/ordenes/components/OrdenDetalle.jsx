@@ -27,34 +27,15 @@ export default function OrdenDetalle({
             {orden.notas && <div className="col-span-2"><p className="campo-label">Notas</p><p className="text-gray-500 italic">{orden.notas}</p></div>}
           </div>
 
-          {/* cambiar estado con select — igual que pedidos */}
+          {/* estado actual */}
           <div className="pt-2 border-t border-gray-200 dark:border-dark-border">
             <p className="campo-label mb-1">Estado</p>
-            {esAnulada ? (
-              <span className="badge-anulado">Anulado</span>
-            ) : (
-              <div className="flex gap-2">
-                {ESTADOS_ORDEN.filter(e => e.key !== 'anulado').map(e => {
-                  const id = getEstadoId(e.key)
-                  if (!id) return null
-                  const activo = getKeyEstado(orden.estado) === e.key
-                  return (
-                    <button key={e.key} type="button"
-                      disabled={activo}
-                      onClick={() => !activo && cambiarEstado.mutate({ id: orden.id, estado_id: id })}
-                      className={`text-xs px-3 py-1 rounded-full border font-medium transition-all disabled:cursor-default ${
-                        activo
-                          ? e.key === 'pendiente'
-                            ? 'bg-amber-500/20 border-amber-500/40 text-amber-500'
-                            : 'bg-primary/20 border-primary/40 text-primary'
-                          : 'border-gray-200 dark:border-dark-border text-gray-400 hover:border-primary/40 hover:text-primary'
-                      }`}>
-                      {e.label}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+            {esAnulada
+              ? <span className="badge-anulado">Anulado</span>
+              : getKeyEstado(orden.estado) === 'activo'
+                ? <span className="badge-activo">Completado</span>
+                : <span className="badge-pendiente">Pendiente</span>
+            }
           </div>
 
           {/* acciones */}
