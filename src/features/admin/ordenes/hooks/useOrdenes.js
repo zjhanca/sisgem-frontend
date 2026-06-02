@@ -50,8 +50,8 @@ export function useOrdenes() {
   const getKeyEstado = nombre => {
     if (!nombre) return 'pendiente'
     const n = nombre.toLowerCase()
-    if (n === 'activo' || n.includes('activo') || n.includes('transito') || n.includes('recibi')) return 'activo'
-    if (n === 'anulado' || n.includes('anula') || n.includes('cancel')) return 'anulado'
+    if (n.includes('anula') || n.includes('cancel')) return 'anulado'
+    if (n.includes('activo') || n.includes('complet') || n.includes('transito') || n.includes('recibi')) return 'activo'
     return 'pendiente'
   }
 
