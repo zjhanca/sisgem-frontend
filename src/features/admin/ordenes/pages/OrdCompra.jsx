@@ -56,8 +56,39 @@ export default function OrdCompra() {
     { key: 'total',        label: 'Total',  render: r => formatPrecio(r.total) },
     { key: 'estado', label: 'Estado',
       render: r => {
-        const { clase, label } = getBadgeOrden(r.estado)
-        return <span className={clase}>{label}</span>
+        const esAnulada = r.estado?.toLowerCase().includes('anula')
+        const esCompletada = r.estado?.toLowerCase().includes('complet')
+        if (esAnulada) return <span className="badge-anulado">Anulado</span>
+        return (
+          <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+            <button type="button"
+              disabled={!esCompletada}
+              onClick={() => {
+                const id = getEstadoId('pendiente')
+                if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
+              }}
+              className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-all ${
+                !esCompletada
+                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-500 cursor-default'
+                  : 'border-gray-200 dark:border-dark-border text-gray-400 hover:border-amber-400/40 hover:text-amber-500'
+              }`}>
+              Pendiente
+            </button>
+            <button type="button"
+              disabled={esCompletada}
+              onClick={() => {
+                const id = getEstadoId('activo')
+                if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
+              }}
+              className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-all ${
+                esCompletada
+                  ? 'bg-primary/20 border-primary/40 text-primary cursor-default'
+                  : 'border-gray-200 dark:border-dark-border text-gray-400 hover:border-primary/40 hover:text-primary'
+              }`}>
+              Completado
+            </button>
+          </div>
+        )
       }
     },
   ]
@@ -180,20 +211,22 @@ export default function OrdCompra() {
         )}
       </Modal>
 
-      {/* modal anular */}
+      {/* modal anular — mismo estilo que pagos */}
       <Modal abierto={modalAnular.abierto} onCerrar={() => setModalAnular({ abierto: false, orden: null })}
-        titulo="Anular Orden" ancho="max-w-sm">
+        titulo="Confirmar Anulación" ancho="max-w-sm">
         {modalAnular.orden && (
           <div className="space-y-4">
-            <p className="text-sm">¿Anular la orden <span className="font-medium text-primary">#{modalAnular.orden.id}</span> de <span className="font-medium">{modalAnular.orden.proveedor}</span>?
-              <br /><span className="text-xs text-gray-400 mt-1 block">Esta acción no se puede deshacer.</span>
+            <p className="text-sm">¿Anular la orden
+              <span className="font-medium text-primary"> #{modalAnular.orden.id}</span> de
+              <span className="text-primary"> {modalAnular.orden.proveedor}</span>?
+              Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
               <button onClick={() => setModalAnular({ abierto: false, orden: null })}
                 className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
               <button onClick={() => anular.mutate(modalAnular.orden.id)} disabled={anulando}
                 className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
-                {anulando ? 'Anulando...' : 'Anular'}
+                {anulando ? 'Anulando...' : 'Aceptar'}
               </button>
             </div>
           </div>
