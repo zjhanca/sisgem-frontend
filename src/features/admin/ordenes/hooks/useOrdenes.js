@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 // estados reales del backend: pendiente(10), activo(11), anulado(12)
 const ESTADOS_ORDEN = [
   { key: 'pendiente', label: 'Pendiente', color: 'yellow' },
-  { key: 'activo',    label: 'Completado', color: 'green'  },
+  { key: 'activo',    label: 'Activo',    color: 'blue'   },
   { key: 'anulado',   label: 'Anulado',   color: 'gray'   },
 ]
 
@@ -67,7 +67,7 @@ export function useOrdenes() {
   const getEstadoId = key => {
     const mapa = {
       pendiente: ['pendiente'],
-      activo:    ['activo', 'transito', 'recibi'],
+      activo:    ['activo', 'complet', 'transito', 'recibi'],
       anulado:   ['anulado', 'anula', 'cancel'],
     }
     return estadosBD.find(e => mapa[key]?.some(k => e.nombre?.toLowerCase().includes(k)))?.id
