@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { Tag } from 'lucide-react'
 
 const COLORES = [
@@ -21,16 +20,11 @@ export default function CategoryCarousel({ categorias }) {
 
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         {categorias.map((cat, i) => (
-          <Link key={cat.id} to={`/productos?categoria=${cat.id}`}
-            className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-transparent
-              hover:border-primary/30 transition-all font-medium text-xs ${COLORES[i % COLORES.length]}
-              bg-opacity-10 hover:scale-105`}>
+          <span key={cat.id}
+            className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full font-medium text-xs ${COLORES[i % COLORES.length]}`}>
             <Tag size={11} />
             {cat.nombre}
-            {cat.total_productos !== undefined && (
-              <span className="opacity-60">({cat.total_productos})</span>
-            )}
-          </Link>
+          </span>
         ))}
       </div>
     </section>
