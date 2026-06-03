@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { tiendaService } from '../services/tiendaService'
  
-export function useCatalogo({ setCarrito }) {
+export function useCatalogo() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [busqueda, setBusqueda]         = useState('')
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
@@ -25,13 +25,6 @@ export function useCatalogo({ setCarrito }) {
   const { data: categorias = [] } = useQuery({ queryKey: ['catalogo-cats'],   queryFn: tiendaService.getCategorias })
   const { data: marcas = [] }     = useQuery({ queryKey: ['catalogo-marcas'], queryFn: tiendaService.getMarcas })
  
-  const agregarAlCarrito = prod => {
-    setCarrito(prev => {
-      const existe = prev.find(p => p.id === prod.id)
-      if (existe) return prev.map(p => p.id === prod.id ? { ...p, cantidad: p.cantidad + 1 } : p)
-      return [...prev, { ...prod, cantidad: 1 }]
-    })
-  }
  
   const limpiarFiltros = () => { setSearchParams({}); setBusqueda('') }
  
@@ -50,6 +43,6 @@ export function useCatalogo({ setCarrito }) {
     productos, categorias, marcas, isLoading,
     busqueda, setBusqueda, mostrarFiltros, setMostrarFiltros,
     categoriaFiltro, marcaFiltro, hayFiltros,
-    agregarAlCarrito, limpiarFiltros, setCategoria, setMarca,
+    limpiarFiltros, setCategoria, setMarca,
   }
 }

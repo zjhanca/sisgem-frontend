@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom'
-import { ShoppingCart } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
  
-export default function FeaturedProducts({ productos, busqueda, setBusqueda, agregarAlCarrito }) {
+export default function FeaturedProducts({ productos, busqueda, setBusqueda }) {
   const filtrados = productos
     .filter(p => !busqueda || p.nombre.toLowerCase().includes(busqueda.toLowerCase()))
     .slice(0, busqueda ? 20 : 10)
@@ -61,14 +60,7 @@ export default function FeaturedProducts({ productos, busqueda, setBusqueda, agr
               </p>
               {prod.marca && <p className="text-xs text-gray-400 mt-0.5">{prod.marca}</p>}
               <p className="text-sm font-bold text-primary mt-1.5">{formatPrecio(prod.precio)}</p>
-              <button
-                onClick={() => agregarAlCarrito(prod)}
-                className="mt-2 w-full py-1.5 text-xs font-medium rounded-lg border border-primary/40
-                  text-primary hover:bg-primary hover:text-dark-bg transition-colors
-                  flex items-center justify-center gap-1"
-              >
-                <ShoppingCart size={11} /> Agregar
-              </button>
+
             </div>
           </div>
         ))}

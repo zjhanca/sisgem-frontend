@@ -1,7 +1,6 @@
-import { ShoppingCart } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
  
-export default function CatalogoCard({ prod, agregarAlCarrito }) {
+export default function CatalogoCard({ prod }) {
   return (
     <div className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
       hover:border-primary/40 hover:shadow-md transition-all group flex flex-col">
@@ -34,16 +33,7 @@ export default function CatalogoCard({ prod, agregarAlCarrito }) {
         {prod.categoria && <p className="text-xs text-gray-400 mt-0.5">{prod.categoria}</p>}
         {prod.marca     && <p className="text-xs text-gray-400">{prod.marca}</p>}
         <p className="text-sm font-bold text-primary mt-2">{formatPrecio(prod.precio)}</p>
-        <button
-          onClick={() => agregarAlCarrito(prod)}
-          disabled={prod.stock === 0}
-          className="mt-2 w-full py-1.5 text-xs font-medium rounded-lg border border-primary/40
-            text-primary hover:bg-primary hover:text-dark-bg transition-colors
-            flex items-center justify-center gap-1
-            disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-primary">
-          <ShoppingCart size={11} />
-          {prod.stock === 0 ? 'Agotado' : 'Agregar'}
-        </button>
+
       </div>
     </div>
   )

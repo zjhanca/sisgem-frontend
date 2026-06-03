@@ -5,18 +5,18 @@ import CatalogoFiltros  from '../components/CatalogoFiltros'
 import CatalogoGrid     from '../components/CatalogoGrid'
 import { useCatalogo }  from '../hooks/useCatalogo'
  
-export default function Catalogo({ carrito, setCarrito }) {
+export default function Catalogo() {
   const {
     productos, categorias, marcas, isLoading,
     busqueda, setBusqueda, mostrarFiltros, setMostrarFiltros,
     categoriaFiltro, marcaFiltro, hayFiltros,
-    agregarAlCarrito, limpiarFiltros, setCategoria, setMarca,
-  } = useCatalogo({ setCarrito })
+    limpiarFiltros, setCategoria, setMarca,
+  } = useCatalogo()
  
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex flex-col">
  
-      <NavbarPublico carrito={carrito} />
+      <NavbarPublico />
  
       <CatalogoHeader
         busqueda={busqueda} setBusqueda={setBusqueda}
@@ -72,7 +72,7 @@ export default function Catalogo({ carrito, setCarrito }) {
         <CatalogoGrid
           productos={productos}
           isLoading={isLoading}
-          agregarAlCarrito={agregarAlCarrito}
+          agregarAlCarrito={() => {}}
           limpiarFiltros={limpiarFiltros}
         />
       </div>
@@ -81,4 +81,3 @@ export default function Catalogo({ carrito, setCarrito }) {
     </div>
   )
 }
- 

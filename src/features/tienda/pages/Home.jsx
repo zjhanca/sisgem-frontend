@@ -6,14 +6,14 @@ import FeaturedProducts   from '../components/FeaturedProducts'
 import PromotionalBanners from '../components/PromotionalBanners'
 import BrandCarousel      from '../components/BrandCarousel'
 import Footer             from '../components/Footer'
- 
-export default function Home({ carrito, setCarrito }) {
-  const { productos, categorias, marcas, busqueda, setBusqueda, agregarAlCarrito } = useHome({ setCarrito })
- 
+
+export default function Home() {
+  const { productos, categorias, marcas, busqueda, setBusqueda } = useHome({})
+
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
-      <NavbarPublico carrito={carrito} busqueda={busqueda} setBusqueda={setBusqueda} />
- 
+      <NavbarPublico busqueda={busqueda} setBusqueda={setBusqueda} />
+
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-10">
         <Carrusel />
         <CategoryCarousel categorias={categorias} />
@@ -21,12 +21,11 @@ export default function Home({ carrito, setCarrito }) {
           productos={productos}
           busqueda={busqueda}
           setBusqueda={setBusqueda}
-          agregarAlCarrito={agregarAlCarrito}
         />
         <PromotionalBanners />
         <BrandCarousel marcas={marcas} />
       </main>
- 
+
       <Footer />
     </div>
   )
