@@ -1,4 +1,4 @@
-import { Plus, Eye, Download, Ban } from 'lucide-react'
+import { Plus, Eye, Download, Ban, Search } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
@@ -77,8 +77,18 @@ export default function Ventas() {
 
       <Tabla columnas={columnas} datos={ventasFiltradas} sinBusqueda
         filtros={<>
-          <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
-            placeholder="# o cliente..." className="campo-input w-36 text-xs" />
+          <div className="relative">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
+              placeholder="Buscar..."
+              className="pl-8 pr-3 py-1.5 text-sm rounded-lg border
+                bg-light-bg dark:bg-dark-bg/60
+                border-gray-200 dark:border-dark-border
+                text-light-text dark:text-dark-text
+                placeholder:text-gray-400/60
+                focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
+                transition-all duration-150 w-52" />
+          </div>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-40 text-xs">
             <option value="">Todos los estados</option>
             {estadosVenta.map(e => (
