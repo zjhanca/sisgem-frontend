@@ -9,6 +9,9 @@ const tooltipStyle = {
   itemStyle:  { color: '#EAF7EE' },
 }
 
+const renderLabel = ({ name, percent }) =>
+  percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''
+
 export default function DashboardTopProductos({ productos }) {
   return (
     <div className="card">
@@ -19,28 +22,41 @@ export default function DashboardTopProductos({ productos }) {
       {!productos?.length ? (
         <p className="text-xs text-gray-400 dark:text-dark-text/40 text-center py-8">Sin datos disponibles</p>
       ) : (
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={productos}
-              dataKey="total_vendido"
-              nameKey="nombre"
-              cx="50%" cy="50%"
-              outerRadius={70}
-              innerRadius={30}
-              paddingAngle={3}
-              label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-              labelLine={{ stroke: '#A6E8B2' }}>
-              {productos.map((_, i) => (
-                <Cell key={i} fill={COLORES[i % COLORES.length]} />
-              ))}
-            </Pie>
-            <Tooltip {...tooltipStyle} formatter={(v, name) => [v + ' uds', name]} />
-            <Legend
-              formatter={value => <span style={{ fontSize: 11, color: '#EAF7EE' }}>{value}</span>}
-              iconType="circle" iconSize={8} />
-          </PieChart>
-        </ResponsiveContainer>
+        <div style={{ width: '100%', height: 260 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={productos}
+                dataKey="total_vendido"
+                nameKey="nombre"
+                cx="50%"
+                cy="45%"
+                outerRadius={85}
+                label={renderLabel}
+                labelLine={false}>
+                {productos.map((_, i) => (
+                  <Cell key={i} fill={COLORES[i % COLORES.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                {...tooltipStyle}
+                formatter={(v, name) => [`${v} uds`, name]}
+              />
+              <Legend
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="center"
+                iconType="circle"
+                iconSize={8}
+                formatter={value => (
+                  <span style={{ fontSize: 10, color: '#EAF7EE' }}>
+                    {value.length > 15 ? value.slice(0, 15) + '…' : value}
+                  </span>
+                )}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   )
