@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
 import api from '@shared/services/api'
 import toast from 'react-hot-toast'
@@ -7,7 +7,7 @@ import {
   LayoutDashboard, BarChart2,
   Package, Tag, Grid3X3, Users, Shield,
   Building2, ClipboardList, CreditCard, Menu, X,
-  LogOut, ChevronDown, ChevronRight, Store,
+  LogOut, ChevronDown, ChevronRight,
   KeyRound, Eye, EyeOff
 } from 'lucide-react'
 
@@ -180,12 +180,16 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
 
       {/* logo */}
       <div className={`flex items-center gap-2 p-4 border-b border-dark-border ${collapsed && !mobile ? 'justify-center' : ''}`}>
-        <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-          <Store size={15} className="text-primary" />
-        </div>
-        {(!collapsed || mobile) && (
-          <span className="font-bold text-primary text-base">SISGEM</span>
-        )}
+        <Link to="/" className="flex items-center gap-2 group" title="Ir a la tienda">
+          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 overflow-hidden group-hover:ring-2 group-hover:ring-primary/40 transition-all">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain"
+              onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+            <span style={{display:'none'}} className="w-full h-full items-center justify-center text-xs font-bold text-primary">S</span>
+          </div>
+          {(!collapsed || mobile) && (
+            <span className="font-bold text-primary text-base group-hover:opacity-80 transition-opacity">Sisgem</span>
+          )}
+        </Link>
         {!mobile && (
           <button onClick={toggleCollapse}
             className="ml-auto text-dark-text/40 hover:text-primary transition-colors">
@@ -277,7 +281,6 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
                   <KeyRound size={13} />
                   Cambiar Contraseña
                 </button>
-
                 <div className="border-t border-dark-border/60" />
                 <button
                   type="button"
@@ -313,10 +316,10 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
 export default function AdminLayout() {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
-  const [collapsed, setCollapsed]               = useState(false)
-  const [menuMovil, setMenuMovil]               = useState(false)
-  const [gruposAbiertos, setGruposAbiertos]     = useState(estadoInicial)
-  const [modalContrasena, setModalContrasena]   = useState(false)
+  const [collapsed, setCollapsed]             = useState(false)
+  const [menuMovil, setMenuMovil]             = useState(false)
+  const [gruposAbiertos, setGruposAbiertos]   = useState(estadoInicial)
+  const [modalContrasena, setModalContrasena] = useState(false)
 
   const toggleGrupo = useCallback(id => {
     setGruposAbiertos(prev => {
@@ -363,7 +366,7 @@ export default function AdminLayout() {
           <button onClick={() => setMenuMovil(true)} className="text-dark-text/60">
             <Menu size={18} />
           </button>
-          <span className="font-bold text-primary">SISGEM</span>
+          <Link to="/"><span className="font-bold text-primary">Sisgem</span></Link>
         </div>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <Outlet />
