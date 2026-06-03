@@ -1,27 +1,40 @@
+import { Link } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
+
 export default function PromotionalBanners() {
   return (
     <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div
-        className="rounded-2xl p-6 text-white flex items-center gap-4"
-        style={{ background: 'linear-gradient(135deg, #1D6B2B, #2D8F50)' }}
-      >
-        <div className="text-4xl shrink-0">🏪</div>
-        <div>
-          <h3 className="font-bold text-base">Compra en Mostrador</h3>
-          <p className="text-sm opacity-90 mt-0.5">Visítanos y lleva lo que necesitas</p>
+      <Link to="/productos"
+        className="group relative rounded-2xl overflow-hidden h-36 block"
+        style={{ background: 'linear-gradient(135deg, #1D6B2B 0%, #2D8F50 100%)' }}>
+        <div className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: 'radial-gradient(circle at 80% 50%, white 0%, transparent 60%)' }} />
+        <div className="relative p-6 h-full flex flex-col justify-between">
+          <div>
+            <h3 className="text-white font-bold text-lg leading-tight">Compra en Mostrador</h3>
+            <p className="text-white/80 text-sm mt-1">Visítanos y lleva lo que necesitas</p>
+          </div>
+          <div className="flex items-center gap-1 text-white/90 text-xs font-medium group-hover:gap-2 transition-all">
+            Ver productos <ArrowRight size={12} />
+          </div>
         </div>
-      </div>
- 
-      <div
-        className="rounded-2xl p-6 text-white flex items-center gap-4"
-        style={{ background: 'linear-gradient(135deg, #1A4A7A, #2E6EBF)' }}
-      >
-        <div className="text-4xl shrink-0">🛵</div>
-        <div>
-          <h3 className="font-bold text-base">Domicilios en Medellín</h3>
-          <p className="text-sm opacity-90 mt-0.5">Pedidos rápidos y seguros a tu puerta</p>
+      </Link>
+
+      <Link to="/productos"
+        className="group relative rounded-2xl overflow-hidden h-36 block"
+        style={{ background: 'linear-gradient(135deg, #1D3326 0%, #2D8F50 100%)' }}>
+        <div className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 0%, transparent 60%)' }} />
+        <div className="relative p-6 h-full flex flex-col justify-between">
+          <div>
+            <h3 className="text-white font-bold text-lg leading-tight">Productos Frescos</h3>
+            <p className="text-white/80 text-sm mt-1">Selección diaria de calidad</p>
+          </div>
+          <div className="flex items-center gap-1 text-white/90 text-xs font-medium group-hover:gap-2 transition-all">
+            Explorar <ArrowRight size={12} />
+          </div>
         </div>
-      </div>
+      </Link>
     </section>
   )
 }

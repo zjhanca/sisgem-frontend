@@ -8,20 +8,16 @@ import BrandCarousel      from '../components/BrandCarousel'
 import Footer             from '../components/Footer'
 
 export default function Home() {
-  const { productos, categorias, marcas, busqueda, setBusqueda } = useHome({})
+  const { productos, categorias, marcas, busqueda, setBusqueda } = useHome()
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
       <NavbarPublico busqueda={busqueda} setBusqueda={setBusqueda} />
 
-      <main className="max-w-6xl mx-auto px-4 py-6 space-y-10">
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-12">
         <Carrusel />
         <CategoryCarousel categorias={categorias} />
-        <FeaturedProducts
-          productos={productos}
-          busqueda={busqueda}
-          setBusqueda={setBusqueda}
-        />
+        <FeaturedProducts productos={productos} busqueda={busqueda} setBusqueda={setBusqueda} />
         <PromotionalBanners />
         <BrandCarousel marcas={marcas} />
       </main>
