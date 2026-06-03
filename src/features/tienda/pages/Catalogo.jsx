@@ -4,7 +4,7 @@ import CatalogoHeader   from '../components/CatalogoHeader'
 import CatalogoFiltros  from '../components/CatalogoFiltros'
 import CatalogoGrid     from '../components/CatalogoGrid'
 import { useCatalogo }  from '../hooks/useCatalogo'
- 
+
 export default function Catalogo() {
   const {
     productos, categorias, marcas, isLoading,
@@ -12,12 +12,12 @@ export default function Catalogo() {
     categoriaFiltro, marcaFiltro, hayFiltros,
     limpiarFiltros, setCategoria, setMarca,
   } = useCatalogo()
- 
+
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex flex-col">
- 
+
       <NavbarPublico />
- 
+
       <CatalogoHeader
         busqueda={busqueda} setBusqueda={setBusqueda}
         mostrarFiltros={mostrarFiltros} setMostrarFiltros={setMostrarFiltros}
@@ -25,7 +25,7 @@ export default function Catalogo() {
         categorias={categorias} marcas={marcas}
         categoriaFiltro={categoriaFiltro} marcaFiltro={marcaFiltro}
       />
- 
+
       <CatalogoFiltros
         mostrarFiltros={mostrarFiltros}
         categorias={categorias} marcas={marcas}
@@ -33,42 +33,38 @@ export default function Catalogo() {
         marcaFiltro={marcaFiltro} setMarca={setMarca}
         hayFiltros={hayFiltros} limpiarFiltros={limpiarFiltros}
       />
- 
+
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
- 
-        {/* contador + badges filtros activos */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <p className="text-sm text-gray-500 dark:text-dark-text/60">
+          <p className="text-xs text-gray-400 dark:text-dark-text/40">
             {isLoading ? 'Cargando...' : (
-              <span>
-                <span className="font-medium text-light-text dark:text-dark-text">{productos.length}</span> productos encontrados
-              </span>
+              <><span className="font-semibold text-light-text dark:text-dark-text">{productos.length}</span> productos encontrados</>
             )}
           </p>
           {hayFiltros && (
-            <div className="flex gap-1 flex-wrap">
+            <div className="flex gap-1.5 flex-wrap">
               {categoriaFiltro && (
-                <span className="flex items-center gap-1 badge-proceso text-xs">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
                   {categorias.find(c => c.id === +categoriaFiltro)?.nombre}
-                  <button onClick={() => setCategoria('')} className="hover:text-red-400 ml-0.5">✕</button>
+                  <button onClick={() => setCategoria('')} className="hover:opacity-60 ml-0.5">✕</button>
                 </span>
               )}
               {marcaFiltro && (
-                <span className="flex items-center gap-1 badge-proceso text-xs">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
                   {marcas.find(m => m.id === +marcaFiltro)?.nombre}
-                  <button onClick={() => setMarca('')} className="hover:text-red-400 ml-0.5">✕</button>
+                  <button onClick={() => setMarca('')} className="hover:opacity-60 ml-0.5">✕</button>
                 </span>
               )}
               {busqueda && (
-                <span className="flex items-center gap-1 badge-proceso text-xs">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
                   "{busqueda}"
-                  <button onClick={() => setBusqueda('')} className="hover:text-red-400 ml-0.5">✕</button>
+                  <button onClick={() => setBusqueda('')} className="hover:opacity-60 ml-0.5">✕</button>
                 </span>
               )}
             </div>
           )}
         </div>
- 
+
         <CatalogoGrid
           productos={productos}
           isLoading={isLoading}
@@ -76,7 +72,7 @@ export default function Catalogo() {
           limpiarFiltros={limpiarFiltros}
         />
       </div>
- 
+
       <Footer />
     </div>
   )
