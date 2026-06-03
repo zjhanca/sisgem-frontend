@@ -77,10 +77,7 @@ export default function FeaturedProducts({ productos }) {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Productos Destacados</h2>
-        <Link to="/productos" className="text-xs text-primary hover:underline">Ver todos →</Link>
-      </div>
+      <h2 className="text-base font-semibold text-light-text dark:text-dark-text mb-4">Productos Destacados</h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {lista.map(prod => <ProductCard key={prod.id} prod={prod} />)}

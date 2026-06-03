@@ -17,10 +17,7 @@ export default function CategoryCarousel({ categorias }) {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Categorías</h2>
-        <Link to="/productos" className="text-xs text-primary hover:underline">Ver todas →</Link>
-      </div>
+      <h2 className="text-base font-semibold text-light-text dark:text-dark-text mb-4">Categorías</h2>
 
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         {categorias.map((cat, i) => (

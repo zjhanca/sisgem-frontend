@@ -1,18 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Menu, X, LogOut } from 'lucide-react'
 
 export default function NavbarPublico() {
   const { usuario, logout } = useAuth()
   const navigate  = useNavigate()
-  const location  = useLocation()
   const [menuMovil, setMenuMovil] = useState(false)
-
-  const isActive = path =>
-    location.pathname === path
-      ? 'text-primary font-medium'
-      : 'text-gray-600 dark:text-dark-text/70 hover:text-primary transition-colors'
 
   const handleLogout = () => { logout(); navigate('/') }
 
@@ -27,12 +21,6 @@ export default function NavbarPublico() {
             onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='block' }} />
           <span style={{display:'none'}} className="text-xl font-bold text-primary">Sisgem</span>
         </Link>
-
-        {/* Links desktop */}
-        <div className="hidden md:flex items-center gap-5 text-sm ml-4">
-          <Link to="/"          className={isActive('/')}>Inicio</Link>
-          <Link to="/productos" className={isActive('/productos')}>Productos</Link>
-        </div>
 
         {/* Acciones */}
         <div className="flex items-center gap-2 ml-auto shrink-0">
@@ -72,8 +60,6 @@ export default function NavbarPublico() {
 
       {menuMovil && (
         <div className="md:hidden border-t border-gray-100 dark:border-dark-border bg-light-card dark:bg-dark-card px-4 py-3 space-y-2">
-          <Link to="/"          onClick={() => setMenuMovil(false)} className={`block text-sm py-1.5 ${isActive('/')}`}>Inicio</Link>
-          <Link to="/productos" onClick={() => setMenuMovil(false)} className={`block text-sm py-1.5 ${isActive('/productos')}`}>Productos</Link>
           {usuario ? (
             <>
               {+usuario.rol_id === 1 && (
