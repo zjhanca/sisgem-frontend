@@ -54,38 +54,25 @@ export default function Pagos() {
         </div>
       </div>
 
-      <div className="flex gap-2 mb-4 flex-wrap items-end">
-        <div>
-          <p className="campo-label mb-0.5">Buscar</p>
+      <Tabla columnas={columnas} datos={pagosFiltrados} sinBusqueda
+        filtros={<>
           <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
             placeholder="# o cliente..." className="campo-input w-36 text-xs" />
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Estado</p>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
             <option value="">Todos</option>
             <option value="pagado">Pagados</option>
             <option value="abono">Abonos</option>
             <option value="anulado">Anulados</option>
           </select>
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Desde</p>
           <input type="datetime-local" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)}
-            className="campo-input text-xs" />
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Hasta</p>
+            className="campo-input text-xs" title="Desde" />
           <input type="datetime-local" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)}
-            className="campo-input text-xs" />
-        </div>
-        {hayFiltros && (
-          <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta(''); setFiltroBusqueda('') }}
-            className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
-        )}
-      </div>
-
-      <Tabla columnas={columnas} datos={pagosFiltrados} sinBusqueda
+            className="campo-input text-xs" title="Hasta" />
+          {hayFiltros && (
+            <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta(''); setFiltroBusqueda('') }}
+              className="btn-ghost text-xs text-red-400">Limpiar</button>
+          )}
+        </>}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, pago: fila })} className="btn-ghost"><Eye size={14} /></button>
           <button onClick={() => descargarPDF(`/reportes/pagos/${fila.id}`, `pago-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>

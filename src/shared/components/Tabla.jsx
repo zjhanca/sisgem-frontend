@@ -7,6 +7,7 @@ export default function Tabla({
   acciones,
   sinBusqueda = false,
   porPagina = 10,
+  filtros,
 }) {
   const [busqueda, setBusqueda] = useState('')
   const [pagina, setPagina]     = useState(1)
@@ -44,24 +45,27 @@ export default function Tabla({
     <div className="space-y-3 animate-fadeIn">
       {/* barra superior */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        {!sinBusqueda ? (
-          <div className="relative">
-            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              value={busqueda}
-              onChange={e => handleBusqueda(e.target.value)}
-              placeholder="Buscar..."
-              className="pl-8 pr-3 py-1.5 text-sm rounded-lg border
-                bg-light-bg dark:bg-dark-bg/60
-                border-gray-200 dark:border-dark-border
-                text-light-text dark:text-dark-text
-                placeholder:text-gray-400/60
-                focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                transition-all duration-150 w-52"
-            />
-          </div>
-        ) : <div />}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap flex-1">
+          {!sinBusqueda && (
+            <div className="relative">
+              <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                value={busqueda}
+                onChange={e => handleBusqueda(e.target.value)}
+                placeholder="Buscar..."
+                className="pl-8 pr-3 py-1.5 text-sm rounded-lg border
+                  bg-light-bg dark:bg-dark-bg/60
+                  border-gray-200 dark:border-dark-border
+                  text-light-text dark:text-dark-text
+                  placeholder:text-gray-400/60
+                  focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
+                  transition-all duration-150 w-52"
+              />
+            </div>
+          )}
+          {filtros && filtros}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-gray-400 dark:text-dark-text/35">
             {filtrados.length} registro{filtrados.length !== 1 ? 's' : ''}
           </span>
