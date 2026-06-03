@@ -1,10 +1,7 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { tiendaService } from '../services/tiendaService'
 
 export function useHome() {
-  const [busqueda, setBusqueda] = useState('')
-
   const { data: productos = [] } = useQuery({
     queryKey: ['catalogo'],
     queryFn:  () => tiendaService.getCatalogo(),
@@ -18,5 +15,5 @@ export function useHome() {
     queryFn:  tiendaService.getMarcas,
   })
 
-  return { productos, categorias, marcas, busqueda, setBusqueda }
+  return { productos, categorias, marcas }
 }
