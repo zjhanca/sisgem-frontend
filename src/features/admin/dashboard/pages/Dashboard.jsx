@@ -1,11 +1,10 @@
-﻿import { DollarSign, Clock, TrendingUp, Calendar, FileText } from 'lucide-react'
+﻿import { DollarSign, Clock, TrendingUp, Calendar, Download } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 import { useDashboard } from '../hooks/useDashboard'
-import DashboardStatCard      from '../components/DashboardStatCard'
-import DashboardVentas        from '../components/DashboardVentas'
-import DashboardTopProductos  from '../components/DashboardTopProductos'
-import DashboardTipoVenta     from '../components/DashboardTipoVenta'
-import DashboardVentasMes     from '../components/DashboardVentasMes'
+import DashboardStatCard     from '../components/DashboardStatCard'
+import DashboardVentas       from '../components/DashboardVentas'
+import DashboardTopProductos from '../components/DashboardTopProductos'
+import DashboardVentasMes    from '../components/DashboardVentasMes'
 
 export default function Dashboard() {
   const {
@@ -28,13 +27,11 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <h1 className="page-title">Dashboard</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarReporte('semana')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-dark-border text-gray-500 dark:text-dark-text/60 hover:border-primary/40 hover:text-primary transition-all">
-            <FileText size={12} /> Semanal
+          <button onClick={() => descargarReporte('semana')} className="btn-outline">
+            <Download size={14} /> Semanal
           </button>
-          <button onClick={() => descargarReporte('mes')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-dark-border text-gray-500 dark:text-dark-text/60 hover:border-primary/40 hover:text-primary transition-all">
-            <FileText size={12} /> Mensual
+          <button onClick={() => descargarReporte('mes')} className="btn-outline">
+            <Download size={14} /> Mensual
           </button>
         </div>
       </div>
@@ -72,10 +69,8 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <DashboardTopProductos productos={data.productos_top} />
-        <DashboardTipoVenta ventasPorTipo={data.ventas_por_tipo} />
+        <DashboardVentasMes ventasMes={ventasMes} />
       </div>
-
-      <DashboardVentasMes ventasMes={ventasMes} />
     </div>
   )
 }
