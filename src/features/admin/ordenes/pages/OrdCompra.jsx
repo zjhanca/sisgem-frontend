@@ -10,7 +10,7 @@ import OrdenDetalle from '../components/OrdenDetalle'
 import ProductoForm from '../../productos/components/ProductoForm'
 import { useProductos } from '../../productos/hooks/useProductos'
 
-const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
+const METODOS_PAGO = ['Efectivo', 'Transferencia']
 
 const getBadgeOrden = nombre => {
   if (!nombre) return { clase: 'badge-pendiente', label: 'Pendiente' }

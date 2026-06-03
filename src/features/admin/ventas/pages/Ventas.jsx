@@ -86,9 +86,9 @@ export default function Ventas() {
             ))}
           </select>
           <input type="datetime-local" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)}
-            className="campo-input text-xs" title="Desde" />
+            className="campo-input w-44 text-xs" title="Desde" />
           <input type="datetime-local" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)}
-            className="campo-input text-xs" title="Hasta" />
+            className="campo-input w-44 text-xs" title="Hasta" />
           {(filtroEstado || filtroBusqueda || filtroDesde || filtroHasta) && (
             <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda(''); setFiltroDesde(''); setFiltroHasta('') }}
               className="btn-ghost text-xs text-red-400">Limpiar</button>

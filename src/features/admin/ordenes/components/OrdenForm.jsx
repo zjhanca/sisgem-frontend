@@ -2,7 +2,7 @@ import Modal from '@shared/components/Modal'
 import { Search, Scan, Trash2, Upload } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
-const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
+const METODOS_PAGO = ['Efectivo', 'Transferencia']
 
 export default function OrdenForm({
   modalNuevo, setModalNuevo, form, setForm, itemForm, setItemForm,
