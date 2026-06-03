@@ -35,6 +35,8 @@ export default function Ventas() {
     return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula')
   })
 
+  const hayFiltros = filtroEstado || filtroBusqueda || filtroDesde || filtroHasta
+
   const columnas = [
     { key: 'id',      label: '#' },
     { key: 'cliente', label: 'Cliente' },
@@ -75,34 +77,23 @@ export default function Ventas() {
         </div>
       </div>
 
-      <div className="flex gap-2 mb-4 flex-wrap items-end">
-        <div>
-          <p className="campo-label mb-0.5">Buscar</p>
-          <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
-            placeholder="# o cliente..." className="campo-input w-36 text-xs" />
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Estado</p>
-          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-40 text-xs">
-            <option value="">Todos los estados</option>
-            {estadosVenta.map(e => (
-              <option key={e.id} value={e.id}>{capitalizar(e.nombre)}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Desde</p>
-          <input type="datetime-local" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)}
-            className="campo-input text-xs" />
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Hasta</p>
-          <input type="datetime-local" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)}
-            className="campo-input text-xs" />
-        </div>
-        {(filtroEstado || filtroBusqueda || filtroDesde || filtroHasta) && (
+      {/* filtros en una sola línea */}
+      <div className="flex gap-2 mb-4 items-center flex-wrap">
+        <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
+          placeholder="Buscar # o cliente..." className="campo-input w-40 text-xs" />
+        <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
+          <option value="">Todos los estados</option>
+          {estadosVenta.map(e => (
+            <option key={e.id} value={e.id}>{capitalizar(e.nombre)}</option>
+          ))}
+        </select>
+        <input type="datetime-local" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)}
+          className="campo-input text-xs" title="Desde" />
+        <input type="datetime-local" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)}
+          className="campo-input text-xs" title="Hasta" />
+        {hayFiltros && (
           <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda(''); setFiltroDesde(''); setFiltroHasta('') }}
-            className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
+            className="btn-ghost text-xs text-red-400">Limpiar</button>
         )}
       </div>
 
