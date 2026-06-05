@@ -8,12 +8,18 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
   const [imgIdx, setImgIdx] = useState(0)
 
-  // reconstruir array de imágenes
-  const imagenes = item
-    ? (Array.isArray(item.imagenes) && item.imagenes.length > 0
-        ? item.imagenes
-        : item.imagen_url ? [item.imagen_url] : [])
-    : []
+  // reconstruir array de imágenes — soporta array, JSON string, o imagen_url suelta
+  const imagenes = (() => {
+    if (!item) return []
+    let imgs = item.imagenes
+    // si llega como string JSON, parsear
+    if (typeof imgs === 'string') {
+      try { imgs = JSON.parse(imgs) } catch { imgs = [] }
+    }
+    if (Array.isArray(imgs) && imgs.length > 0) return imgs
+    // fallback a imagen_url
+    return item.imagen_url ? [item.imagen_url] : []
+  })()
 
   const prev = () => setImgIdx(i => (i - 1 + imagenes.length) % imagenes.length)
   const next = () => setImgIdx(i => (i + 1) % imagenes.length)
