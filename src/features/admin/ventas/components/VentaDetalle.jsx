@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
 import { Download, Clock, CreditCard } from 'lucide-react'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
@@ -31,6 +31,16 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
   const vencida = dias !== null && dias < 0
 
   const [modalPago, setModalPago] = useState(false)
+
+  // abrir form de pago automáticamente si viene desde el icono CreditCard
+  useEffect(() => {
+    if (modalDetalle.abrirPago && modalDetalle.abierto) {
+      setModalPago(true)
+    } else {
+      setModalPago(false)
+      setMonto('')
+    }
+  }, [modalDetalle.abierto, modalDetalle.abrirPago])
   const [monto, setMonto] = useState('')
   const [metodo, setMetodo] = useState('efectivo')
 
