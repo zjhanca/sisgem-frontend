@@ -61,7 +61,6 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
             <div><p className="campo-label">Stock</p><p className={item.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{item.stock} uds</p></div>
             <div><p className="campo-label">Categoría</p><p>{item.categoria || '—'}</p></div>
             <div><p className="campo-label">Marca</p><p>{item.marca || '—'}</p></div>
-            <div><p className="campo-label">Proveedor</p><p>{item.proveedor || '—'}</p></div>
             <div><p className="campo-label">Código Barras</p><p className="font-mono text-xs">{item.codigo_barras || '—'}</p></div>
           </div>
 

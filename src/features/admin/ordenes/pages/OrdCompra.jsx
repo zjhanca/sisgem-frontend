@@ -10,7 +10,7 @@ import OrdenDetalle from '../components/OrdenDetalle'
 import ProductoForm from '../../productos/components/ProductoForm'
 import { useProductos } from '../../productos/hooks/useProductos'
 
-const METODOS_PAGO = ['Efectivo', 'Transferencia']
+const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
 
 const getBadgeOrden = nombre => {
   if (!nombre) return { clase: 'badge-pendiente', label: 'Pendiente' }
@@ -101,24 +101,31 @@ export default function OrdCompra() {
         </div>
       )}
 
-      <Tabla columnas={columnas} datos={ordenesFiltradas}
-        filtros={<>
+      <div className="flex gap-2 mb-4 flex-wrap items-end">
+        <div>
+          <p className="campo-label mb-0.5">Estado</p>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-44 text-xs">
             <option value="">Todos los estados</option>
             {ESTADOS_ORDEN.map(e => <option key={e.key} value={e.key}>{e.label}</option>)}
           </select>
+        </div>
+        <div>
+          <p className="campo-label mb-0.5">Proveedor</p>
           <select value={filtroProveedor} onChange={e => setFiltroProveedor(e.target.value)} className="campo-input w-44 text-xs">
             <option value="">Todos los proveedores</option>
             {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
           </select>
-          {(filtroEstado || filtroProveedor) && (
-            <button onClick={() => { setFiltroEstado(''); setFiltroProveedor('') }}
-              className="btn-ghost text-xs text-red-400">Limpiar</button>
-          )}
-        </>}
+        </div>
+        {(filtroEstado || filtroProveedor) && (
+          <button onClick={() => { setFiltroEstado(''); setFiltroProveedor('') }}
+            className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
+        )}
+      </div>
+
+      <Tabla columnas={columnas} datos={ordenesFiltradas}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
-          <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar" disabled={getKeyEstado(fila.estado) === 'anulado'}><Edit2 size={14} /></button>
+          <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar" disabled={getKeyEstado(fila.estado) === 'anulado' || getKeyEstado(fila.estado) === 'activo'}><Edit2 size={14} /></button>
           <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
           {getKeyEstado(fila.estado) !== 'anulado' && (
             <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><Ban size={14} /></button>
