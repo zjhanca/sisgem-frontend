@@ -46,7 +46,7 @@ export default function PagoForm({
 
         {/* buscador de pedido */}
         <div>
-          <label className="campo-label">Venta *</label>
+          <label className="campo-label">Pedido *</label>
           {pedidoSeleccionado && !pedidoDropdown ? (
             <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
               <div>
@@ -120,44 +120,45 @@ export default function PagoForm({
           </div>
         )}
 
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="campo-label mb-0">Monto *</label>
-            {tipoPagoActual && (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'
-              }`}>
-                {tipoPagoActual === 'total' ? '✓ Pago total' : '~ Abono parcial'}
-              </span>
+        <div className="grid grid-cols-2 gap-3 items-start">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="campo-label mb-0">Monto *</label>
+              {tipoPagoActual && (
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'
+                }`}>
+                  {tipoPagoActual === 'total' ? '✓ Total' : '~ Abono'}
+                </span>
+              )}
+            </div>
+            <input
+              type="number" step="0.01" min="0.01"
+              max={!esFiado && montoPendiente > 0 ? montoPendiente : undefined}
+              value={form.monto}
+              onChange={handleMonto}
+              className={`campo-input ${errores.monto ? 'border-red-400' : ''}`}
+              placeholder="0.00"
+              disabled={pagoCompleto}
+            />
+            {errores.monto && <p className="campo-error">{errores.monto}</p>}
+            {!pagoCompleto && montoPendiente > 0 && (
+              <button type="button" onClick={() => setForm(p => ({ ...p, monto: montoPendiente }))}
+                className="text-xs text-primary mt-1 hover:underline">
+                Usar pendiente ({formatPrecio(montoPendiente)})
+              </button>
             )}
           </div>
-          <input
-            type="number" step="0.01" min="0.01"
-            max={!esFiado && montoPendiente > 0 ? montoPendiente : undefined}
-            value={form.monto}
-            onChange={handleMonto}
-            className={`campo-input ${errores.monto ? 'border-red-400' : ''}`}
-            placeholder="0.00"
-            disabled={pagoCompleto}
-          />
-          {errores.monto && <p className="campo-error">{errores.monto}</p>}
-          {!pagoCompleto && montoPendiente > 0 && (
-            <button type="button" onClick={() => setForm(p => ({ ...p, monto: montoPendiente }))}
-              className="text-xs text-primary mt-1 hover:underline">
-              Usar monto pendiente ({formatPrecio(montoPendiente)})
-            </button>
-          )}
-        </div>
-
-        <div>
-          <label className="campo-label">Método de Pago</label>
-          <select value={form.metodo} onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))} className="campo-input">
-            <option value="efectivo">Efectivo</option>
-            <option value="transferencia">Transferencia</option>
-            <option value="nequi">Nequi</option>
-            <option value="daviplata">Daviplata</option>
-            <option value="tarjeta">Tarjeta</option>
-          </select>
+          <div>
+            <label className="campo-label">Método de Pago</label>
+            <select value={form.metodo} onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))} className="campo-input">
+              <option value="efectivo">Efectivo</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="nequi">Nequi</option>
+              <option value="daviplata">Daviplata</option>
+              <option value="tarjeta">Tarjeta</option>
+            </select>
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
