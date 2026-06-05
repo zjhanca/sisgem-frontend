@@ -48,6 +48,12 @@ export function usePagos() {
 
   const getFechaPago = p => p.fecha_pago || p.fecha || p.created_at || null
 
+  // abrir modal de pago con pedido preseleccionado (desde ventas)
+  const abrirConPedido = pedido_id => {
+    setForm({ ...formVacio, pedido_id })
+    setModalNuevo(true)
+  }
+
   const crear = useMutation({
     mutationFn: data => pagosService.create(data),
     onSuccess: () => {
@@ -68,7 +74,7 @@ export function usePagos() {
     const e = {}
     if (!form.pedido_id)                 e.pedido_id = 'Selecciona un pedido'
     if (!form.monto || +form.monto <= 0) e.monto     = 'Monto inválido'
-    if (+form.monto > montoPendiente) e.monto = `El monto no puede superar ${montoPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}`
+    if (!esFiado && +form.monto > montoPendiente) e.monto = `El monto no puede superar ${montoPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}`
     if (pagoCompleto)                    e.monto     = 'El pedido ya está completamente pagado'
     return e
   }
@@ -117,6 +123,7 @@ export function usePagos() {
     handleSubmit, anular, esPagado, esAbono, esAnulado, getFechaPago,
     pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
     getEstadoPago, tipoPagoActual,
+    abrirConPedido,
     creando: crear.isPending, anulando: anular.isPending,
   }
 }
