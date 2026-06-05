@@ -3,11 +3,11 @@ import Tabla from '@shared/components/Tabla'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { useVentas } from '../hooks/useVentas'
+import { usePagos } from '@features/admin/pagos/hooks/usePagos'
 import VentaForm    from '../components/VentaForm'
 import VentaDetalle from '../components/VentaDetalle'
 import VentaAnular  from '../components/VentaAnular'
-import { usePagos } from '../../pagos/hooks/usePagos'
-import PagoForm from '../../pagos/components/PagoForm'
+import PagoForm     from '@features/admin/pagos/components/PagoForm'
 
 const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''
 

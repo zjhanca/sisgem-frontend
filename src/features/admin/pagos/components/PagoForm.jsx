@@ -46,7 +46,7 @@ export default function PagoForm({
 
         {/* buscador de pedido */}
         <div>
-          <label className="campo-label">Pedido *</label>
+          <label className="campo-label">Venta *</label>
           {pedidoSeleccionado && !pedidoDropdown ? (
             <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
               <div>
