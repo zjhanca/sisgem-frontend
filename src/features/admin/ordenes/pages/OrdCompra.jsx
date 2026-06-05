@@ -38,6 +38,7 @@ export default function OrdCompra() {
     creando, editando, anulando,
   } = useOrdenes()
 
+  // hook de productos para el modal de crear producto rápido
   const {
     modal: modalProd, form: formProd, setForm: setFormProd, errores: erroresProd,
     handleChange: handleChangeProd, handleSubmit: handleSubmitProd,
@@ -52,7 +53,6 @@ export default function OrdCompra() {
     { key: 'proveedor',    label: 'Proveedor' },
     { key: 'fecha_compra', label: 'Fecha', render: r => formatFecha(r.fecha_compra || r.created_at) },
     { key: 'metodo_pago',  label: 'Método', render: r => r.metodo_pago || '—' },
-    { key: 'registrado_por_nombre', label: 'Registrado por', render: r => r.registrado_por_nombre || '—' },
     { key: 'total',        label: 'Total',  render: r => formatPrecio(r.total) },
     { key: 'estado', label: 'Estado',
       render: r => {
@@ -84,7 +84,7 @@ export default function OrdCompra() {
           <button onClick={() => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
-          <button onClick={() => setModalNuevo(true)} className="btn-primary">
+<button onClick={() => setModalNuevo(true)} className="btn-primary">
             <Plus size={14} /> Nueva Orden
           </button>
         </div>
@@ -100,33 +100,24 @@ export default function OrdCompra() {
         </div>
       )}
 
-      <div className="flex gap-2 mb-4 flex-wrap items-end">
-        <div>
-          <p className="campo-label mb-0.5">Estado</p>
+      <Tabla columnas={columnas} datos={ordenesFiltradas}
+        filtros={<>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-44 text-xs">
             <option value="">Todos los estados</option>
             {ESTADOS_ORDEN.map(e => <option key={e.key} value={e.key}>{e.label}</option>)}
           </select>
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Proveedor</p>
           <select value={filtroProveedor} onChange={e => setFiltroProveedor(e.target.value)} className="campo-input w-44 text-xs">
             <option value="">Todos los proveedores</option>
             {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
           </select>
-        </div>
-        {(filtroEstado || filtroProveedor) && (
-          <button onClick={() => { setFiltroEstado(''); setFiltroProveedor('') }}
-            className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
-        )}
-      </div>
-
-      <Tabla columnas={columnas} datos={ordenesFiltradas}
+          {(filtroEstado || filtroProveedor) && (
+            <button onClick={() => { setFiltroEstado(''); setFiltroProveedor('') }}
+              className="btn-ghost text-xs text-red-400">Limpiar</button>
+          )}
+        </>}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
-          {getKeyEstado(fila.estado) !== 'anulado' && getKeyEstado(fila.estado) !== 'activo' && (
-            <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
-          )}
+          <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar" disabled={getKeyEstado(fila.estado) === 'anulado'}><Edit2 size={14} /></button>
           <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
           {getKeyEstado(fila.estado) !== 'anulado' && (
             <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><Ban size={14} /></button>
@@ -156,6 +147,7 @@ export default function OrdCompra() {
         abrirEditar={abrirEditar} setModalAnular={setModalAnular}
       />
 
+      {/* modal editar */}
       <Modal abierto={modalEditar.abierto} onCerrar={() => setModalEditar({ abierto: false, orden: null })}
         titulo={`Editar Orden #${modalEditar.orden?.id}`} ancho="max-w-lg">
         {modalEditar.orden && (
@@ -195,6 +187,7 @@ export default function OrdCompra() {
         )}
       </Modal>
 
+      {/* modal anular — mismo estilo que pagos */}
       <Modal abierto={modalAnular.abierto} onCerrar={() => setModalAnular({ abierto: false, orden: null })}
         titulo="Confirmar Anulación" ancho="max-w-sm">
         {modalAnular.orden && (
@@ -216,6 +209,7 @@ export default function OrdCompra() {
         )}
       </Modal>
 
+      {/* modal crear producto rápido */}
       {modalCrearProd && (
         <ProductoForm
           modal={{ ...modalProd, abierto: true }}
