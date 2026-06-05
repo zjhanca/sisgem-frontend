@@ -59,9 +59,17 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al registrar pago'),
   })
 
+  const handleMontoChange = e => {
+    let val = e.target.value
+    if (val !== '' && saldoPendiente > 0 && +val > saldoPendiente) {
+      val = String(saldoPendiente)
+    }
+    setMonto(val)
+  }
+
   const handlePago = () => {
     if (!monto || +monto <= 0) { toast.error('Ingresa un monto válido'); return }
-    if (+monto > saldoPendiente) { toast.error(`El monto no puede superar el saldo pendiente`); return }
+    if (+monto > saldoPendiente) { toast.error(`El monto no puede superar $${saldoPendiente.toLocaleString('es-CO')}`); return }
     registrarPago.mutate({ pedido_id: venta.id, monto: +monto, metodo })
   }
 
@@ -121,7 +129,7 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                 <div>
                   <label className="campo-label">Monto *</label>
                   <input type="number" step="0.01" min="0.01" max={saldoPendiente}
-                    value={monto} onChange={e => setMonto(e.target.value)}
+                    value={monto} onChange={handleMontoChange} onBlur={e => { if (saldoPendiente > 0 && +e.target.value > saldoPendiente) setMonto(String(saldoPendiente)) }}
                     className="campo-input" placeholder="0.00" />
                   <button type="button" onClick={() => setMonto(saldoPendiente)}
                     className="text-xs text-primary mt-1 hover:underline">

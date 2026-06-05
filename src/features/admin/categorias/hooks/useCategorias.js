@@ -3,13 +3,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { categoriasService } from '../services/categoriasService'
 import toast from 'react-hot-toast'
 
-const formVacio = { nombre: '', descripcion: '' }
+const formVacio = { nombre: '', descripcion: '', margen: 45 }
 
 const validar = form => {
   const e = {}
   if (!form.nombre.trim())                  e.nombre = 'El nombre es obligatorio'
   else if (form.nombre.trim().length < 2)   e.nombre = 'Mínimo 2 caracteres'
   else if (form.nombre.trim().length > 100) e.nombre = 'Máximo 100 caracteres'
+  if (form.margen === '' || form.margen === null || form.margen === undefined || isNaN(+form.margen))
+    e.margen = 'El margen es obligatorio'
+  else if (+form.margen < 0) e.margen = 'El margen no puede ser negativo'
   return e
 }
 
@@ -31,6 +34,7 @@ export function useCategorias() {
     mutationFn: data => modal.item
       ? categoriasService.update(modal.item.id, data)
       : categoriasService.create(data),
+    // margen se guarda vía actualizarMargen si es nuevo, o junto al update
     onSuccess: () => {
       qc.invalidateQueries(['categorias'])
       cerrarModal()
@@ -62,7 +66,7 @@ export function useCategorias() {
   })
 
   const abrirModal = (item = null) => {
-    setForm(item ? { nombre: item.nombre, descripcion: item.descripcion || '' } : formVacio)
+    setForm(item ? { nombre: item.nombre, descripcion: item.descripcion || '', margen: item.margen ?? 45 } : formVacio)
     setErrores({})
     setModal({ abierto: true, item })
   }

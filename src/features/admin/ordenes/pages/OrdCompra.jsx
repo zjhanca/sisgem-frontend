@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react'
-import { Plus, Eye, Download, Ban, AlertTriangle, Edit2 } from 'lucide-react'
+import { Plus, Eye, Download, Ban, AlertTriangle } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
@@ -53,7 +53,6 @@ export default function OrdCompra() {
     { key: 'proveedor',    label: 'Proveedor' },
     { key: 'fecha_compra', label: 'Fecha', render: r => formatFecha(r.fecha_compra || r.created_at) },
     { key: 'metodo_pago',  label: 'Método', render: r => r.metodo_pago || '—' },
-    { key: 'registrado_por_nombre', label: 'Registrado por', render: r => r.registrado_por_nombre || '—' },
     { key: 'total',        label: 'Total',  render: r => formatPrecio(r.total) },
     { key: 'estado', label: 'Estado',
       render: r => {
@@ -125,7 +124,7 @@ export default function OrdCompra() {
       <Tabla columnas={columnas} datos={ordenesFiltradas}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
-          <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar" disabled={getKeyEstado(fila.estado) === 'anulado' || getKeyEstado(fila.estado) === 'activo'}><Edit2 size={14} /></button>
+          <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar" disabled={getKeyEstado(fila.estado) === 'anulado'}><Edit2 size={14} /></button>
           <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
           {getKeyEstado(fila.estado) !== 'anulado' && (
             <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><Ban size={14} /></button>

@@ -1,5 +1,5 @@
 import Modal from '@shared/components/Modal'
- 
+
 export default function CategoriaForm({
   modal, form, errores,
   handleChange, handleSubmit,
@@ -11,7 +11,7 @@ export default function CategoriaForm({
       onCerrar={cerrarModal}
       titulo={modal.item ? 'Editar Categoría' : 'Nueva Categoría'}>
       <form onSubmit={handleSubmit} className="space-y-3">
- 
+
         <div>
           <label className="campo-label">Nombre *</label>
           <input
@@ -23,7 +23,7 @@ export default function CategoriaForm({
           />
           {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
         </div>
- 
+
         <div>
           <label className="campo-label">Descripción</label>
           <textarea
@@ -35,7 +35,22 @@ export default function CategoriaForm({
             maxLength={500}
           />
         </div>
- 
+
+        <div>
+          <label className="campo-label">Margen de ganancia (%) *</label>
+          <input
+            type="number" min="0" max="500" step="0.5"
+            value={form.margen ?? ''}
+            onChange={e => handleChange('margen', e.target.value)}
+            className={`campo-input ${errores.margen ? 'border-red-400' : ''}`}
+            placeholder="Ej: 45"
+          />
+          {errores.margen
+            ? <p className="campo-error">{errores.margen}</p>
+            : <p className="text-xs text-gray-400 mt-1">Precio venta = costo × (1 + margen / 100)</p>
+          }
+        </div>
+
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button
             type="button"
@@ -51,7 +66,7 @@ export default function CategoriaForm({
             {guardando ? 'Guardando...' : 'Aceptar'}
           </button>
         </div>
- 
+
       </form>
     </Modal>
   )

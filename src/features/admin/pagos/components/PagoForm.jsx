@@ -15,12 +15,12 @@ export default function PagoForm({
   }
 
   const handleMonto = e => {
-    const val = e.target.value
-    if (!esFiado && montoPendiente > 0 && +val > montoPendiente) {
-      setForm(p => ({ ...p, monto: montoPendiente }))
-    } else {
-      setForm(p => ({ ...p, monto: val }))
+    let val = e.target.value
+    // limitar en tiempo real al saldo pendiente
+    if (val !== '' && montoPendiente > 0 && +val > montoPendiente) {
+      val = String(montoPendiente)
     }
+    setForm(p => ({ ...p, monto: val }))
   }
 
   const pedidoSeleccionado = pedidos.find(p => p.id === +form.pedido_id)
@@ -103,7 +103,6 @@ export default function PagoForm({
         {esFiado && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500">
             <span className="font-medium">Cliente con fiado habilitado</span>
-            <span className="text-amber-400/70">— sin límite de monto</span>
           </div>
         )}
 
@@ -133,9 +132,13 @@ export default function PagoForm({
           </div>
           <input
             type="number" step="0.01" min="0.01"
-            max={!esFiado && montoPendiente > 0 ? montoPendiente : undefined}
+            max={montoPendiente > 0 ? montoPendiente : undefined}
             value={form.monto}
             onChange={handleMonto}
+            onBlur={e => {
+              if (montoPendiente > 0 && +e.target.value > montoPendiente)
+                setForm(p => ({ ...p, monto: montoPendiente }))
+            }}
             className={`campo-input ${errores.monto ? 'border-red-400' : ''}`}
             placeholder="0.00"
             disabled={pagoCompleto}
@@ -154,13 +157,16 @@ export default function PagoForm({
           <select value={form.metodo} onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))} className="campo-input">
             <option value="efectivo">Efectivo</option>
             <option value="transferencia">Transferencia</option>
+            <option value="nequi">Nequi</option>
+            <option value="daviplata">Daviplata</option>
+            <option value="tarjeta">Tarjeta</option>
           </select>
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button type="submit"
-            disabled={creando || pagoCompleto || (!esFiado && +form.monto > montoPendiente)}
+            disabled={creando || pagoCompleto || +form.monto > montoPendiente}
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
           </button>
