@@ -1,4 +1,4 @@
-import { Plus, Eye, Download, Ban } from 'lucide-react'
+import { Plus, Eye, Download, Ban, Search, CreditCard } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
@@ -7,16 +7,14 @@ import VentaForm    from '../components/VentaForm'
 import VentaDetalle from '../components/VentaDetalle'
 import VentaAnular  from '../components/VentaAnular'
 
-// capitalizar primera letra
 const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''
 
-// badge según estado
 const getBadgeEstado = nombre => {
-  if (!nombre) return 'badge-pendiente'
+  if (!nombre) return { clase: 'badge-pendiente', label: 'Pendiente' }
   const l = nombre.toLowerCase()
-  if (l.includes('anula'))   return 'badge-anulado'
-  if (l.includes('complet') || l.includes('paga')) return 'badge-activo'
-  return 'badge-pendiente'
+  if (l.includes('anula'))                          return { clase: 'badge-anulado',  label: 'Anulado' }
+  if (l.includes('complet') || l.includes('paga'))  return { clase: 'badge-activo',   label: 'Completado' }
+  return { clase: 'badge-pendiente', label: 'Pendiente' }
 }
 
 export default function Ventas() {
@@ -28,53 +26,34 @@ export default function Ventas() {
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, cambiarEstado, getBadge, estados,
+    totalVenta, handleCrear, anular, getBadge, estados,
     creando, anulando,
   } = useVentas()
 
-  // solo mostrar Pendiente, Completado y Anulado (sin otros)
   const estadosVenta = estados.filter(e => {
     const n = e.nombre?.toLowerCase()
     return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula')
   })
 
   const columnas = [
-    { key: 'id',       label: '#' },
-    { key: 'cliente',  label: 'Cliente' },
+    { key: 'id',      label: '#' },
+    { key: 'cliente', label: 'Cliente' },
     { key: 'tipo_venta', label: 'Tipo',
       render: r => <span className="badge-activo">{r.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}</span>
     },
     { key: 'total', label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado_id', label: 'Estado',
       render: r => {
-        const esAnulado = r.estado?.toLowerCase().includes('anula')
+        const { clase, label } = getBadgeEstado(r.estado)
+        const esFiadoPendiente = r.permite_fiado && r.estado?.toLowerCase().includes('pendiente')
         return (
-          <div className="flex gap-1 flex-wrap" onClick={e => e.stopPropagation()}>
-            {estadosVenta
-              .filter(e => !e.nombre?.toLowerCase().includes('anula')) // pendiente y completado como botones
-              .map(e => {
-                const activo = r.estado_id === e.id
-                const isPendiente = e.nombre?.toLowerCase().includes('pendiente')
-                return (
-                  <button key={e.id} type="button"
-                    disabled={esAnulado || activo}
-                    onClick={() => !activo && cambiarEstado.mutate({ id: r.id, estado_id: e.id })}
-                    className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-all disabled:cursor-default ${
-                      activo
-                        ? isPendiente
-                          ? 'bg-amber-500/20 border-amber-500/40 text-amber-500'
-                          : 'bg-primary/20 border-primary/40 text-primary'
-                        : esAnulado
-                          ? 'opacity-30 border-gray-200 dark:border-dark-border text-gray-400'
-                          : 'border-gray-200 dark:border-dark-border text-gray-400 hover:border-primary/40 hover:text-primary'
-                    }`}>
-                    {capitalizar(e.nombre)}
-                  </button>
-                )
-              })
-            }
-            {/* badge anulado si está anulado */}
-            {esAnulado && <span className="badge-anulado">Anulado</span>}
+          <div className="flex items-center gap-1.5">
+            <span className={clase}>{label}</span>
+            {esFiadoPendiente && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 font-medium">
+                Fiado
+              </span>
+            )}
           </div>
         )
       }
@@ -96,44 +75,63 @@ export default function Ventas() {
         </div>
       </div>
 
-      <div className="flex gap-2 mb-4 flex-wrap items-end">
-        <div>
-          <p className="campo-label mb-0.5">Buscar</p>
-          <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
-            placeholder="# o cliente..." className="campo-input w-36 text-xs" />
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Estado</p>
+      <Tabla columnas={columnas} datos={ventasFiltradas} sinBusqueda
+        filtros={<>
+          <div className="relative">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
+              placeholder="Buscar..."
+              className="pl-8 pr-3 py-1.5 text-sm rounded-lg border
+                bg-light-bg dark:bg-dark-bg/60
+                border-gray-200 dark:border-dark-border
+                text-light-text dark:text-dark-text
+                placeholder:text-gray-400/60
+                focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
+                transition-all duration-150 w-52" />
+          </div>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-40 text-xs">
             <option value="">Todos los estados</option>
             {estadosVenta.map(e => (
               <option key={e.id} value={e.id}>{capitalizar(e.nombre)}</option>
             ))}
           </select>
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Desde</p>
           <input type="datetime-local" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)}
-            className="campo-input text-xs" />
-        </div>
-        <div>
-          <p className="campo-label mb-0.5">Hasta</p>
+            className="campo-input w-44 text-xs" title="Desde" />
           <input type="datetime-local" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)}
-            className="campo-input text-xs" />
-        </div>
-        {(filtroEstado || filtroBusqueda || filtroDesde || filtroHasta) && (
-          <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda(''); setFiltroDesde(''); setFiltroHasta('') }}
-            className="btn-ghost text-xs text-red-400 self-end">Limpiar</button>
-        )}
-      </div>
-
-      <Tabla columnas={columnas} datos={ventasFiltradas} sinBusqueda
+            className="campo-input w-44 text-xs" title="Hasta" />
+          {(filtroEstado || filtroBusqueda || filtroDesde || filtroHasta) && (
+            <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda(''); setFiltroDesde(''); setFiltroHasta('') }}
+              className="btn-ghost text-xs text-red-400">Limpiar</button>
+          )}
+        </>}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost"><Eye size={14} /></button>
           <button onClick={() => descargarPDF(`/reportes/pedido/${fila.id}`, `comprobante-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
-          {!fila.estado?.toLowerCase().includes('anula') && (
-            <button onClick={() => setModalAnular({ abierto: true, venta: fila })} className="btn-ghost hover:text-red-400"><Ban size={14} /></button>
+          {fila.permite_fiado && fila.estado?.toLowerCase().includes('pendiente') && (
+            <button onClick={() => setModalDetalle({ abierto: true, venta: fila })}
+              className="btn-ghost hover:text-primary" title="Registrar abono">
+              <CreditCard size={14} />
+            </button>
           )}
+          {(() => {
+            const esAnulada = fila.estado?.toLowerCase().includes('anula')
+            if (esAnulada) return null
+            const esFiado = fila.permite_fiado && fila.estado?.toLowerCase().includes('pendiente')
+            if (esFiado) {
+              const horas = (new Date() - new Date(fila.fecha_pedido)) / (1000 * 60 * 60)
+              if (horas > 48) return (
+                <button disabled title="Solo se puede anular dentro de las primeras 48 horas"
+                  className="btn-ghost opacity-30 cursor-not-allowed"><Ban size={14} /></button>
+              )
+            }
+            return (
+              <button onClick={() => setModalAnular({ abierto: true, venta: fila })}
+                className="btn-ghost hover:text-red-400"
+                title={esFiado ? `Anular fiado (quedan ${Math.max(0, Math.ceil(48 - (new Date() - new Date(fila.fecha_pedido)) / (1000 * 60 * 60)))}h)` : 'Anular'}>
+                <Ban size={14} />
+              </button>
+            )
+          })()}
         </>)}
       />
 
