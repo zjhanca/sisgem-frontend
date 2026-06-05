@@ -48,10 +48,6 @@ export default function OrdenDetalle({
               <button onClick={() => { cerrar(); abrirEditar(orden) }} className="btn-outline text-xs">
                 <Edit2 size={12} /> Editar
               </button>
-              <button onClick={() => { cerrar(); setModalAnular({ abierto: true, orden }) }}
-                className="px-3 py-1.5 text-xs border border-red-400/40 text-red-400 rounded-lg hover:bg-red-400/10 transition-colors">
-                <XCircle size={12} className="inline mr-1" /> Anular
-              </button>
             </>)}
           </div>
         </div>
