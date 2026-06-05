@@ -15,12 +15,11 @@ export default function PagoForm({
   }
 
   const handleMonto = e => {
-    const val = e.target.value
-    if (!esFiado && montoPendiente > 0 && +val > montoPendiente) {
-      setForm(p => ({ ...p, monto: montoPendiente }))
-    } else {
-      setForm(p => ({ ...p, monto: val }))
+    let val = e.target.value
+    if (val !== '' && montoPendiente > 0 && +val > montoPendiente) {
+      val = String(montoPendiente)
     }
+    setForm(p => ({ ...p, monto: val }))
   }
 
   const pedidoSeleccionado = pedidos.find(p => p.id === +form.pedido_id)
@@ -103,7 +102,6 @@ export default function PagoForm({
         {esFiado && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500">
             <span className="font-medium">Cliente con fiado habilitado</span>
-            <span className="text-amber-400/70">— sin límite de monto</span>
           </div>
         )}
 
@@ -120,51 +118,50 @@ export default function PagoForm({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 items-start">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="campo-label mb-0">Monto *</label>
-              {tipoPagoActual && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'
-                }`}>
-                  {tipoPagoActual === 'total' ? '✓ Total' : '~ Abono'}
-                </span>
-              )}
-            </div>
-            <input
-              type="number" step="0.01" min="0.01"
-              max={!esFiado && montoPendiente > 0 ? montoPendiente : undefined}
-              value={form.monto}
-              onChange={handleMonto}
-              className={`campo-input ${errores.monto ? 'border-red-400' : ''}`}
-              placeholder="0.00"
-              disabled={pagoCompleto}
-            />
-            {errores.monto && <p className="campo-error">{errores.monto}</p>}
-            {!pagoCompleto && montoPendiente > 0 && (
-              <button type="button" onClick={() => setForm(p => ({ ...p, monto: montoPendiente }))}
-                className="text-xs text-primary mt-1 hover:underline">
-                Usar pendiente ({formatPrecio(montoPendiente)})
-              </button>
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="campo-label mb-0">Monto *</label>
+            {tipoPagoActual && (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'
+              }`}>
+                {tipoPagoActual === 'total' ? '✓ Pago total' : '~ Abono parcial'}
+              </span>
             )}
           </div>
-          <div>
-            <label className="campo-label">Método de Pago</label>
-            <select value={form.metodo} onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))} className="campo-input">
-              <option value="efectivo">Efectivo</option>
-              <option value="transferencia">Transferencia</option>
-              <option value="nequi">Nequi</option>
-              <option value="daviplata">Daviplata</option>
-              <option value="tarjeta">Tarjeta</option>
-            </select>
-          </div>
+          <input
+            type="number" step="0.01" min="0.01"
+            max={montoPendiente > 0 ? montoPendiente : undefined}
+            value={form.monto}
+            onChange={handleMonto}
+            className={`campo-input ${errores.monto ? 'border-red-400' : ''}`}
+            placeholder="0.00"
+            disabled={pagoCompleto}
+          />
+          {errores.monto && <p className="campo-error">{errores.monto}</p>}
+          {!pagoCompleto && montoPendiente > 0 && (
+            <button type="button" onClick={() => setForm(p => ({ ...p, monto: montoPendiente }))}
+              className="text-xs text-primary mt-1 hover:underline">
+              Usar monto pendiente ({formatPrecio(montoPendiente)})
+            </button>
+          )}
+        </div>
+
+        <div>
+          <label className="campo-label">Método de Pago</label>
+          <select value={form.metodo} onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))} className="campo-input">
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="nequi">Nequi</option>
+            <option value="daviplata">Daviplata</option>
+            <option value="tarjeta">Tarjeta</option>
+          </select>
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
           <button type="button" onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button type="submit"
-            disabled={creando || pagoCompleto || (!esFiado && +form.monto > montoPendiente)}
+            disabled={creando || pagoCompleto || +form.monto > montoPendiente}
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
           </button>
