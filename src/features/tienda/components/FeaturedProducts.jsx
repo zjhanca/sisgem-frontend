@@ -4,7 +4,19 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 function ProductCard({ prod }) {
-  const imagenes = [prod.imagen_url, prod.imagen2_url, prod.imagen3_url].filter(Boolean)
+  // reconstruir array igual que en ProductoDetalle
+  const imagenes = (() => {
+    let imgs = prod.imagenes
+    if (typeof imgs === 'string') {
+      try { imgs = JSON.parse(imgs) } catch { imgs = [] }
+    }
+    if (Array.isArray(imgs) && imgs.length > 0) {
+      const limpias = imgs.filter(Boolean)
+      if (limpias.length > 0) return limpias
+    }
+    return prod.imagen_url ? [prod.imagen_url] : []
+  })()
+
   const [imgIdx, setImgIdx] = useState(0)
 
   const prev = e => { e.stopPropagation(); setImgIdx(i => (i - 1 + imagenes.length) % imagenes.length) }
