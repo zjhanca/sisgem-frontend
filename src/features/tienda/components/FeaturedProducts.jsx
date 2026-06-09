@@ -78,7 +78,7 @@ export default function FeaturedProducts({ productos }) {
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-light-text dark:text-dark-text tracking-wide uppercase">Productos Destacados</h2>
-        <a href="/productos" className="text-xs text-primary hover:underline">Ver todos →</a>
+        
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {productos.slice(0, 10).map(prod => <ProductCard key={prod.id} prod={prod} />)}
