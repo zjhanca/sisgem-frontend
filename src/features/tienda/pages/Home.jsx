@@ -14,8 +14,12 @@ export default function Home() {
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
       <NavbarPublico />
 
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-12">
+      {/* hero carrusel — full width sin padding lateral */}
+      <div className="w-full">
         <Carrusel />
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 py-10 space-y-14">
         <CategoryCarousel categorias={categorias} />
         <FeaturedProducts productos={productos} />
         <PromotionalBanners />

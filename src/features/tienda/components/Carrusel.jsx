@@ -1,26 +1,27 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-// Coloca aquí las URLs de tus imágenes. Mientras no tengas imágenes reales,
-// usamos placeholders de Unsplash con temática de minimercado.
 const BANNERS = [
   {
     id: 1,
-    imagen: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80',
+    imagen: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1400&q=80',
     titulo: 'Frescos Todos los Días',
     subtitulo: 'Frutas y verduras del campo a tu mesa',
+    cta: 'Ver productos',
   },
   {
     id: 2,
-    imagen: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1200&q=80',
+    imagen: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1400&q=80',
     titulo: 'Lo Mejor del Mercado',
     subtitulo: 'Selección especial de productos frescos',
+    cta: 'Explorar',
   },
   {
     id: 3,
-    imagen: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=1200&q=80',
+    imagen: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=1400&q=80',
     titulo: 'Tu Minimercado de Confianza',
     subtitulo: 'Calidad y variedad en un solo lugar',
+    cta: 'Ver todo',
   },
 ]
 
@@ -33,47 +34,46 @@ export default function Carrusel() {
     timer.current = setInterval(() => setIdx(i => (i + 1) % BANNERS.length), 5000)
   }
 
-  useEffect(() => {
-    resetTimer()
-    return () => clearInterval(timer.current)
-  }, [])
+  useEffect(() => { resetTimer(); return () => clearInterval(timer.current) }, [])
 
   const ir   = i  => { setIdx(i); resetTimer() }
   const prev = () => { setIdx(i => (i - 1 + BANNERS.length) % BANNERS.length); resetTimer() }
   const next = () => { setIdx(i => (i + 1) % BANNERS.length); resetTimer() }
 
   return (
-    <section className="relative rounded-2xl overflow-hidden h-56 sm:h-72 md:h-80 select-none bg-gray-900">
+    <section className="relative w-full overflow-hidden rounded-none sm:rounded-2xl h-52 sm:h-72 md:h-96 select-none bg-gray-900">
       {BANNERS.map((b, i) => (
         <div key={b.id}
           className={`absolute inset-0 transition-opacity duration-700 ${i === idx ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <img src={b.imagen} alt={b.titulo}
-            className="w-full h-full object-cover"
-            onError={e => e.target.style.display = 'none'} />
-          {/* overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <h2 className="text-xl md:text-3xl font-bold drop-shadow">{b.titulo}</h2>
-            <p className="text-sm md:text-base opacity-90 mt-1 drop-shadow">{b.subtitulo}</p>
+          <img src={b.imagen} alt={b.titulo} className="w-full h-full object-cover" onError={e => e.target.style.display='none'} />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-center px-8 sm:px-16 max-w-2xl">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white leading-tight drop-shadow">{b.titulo}</h2>
+            <p className="text-sm sm:text-base text-white/80 mt-2 drop-shadow">{b.subtitulo}</p>
+            <a href="/productos"
+              className="mt-4 inline-flex items-center gap-2 self-start px-5 py-2.5 rounded-full
+                bg-primary text-dark-bg font-semibold text-sm hover:bg-primary/90 transition-colors shadow-lg">
+              {b.cta}
+            </a>
           </div>
         </div>
       ))}
 
       <button onClick={prev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50
           flex items-center justify-center text-white transition-colors backdrop-blur-sm">
-        <ChevronLeft size={16} />
+        <ChevronLeft size={18} />
       </button>
       <button onClick={next}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50
+        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50
           flex items-center justify-center text-white transition-colors backdrop-blur-sm">
-        <ChevronRight size={16} />
+        <ChevronRight size={18} />
       </button>
 
-      <div className="absolute bottom-3 right-4 flex gap-1.5">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
         {BANNERS.map((_, i) => (
           <button key={i} onClick={() => ir(i)}
-            className={`rounded-full transition-all ${i === idx ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'}`} />
+            className={`rounded-full transition-all duration-300 ${i === idx ? 'w-6 h-2 bg-primary' : 'w-2 h-2 bg-white/50'}`} />
         ))}
       </div>
     </section>
