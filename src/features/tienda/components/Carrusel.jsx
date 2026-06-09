@@ -7,21 +7,18 @@ const BANNERS = [
     imagen: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1600&q=85',
     titulo: 'Frescos Todos los Días',
     subtitulo: 'Frutas y verduras del campo a tu mesa',
-    cta: 'Ver productos',
   },
   {
     id: 2,
     imagen: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1600&q=85',
     titulo: 'Lo Mejor del Mercado',
     subtitulo: 'Selección especial de productos frescos',
-    cta: 'Explorar',
   },
   {
     id: 3,
     imagen: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=1600&q=85',
     titulo: 'Tu Minimercado de Confianza',
     subtitulo: 'Calidad y variedad en un solo lugar',
-    cta: 'Ver todo',
   },
 ]
 
@@ -48,14 +45,8 @@ export default function Carrusel() {
           <img src={b.imagen} alt={b.titulo} className="w-full h-full object-cover" onError={e => e.target.style.display='none'} />
           <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />
           <div className="absolute inset-0 flex flex-col justify-center px-8 sm:px-20">
-            <p className="text-primary text-xs font-semibold tracking-widest uppercase mb-2 opacity-90">Minimercado</p>
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight max-w-lg">{b.titulo}</h2>
             <p className="text-sm sm:text-base text-white/70 mt-3 max-w-sm">{b.subtitulo}</p>
-            <a href="/productos"
-              className="mt-5 self-start px-6 py-2.5 rounded-lg bg-primary text-dark-bg font-semibold text-sm
-                hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
-              {b.cta}
-            </a>
           </div>
         </div>
       ))}
