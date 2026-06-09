@@ -26,8 +26,6 @@ export default function Pagos() {
   const hayFiltros = filtroEstado || filtroDesde || filtroHasta || filtroBusqueda
 
   const columnas = [
-    { key: 'id',        label: '#' },
-    { key: 'pedido_id', label: 'Pedido',  render: r => `#${r.pedido_id}` },
     { key: 'cliente',   label: 'Cliente', render: r => r.cliente || '—' },
     { key: 'monto',     label: 'Monto',   render: r => formatPrecio(r.monto) },
     { key: 'metodo',    label: 'Método',  render: r => r.metodo || '—' },
