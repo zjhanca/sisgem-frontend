@@ -82,10 +82,10 @@ export default function Tabla({
           <thead>
             <tr className="bg-light-bg dark:bg-dark-bg border-b border-gray-100 dark:border-dark-border/60">
               {columnas.map(col => (
-                <th key={col.key} className="tabla-header">{col.label}</th>
+                <th key={col.key} className="tabla-header normal-case">{col.label}</th>
               ))}
               {acciones && (
-                <th className="tabla-header text-right">Acciones</th>
+                <th className="tabla-header normal-case text-right">Acciones</th>
               )}
             </tr>
           </thead>

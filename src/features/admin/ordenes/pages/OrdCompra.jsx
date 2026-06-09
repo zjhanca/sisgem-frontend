@@ -49,7 +49,6 @@ export default function OrdCompra() {
   const [modalCrearProd, setModalCrearProd] = useState(false)
 
   const columnas = [
-    { key: 'id',           label: '#' },
     { key: 'proveedor',    label: 'Proveedor' },
     { key: 'fecha_compra', label: 'Fecha', render: r => formatFecha(r.fecha_compra || r.created_at) },
     { key: 'metodo_pago',  label: 'Método', render: r => r.metodo_pago || '—' },
