@@ -27,23 +27,20 @@ export default function BrandCarousel({ marcas }) {
 
         <div className="flex-1 flex justify-around items-center">
           {visibles.map(m => (
-            <div key={m.id} className="flex flex-col items-center gap-2">
-              <div className="w-20 h-20 rounded-full overflow-hidden bg-light-card dark:bg-dark-card
-                border border-gray-100 dark:border-dark-border shadow-sm">
-                {m.logo ? (
-                  <img src={m.logo} alt={m.nombre}
-                    className="w-full h-full object-cover"
-                    onError={e => {
-                      e.target.style.display='none'
-                      e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-primary/10 font-bold text-primary text-2xl">${m.nombre?.charAt(0).toUpperCase()}</div>`
-                    }} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-primary/10 font-bold text-primary text-2xl">
-                    {m.nombre?.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <span className="text-xs text-center text-gray-400 dark:text-dark-text/50 line-clamp-1 w-20">{m.nombre}</span>
+            <div key={m.id} className="w-20 h-20 rounded-full overflow-hidden
+              bg-light-card dark:bg-dark-card border border-gray-100 dark:border-dark-border shadow-sm">
+              {m.logo ? (
+                <img src={m.logo} alt={m.nombre}
+                  className="w-full h-full object-cover"
+                  onError={e => {
+                    e.target.style.display='none'
+                    e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-primary/10 font-bold text-primary text-2xl">${m.nombre?.charAt(0).toUpperCase()}</div>`
+                  }} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-primary/10 font-bold text-primary text-2xl">
+                  {m.nombre?.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
           ))}
         </div>

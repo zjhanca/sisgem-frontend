@@ -42,11 +42,29 @@ export default function CategoriaForm({
         </div>
 
         <div>
+          <label className="campo-label">Ícono (URL de imagen)</label>
+          <div className="flex gap-2 items-center">
+            <input
+              value={form.icono ?? ''}
+              onChange={e => handleChange('icono', e.target.value)}
+              className="campo-input text-xs"
+              placeholder="https://ejemplo.com/icono.png"
+            />
+            {form.icono && (
+              <img src={form.icono} alt="preview"
+                className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-dark-border shrink-0"
+                onError={e => e.target.style.display='none'} />
+            )}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Se mostrará como ícono circular en la tienda</p>
+        </div>
+
+        <div>
           <label className="campo-label">Descripción</label>
           <textarea
             value={form.descripcion}
             onChange={e => handleChange('descripcion', e.target.value)}
-            rows={3}
+            rows={2}
             className="campo-input resize-none"
             placeholder="Descripción de la categoría"
             maxLength={500}

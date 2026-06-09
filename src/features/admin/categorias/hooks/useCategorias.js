@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { categoriasService } from '../services/categoriasService'
 import toast from 'react-hot-toast'
 
-const formVacio = { nombre: '', descripcion: '', margen: 45 }
+const formVacio = { nombre: '', descripcion: '', margen: 45, icono: '' }
 
 const validar = form => {
   const e = {}
@@ -34,7 +34,6 @@ export function useCategorias() {
     mutationFn: data => modal.item
       ? categoriasService.update(modal.item.id, data)
       : categoriasService.create(data),
-    // margen se guarda vía actualizarMargen si es nuevo, o junto al update
     onSuccess: () => {
       qc.invalidateQueries(['categorias'])
       cerrarModal()
@@ -66,7 +65,9 @@ export function useCategorias() {
   })
 
   const abrirModal = (item = null) => {
-    setForm(item ? { nombre: item.nombre, descripcion: item.descripcion || '', margen: item.margen ?? 45 } : formVacio)
+    setForm(item
+      ? { nombre: item.nombre, descripcion: item.descripcion || '', margen: item.margen ?? 45, icono: item.icono || '' }
+      : formVacio)
     setErrores({})
     setModal({ abierto: true, item })
   }
