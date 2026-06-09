@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
 import { Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
@@ -8,6 +8,9 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
   const [imgIdx, setImgIdx] = useState(0)
 
+  // resetear índice cada vez que cambia el producto
+  useEffect(() => { setImgIdx(0) }, [item?.id])
+
   // reconstruir array de imágenes — soporta array, JSON string, o imagen_url suelta
   const imagenes = (() => {
     if (!item) return []
@@ -16,7 +19,11 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
     if (typeof imgs === 'string') {
       try { imgs = JSON.parse(imgs) } catch { imgs = [] }
     }
-    if (Array.isArray(imgs) && imgs.length > 0) return imgs
+    if (Array.isArray(imgs) && imgs.length > 0) {
+      // filtrar urls vacías
+      const limpias = imgs.filter(Boolean)
+      if (limpias.length > 0) return limpias
+    }
     // fallback a imagen_url
     return item.imagen_url ? [item.imagen_url] : []
   })()
