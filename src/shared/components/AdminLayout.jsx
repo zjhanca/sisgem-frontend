@@ -63,7 +63,6 @@ const estadoInicial = () => {
   return MENU.reduce((acc, g) => ({ ...acc, [g.id]: true }), {})
 }
 
-// Modal cambiar contraseña
 function ModalContrasena({ onCerrar }) {
   const [form, setForm] = useState({ actual: '', nueva: '', confirmar: '' })
   const [verActual, setVerActual] = useState(false)
@@ -100,64 +99,39 @@ function ModalContrasena({ onCerrar }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onCerrar}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
-      <div className="relative z-10 w-full max-w-sm bg-light-card dark:bg-dark-card rounded-2xl border border-gray-200 dark:border-dark-border shadow-xl animate-slideIn"
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+      <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl border border-gray-200 shadow-xl animate-slideIn"
         onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-dark-border/60">
-          <h3 className="text-sm font-semibold text-light-text dark:text-dark-text">Cambiar Contraseña</h3>
-          <button onClick={onCerrar} className="p-1 rounded-md text-gray-400 hover:text-primary hover:bg-primary/8 transition-all">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+          <h3 className="text-sm font-semibold text-light-text">Cambiar Contraseña</h3>
+          <button onClick={onCerrar} className="p-1 rounded-md text-gray-400 hover:text-primary hover:bg-primary/10 transition-all">
             <X size={15} />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3">
-          {/* actual */}
-          <div>
-            <label className="campo-label">Contraseña Actual *</label>
-            <div className="relative">
-              <input type={verActual ? 'text' : 'password'} value={form.actual}
-                onChange={e => { setForm(p => ({ ...p, actual: e.target.value })); setErrores(p => ({ ...p, actual: '' })) }}
-                className={`campo-input pr-8 ${errores.actual ? 'border-red-400' : ''}`}
-                placeholder="Tu contraseña actual" />
-              <button type="button" onClick={() => setVerActual(!verActual)}
-                className="absolute right-2 top-2.5 text-gray-400 hover:text-primary">
-                {verActual ? <EyeOff size={13} /> : <Eye size={13} />}
-              </button>
+          {[
+            { key: 'actual', label: 'Contraseña Actual *', ver: verActual, setVer: setVerActual, placeholder: 'Tu contraseña actual' },
+            { key: 'nueva',  label: 'Nueva Contraseña *',  ver: verNueva,  setVer: setVerNueva,  placeholder: 'Mínimo 6 caracteres' },
+            { key: 'confirmar', label: 'Confirmar Nueva *', ver: verConf,  setVer: setVerConf,   placeholder: 'Repetir nueva contraseña' },
+          ].map(({ key, label, ver, setVer, placeholder }) => (
+            <div key={key}>
+              <label className="campo-label">{label}</label>
+              <div className="relative">
+                <input type={ver ? 'text' : 'password'} value={form[key]}
+                  onChange={e => { setForm(p => ({ ...p, [key]: e.target.value })); setErrores(p => ({ ...p, [key]: '' })) }}
+                  className={`campo-input pr-8 ${errores[key] ? 'border-red-400' : ''}`}
+                  placeholder={placeholder} />
+                <button type="button" onClick={() => setVer(!ver)}
+                  className="absolute right-2 top-2.5 text-gray-400 hover:text-primary">
+                  {ver ? <EyeOff size={13} /> : <Eye size={13} />}
+                </button>
+              </div>
+              {errores[key] && <p className="campo-error">{errores[key]}</p>}
             </div>
-            {errores.actual && <p className="campo-error">{errores.actual}</p>}
-          </div>
-          {/* nueva */}
-          <div>
-            <label className="campo-label">Nueva Contraseña *</label>
-            <div className="relative">
-              <input type={verNueva ? 'text' : 'password'} value={form.nueva}
-                onChange={e => { setForm(p => ({ ...p, nueva: e.target.value })); setErrores(p => ({ ...p, nueva: '' })) }}
-                className={`campo-input pr-8 ${errores.nueva ? 'border-red-400' : ''}`}
-                placeholder="Mínimo 6 caracteres" />
-              <button type="button" onClick={() => setVerNueva(!verNueva)}
-                className="absolute right-2 top-2.5 text-gray-400 hover:text-primary">
-                {verNueva ? <EyeOff size={13} /> : <Eye size={13} />}
-              </button>
-            </div>
-            {errores.nueva && <p className="campo-error">{errores.nueva}</p>}
-          </div>
-          {/* confirmar */}
-          <div>
-            <label className="campo-label">Confirmar Nueva Contraseña *</label>
-            <div className="relative">
-              <input type={verConf ? 'text' : 'password'} value={form.confirmar}
-                onChange={e => { setForm(p => ({ ...p, confirmar: e.target.value })); setErrores(p => ({ ...p, confirmar: '' })) }}
-                className={`campo-input pr-8 ${errores.confirmar ? 'border-red-400' : ''}`}
-                placeholder="Repetir nueva contraseña" />
-              <button type="button" onClick={() => setVerConf(!verConf)}
-                className="absolute right-2 top-2.5 text-gray-400 hover:text-primary">
-                {verConf ? <EyeOff size={13} /> : <Eye size={13} />}
-              </button>
-            </div>
-            {errores.confirmar && <p className="campo-error">{errores.confirmar}</p>}
-          </div>
-          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-dark-border/60">
+          ))}
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
             <button type="button" onClick={onCerrar}
-              className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">
+              className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg hover:border-gray-300">
               Cancelar
             </button>
             <button type="submit" disabled={cargando} className="btn-primary disabled:opacity-50">
@@ -175,11 +149,11 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
   const [perfilAbierto, setPerfilAbierto] = useState(false)
 
   return (
-    <div className={`flex flex-col h-full bg-dark-bg border-r border-dark-border
+    <div className={`flex flex-col h-full bg-light-text border-r border-gray-800
       ${mobile ? 'w-72' : collapsed ? 'w-16' : 'w-60'} transition-all duration-200`}>
 
       {/* logo */}
-      <div className={`flex items-center gap-2 p-4 border-b border-dark-border ${collapsed && !mobile ? 'justify-center' : ''}`}>
+      <div className={`flex items-center gap-2 p-4 border-b border-gray-700 ${collapsed && !mobile ? 'justify-center' : ''}`}>
         <Link to="/" className="flex items-center gap-2 group" title="Ir a la tienda">
           <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 overflow-hidden group-hover:ring-2 group-hover:ring-primary/40 transition-all">
             <img src="/logo.png" alt="Logo" className="w-full h-full object-contain"
@@ -192,7 +166,7 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
         </Link>
         {!mobile && (
           <button onClick={toggleCollapse}
-            className="ml-auto text-dark-text/40 hover:text-primary transition-colors">
+            className="ml-auto text-gray-400 hover:text-primary transition-colors">
             {collapsed ? <ChevronRight size={14} /> : <ChevronRight size={14} className="rotate-180" />}
           </button>
         )}
@@ -210,7 +184,7 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
                   <NavLink key={item.to} to={item.to} end={item.exact}
                     className={({ isActive }) =>
                       `flex items-center justify-center p-2.5 rounded-lg transition-all mb-0.5 ${
-                        isActive ? 'bg-primary text-dark-bg' : 'text-dark-text/60 hover:bg-dark-card hover:text-primary'
+                        isActive ? 'bg-primary text-light-text' : 'text-gray-400 hover:bg-gray-700 hover:text-primary'
                       }`
                     }
                     title={item.label}>
@@ -225,7 +199,7 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
             <div key={grupo.id} className="mb-2">
               <button onClick={() => toggleGrupo(grupo.id)}
                 className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold
-                  text-dark-text/40 uppercase tracking-wider hover:text-dark-text/60 transition-colors">
+                  text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
                 <span>{grupo.label}</span>
                 {abierto ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
               </button>
@@ -236,8 +210,8 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
                       className={({ isActive }) =>
                         `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
                           isActive
-                            ? 'bg-primary text-dark-bg font-medium'
-                            : 'text-dark-text/70 hover:bg-dark-card hover:text-primary'
+                            ? 'bg-primary text-light-text font-medium'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-primary'
                         }`
                       }>
                       <item.icon size={15} />
@@ -252,58 +226,46 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
       </nav>
 
       {/* footer usuario */}
-      <div className={`p-3 border-t border-dark-border ${collapsed && !mobile ? 'flex flex-col items-center gap-2' : 'space-y-1'}`}>
-
-        {/* perfil clickeable — solo cuando no está colapsado */}
+      <div className={`p-3 border-t border-gray-700 ${collapsed && !mobile ? 'flex flex-col items-center gap-2' : 'space-y-1'}`}>
         {(!collapsed || mobile) && (
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => setPerfilAbierto(p => !p)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-dark-card transition-colors text-left">
+            <button type="button" onClick={() => setPerfilAbierto(p => !p)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-700 transition-colors text-left">
               <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">
                 {usuario?.nombre?.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-dark-text truncate">{usuario?.nombre} {usuario?.apellido}</p>
-                <p className="text-xs text-dark-text/40 truncate">{usuario?.email}</p>
+                <p className="text-xs font-medium text-gray-100 truncate">{usuario?.nombre} {usuario?.apellido}</p>
+                <p className="text-xs text-gray-500 truncate">{usuario?.email}</p>
               </div>
-              <ChevronDown size={12} className={`text-dark-text/40 transition-transform ${perfilAbierto ? 'rotate-180' : ''}`} />
+              <ChevronDown size={12} className={`text-gray-500 transition-transform ${perfilAbierto ? 'rotate-180' : ''}`} />
             </button>
-
-            {/* dropdown opciones */}
             {perfilAbierto && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-dark-card border border-dark-border rounded-xl shadow-xl overflow-hidden animate-fadeIn z-10">
-                <button
-                  type="button"
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-gray-800 border border-gray-700 rounded-xl shadow-xl overflow-hidden animate-fadeIn z-10">
+                <button type="button"
                   onClick={() => { setPerfilAbierto(false); onCambiarContrasena() }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-dark-text/70 hover:bg-primary/10 hover:text-primary transition-colors">
-                  <KeyRound size={13} />
-                  Cambiar Contraseña
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                  <KeyRound size={13} /> Cambiar Contraseña
                 </button>
-                <div className="border-t border-dark-border/60" />
-                <button
-                  type="button"
+                <div className="border-t border-gray-700" />
+                <button type="button"
                   onClick={() => { setPerfilAbierto(false); handleLogout() }}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-red-400 hover:bg-red-400/10 transition-colors">
-                  <LogOut size={13} />
-                  Cerrar Sesión
+                  <LogOut size={13} /> Cerrar Sesión
                 </button>
               </div>
             )}
           </div>
         )}
-
-        {/* colapsado: solo iconos */}
         {collapsed && !mobile && (
           <div className="flex flex-col gap-1">
             <button onClick={() => onCambiarContrasena()}
-              className="flex items-center justify-center p-1.5 rounded-lg text-dark-text/50 hover:text-primary hover:bg-dark-card transition-colors"
+              className="flex items-center justify-center p-1.5 rounded-lg text-gray-500 hover:text-primary hover:bg-gray-700 transition-colors"
               title="Cambiar contraseña">
               <KeyRound size={13} />
             </button>
             <button onClick={handleLogout}
-              className="flex items-center justify-center p-1.5 rounded-lg text-dark-text/50 hover:text-red-400 hover:bg-dark-card transition-colors">
+              className="flex items-center justify-center p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-gray-700 transition-colors">
               <LogOut size={13} />
             </button>
           </div>
@@ -340,7 +302,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-dark-bg overflow-hidden">
+    <div className="flex h-screen bg-light-bg overflow-hidden">
 
       {/* sidebar desktop */}
       <div className="hidden md:flex shrink-0">
@@ -362,18 +324,17 @@ export default function AdminLayout() {
 
       {/* contenido */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-dark-border bg-dark-bg">
-          <button onClick={() => setMenuMovil(true)} className="text-dark-text/60">
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
+          <button onClick={() => setMenuMovil(true)} className="text-gray-500">
             <Menu size={18} />
           </button>
           <Link to="/"><span className="font-bold text-primary">Sisgem</span></Link>
         </div>
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-light-bg">
           <Outlet />
         </main>
       </div>
 
-      {/* modal cambiar contraseña */}
       {modalContrasena && <ModalContrasena onCerrar={() => setModalContrasena(false)} />}
     </div>
   )

@@ -11,10 +11,9 @@ export default function NavbarPublico() {
   const handleLogout = () => { logout(); navigate('/') }
 
   return (
-    <nav className="sticky top-0 z-50 bg-light-card dark:bg-dark-card border-b border-gray-100 dark:border-dark-border shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center gap-4">
 
-        {/* Logo */}
         <Link to="/" className="shrink-0 flex items-center gap-2 group">
           <img src="/logo.png" alt="Sisgem"
             className="h-9 w-auto object-contain"
@@ -22,27 +21,27 @@ export default function NavbarPublico() {
           <span style={{display:'none'}} className="text-xl font-bold text-primary">Sisgem</span>
         </Link>
 
-        {/* Acciones */}
         <div className="flex items-center gap-2 ml-auto shrink-0">
           {usuario ? (
             <div className="flex items-center gap-2">
               {+usuario.rol_id === 1 && (
                 <Link to="/admin"
-                  className="hidden md:block px-3 py-1.5 text-xs rounded-xl border border-primary/40
-                    text-primary hover:bg-primary/5 transition-colors font-medium">
+                  className="hidden md:block px-3 py-1.5 text-xs rounded-lg
+                    bg-light-text text-white hover:bg-gray-700
+                    transition-colors font-medium">
                   Panel Admin
                 </Link>
               )}
               <button onClick={handleLogout}
-                className="p-1.5 rounded-xl border border-gray-200 dark:border-dark-border
-                  hover:border-red-300 hover:text-red-400 transition-colors text-gray-400">
+                className="p-1.5 rounded-lg border border-gray-200
+                  hover:border-red-200 hover:text-red-400 transition-colors text-gray-400">
                 <LogOut size={13} />
               </button>
             </div>
           ) : (
             <div className="hidden sm:flex items-center gap-2">
               <Link to="/login"
-                className="px-3 py-1.5 text-xs text-gray-500 hover:text-primary transition-colors">
+                className="px-3 py-1.5 text-xs text-gray-500 hover:text-primary transition-colors font-medium">
                 Entrar
               </Link>
               <Link to="/register" className="btn-primary text-xs px-3 py-1.5">
@@ -52,18 +51,19 @@ export default function NavbarPublico() {
           )}
 
           <button onClick={() => setMenuMovil(!menuMovil)}
-            className="md:hidden p-1.5 rounded-xl border border-gray-200 dark:border-dark-border text-gray-500">
+            className="md:hidden p-1.5 rounded-lg border border-gray-200 text-gray-500">
             {menuMovil ? <X size={15} /> : <Menu size={15} />}
           </button>
         </div>
       </div>
 
       {menuMovil && (
-        <div className="md:hidden border-t border-gray-100 dark:border-dark-border bg-light-card dark:bg-dark-card px-4 py-3 space-y-2">
+        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-2">
           {usuario ? (
             <>
               {+usuario.rol_id === 1 && (
-                <Link to="/admin" onClick={() => setMenuMovil(false)} className="block text-sm py-1.5 text-primary font-medium">Panel Admin</Link>
+                <Link to="/admin" onClick={() => setMenuMovil(false)}
+                  className="block text-sm py-1.5 text-light-text font-medium">Panel Admin</Link>
               )}
               <button onClick={handleLogout} className="block text-sm py-1.5 text-red-400 text-left w-full">Cerrar Sesión</button>
             </>
