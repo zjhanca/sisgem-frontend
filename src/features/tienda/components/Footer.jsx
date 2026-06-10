@@ -4,9 +4,10 @@ import { MapPin } from 'lucide-react'
 export default function Footer() {
   return (
     <footer className="mt-20 border-t border-gray-100 dark:border-dark-border">
-      <div className="max-w-6xl mx-auto px-4 py-10 grid grid-cols-2 sm:grid-cols-3 gap-8">
+      <div className="max-w-6xl mx-auto px-4 py-10 flex flex-col sm:flex-row sm:justify-between gap-8">
 
-        <div className="col-span-2 sm:col-span-1">
+        {/* izquierda — marca */}
+        <div className="max-w-xs">
           <span className="font-extrabold text-primary text-xl tracking-tight">SISGEM</span>
           <p className="text-gray-400 dark:text-dark-text/40 text-xs leading-relaxed mt-2 mb-3">
             Tu minimercado de confianza en Medellín.
@@ -16,19 +17,22 @@ export default function Footer() {
           </div>
         </div>
 
-        <div>
-          <p className="text-xs font-semibold text-light-text dark:text-dark-text uppercase tracking-wider mb-3">Tienda</p>
-          <ul className="space-y-2">
-            <li><Link to="/" className="text-xs text-gray-400 hover:text-primary transition-colors">Inicio</Link></li>
-          </ul>
-        </div>
+        {/* derecha — enlaces */}
+        <div className="flex gap-12">
+          <div>
+            <p className="text-xs font-semibold text-light-text dark:text-dark-text uppercase tracking-wider mb-3">Tienda</p>
+            <ul className="space-y-2">
+              <li><Link to="/" className="text-xs text-gray-400 hover:text-primary transition-colors">Inicio</Link></li>
+            </ul>
+          </div>
 
-        <div>
-          <p className="text-xs font-semibold text-light-text dark:text-dark-text uppercase tracking-wider mb-3">Cuenta</p>
-          <ul className="space-y-2">
-            <li><Link to="/login"    className="text-xs text-gray-400 hover:text-primary transition-colors">Iniciar Sesión</Link></li>
-            <li><Link to="/register" className="text-xs text-gray-400 hover:text-primary transition-colors">Crear Cuenta</Link></li>
-          </ul>
+          <div>
+            <p className="text-xs font-semibold text-light-text dark:text-dark-text uppercase tracking-wider mb-3">Cuenta</p>
+            <ul className="space-y-2">
+              <li><Link to="/login"    className="text-xs text-gray-400 hover:text-primary transition-colors">Iniciar Sesión</Link></li>
+              <li><Link to="/register" className="text-xs text-gray-400 hover:text-primary transition-colors">Crear Cuenta</Link></li>
+            </ul>
+          </div>
         </div>
 
       </div>
