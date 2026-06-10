@@ -75,7 +75,7 @@ export default function Login() {
                 Olvidé mi Contraseña
               </Link>
               <Link to="/" className="text-xs text-primary/70 hover:text-primary transition-colors">
-                Ver Catálogo
+                Inico
               </Link>
             </div>
             <div className="text-center pt-1">
