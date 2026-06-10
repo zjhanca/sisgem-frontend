@@ -10,8 +10,8 @@ export default {
         'dark-border': '#1A3040',
         'light-bg':    '#FFFFFF',
         'light-card':  '#FFFFFF',
-        'primary':     '#A6E8B2',
-        'primary-mid': '#7CCF92',
+        'primary':     '#1E9E50',
+        'primary-mid': '#178040',
         'dark-text':   '#EAF7EE',
         'light-text':  '#1D3326',
       }
