@@ -1,28 +1,28 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Package } from 'lucide-react'
- 
-const COLORES = ['#A6E8B2', '#7CCF92', '#4CAF6E', '#2D8F50', '#1A6635']
- 
+
+const COLORES = ['#1E9E50', '#2DB860', '#3DD170', '#52D980', '#78E49A']
+
 const tooltipStyle = {
-  contentStyle: { background: '#0F1C22', border: '1px solid #1A3040', borderRadius: 8, fontSize: 12 },
-  labelStyle: { color: '#A6E8B2' },
-  itemStyle:  { color: '#EAF7EE' },
+  contentStyle: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12 },
+  labelStyle: { color: '#1D3326', fontWeight: 600 },
+  itemStyle:  { color: '#1E9E50' },
 }
- 
+
 export default function DashboardTopProductos({ productos }) {
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-medium text-light-text dark:text-dark-text">Productos Más Vendidos</h2>
+        <h2 className="text-sm font-semibold text-light-text">Productos Más Vendidos</h2>
         <Package size={14} className="text-primary/50" />
       </div>
       {!productos?.length ? (
-        <p className="text-xs text-gray-400 dark:text-dark-text/40 text-center py-8">Sin datos disponibles</p>
+        <p className="text-xs text-gray-400 text-center py-8">Sin datos disponibles</p>
       ) : (
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={productos} layout="vertical">
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#A6E8B2' }} />
-            <YAxis dataKey="nombre" type="category" width={100} tick={{ fontSize: 10, fill: '#EAF7EE' }} />
+            <XAxis type="number" tick={{ fontSize: 11, fill: '#6b7280' }} />
+            <YAxis dataKey="nombre" type="category" width={100} tick={{ fontSize: 10, fill: '#374151' }} />
             <Tooltip {...tooltipStyle} formatter={v => [v, 'Unidades']} />
             <Bar dataKey="total_vendido" radius={[0, 4, 4, 0]}>
               {productos.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
