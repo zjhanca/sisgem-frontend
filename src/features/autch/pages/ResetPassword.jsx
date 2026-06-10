@@ -1,8 +1,24 @@
 import { useState } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
-import { Store, Eye, EyeOff, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { authService } from '../services/authService'
 import toast from 'react-hot-toast'
+
+function Logo({ subtitulo }) {
+  return (
+    <div className="text-center mb-8">
+      <Link to="/" className="inline-flex flex-col items-center gap-2">
+        <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center overflow-hidden">
+          <img src="/logo.png" alt="Logo" className="w-full h-full object-contain"
+            onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+          <span style={{display:'none'}} className="w-full h-full items-center justify-center text-2xl font-bold text-primary">S</span>
+        </div>
+        <h1 className="text-2xl font-bold text-primary">Sisgem</h1>
+      </Link>
+      <p className="text-sm text-gray-400 dark:text-dark-text/50 mt-1">{subtitulo}</p>
+    </div>
+  )
+}
 
 function Requisito({ ok, texto }) {
   return (
@@ -17,7 +33,7 @@ export default function ResetPassword() {
   const navigate = useNavigate()
   const token = params.get('token')
 
-  const [form, setForm]       = useState({ nueva: '', confirmar: '' })
+  const [form, setForm]         = useState({ nueva: '', confirmar: '' })
   const [verNueva, setVerNueva] = useState(false)
   const [verConf, setVerConf]   = useState(false)
   const [cargando, setCargando] = useState(false)
@@ -51,7 +67,6 @@ export default function ResetPassword() {
     if (!/[0-9]/.test(form.nueva)) e2.nueva = 'Debe tener al menos un número'
     if (form.nueva !== form.confirmar) e2.confirmar = 'Las contraseñas no coinciden'
     if (Object.keys(e2).length) { setErrores(e2); return }
-
     setCargando(true)
     try {
       await authService.resetPassword({ token, nueva: form.nueva })
@@ -68,14 +83,7 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-light-bg dark:bg-dark-bg px-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/20 mb-4">
-            <Store size={22} className="text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold text-primary">SISGEM</h1>
-          <p className="text-sm text-gray-400 dark:text-dark-text/50 mt-1">Restablecer Contraseña</p>
-        </div>
-
+        <Logo subtitulo="Restablecer Contraseña" />
         <div className="card">
           {exito ? (
             <div className="text-center space-y-3 py-2">
@@ -91,7 +99,6 @@ export default function ResetPassword() {
               <p className="text-xs text-gray-400 dark:text-dark-text/50">
                 Ingresa tu nueva contraseña para restablecer el acceso.
               </p>
-
               <div>
                 <label className="campo-label">Nueva Contraseña *</label>
                 <div className="relative">
@@ -113,7 +120,6 @@ export default function ResetPassword() {
                 )}
                 {errores.nueva && <p className="campo-error">{errores.nueva}</p>}
               </div>
-
               <div>
                 <label className="campo-label">Confirmar Contraseña *</label>
                 <div className="relative">
@@ -128,13 +134,11 @@ export default function ResetPassword() {
                 </div>
                 {errores.confirmar && <p className="campo-error">{errores.confirmar}</p>}
               </div>
-
               <button type="submit" disabled={cargando} className="btn-primary w-full justify-center py-2 disabled:opacity-50">
                 {cargando ? 'Actualizando...' : 'Restablecer Contraseña'}
               </button>
             </form>
           )}
-
           <div className="mt-4 text-center border-t border-gray-200 dark:border-dark-border pt-4">
             <Link to="/login" className="text-xs text-primary/70 hover:text-primary transition-colors">
               ← Volver al Login

@@ -3,6 +3,22 @@ import { Eye, EyeOff, CheckCircle, XCircle, Loader2, CheckCircle2 } from 'lucide
 import { useState } from 'react'
 import { useRegister } from '../Hooks/useRegister'
 
+function Logo() {
+  return (
+    <div className="text-center mb-6">
+      <Link to="/" className="inline-flex flex-col items-center gap-2">
+        <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center overflow-hidden">
+          <img src="/logo.png" alt="Logo" className="w-full h-full object-contain"
+            onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+          <span style={{display:'none'}} className="w-full h-full items-center justify-center text-2xl font-bold text-primary">S</span>
+        </div>
+        <h1 className="text-2xl font-bold text-primary">Sisgem</h1>
+      </Link>
+      <p className="text-sm text-gray-500 dark:text-dark-text/60 mt-1">Crear Cuenta Nueva</p>
+    </div>
+  )
+}
+
 function Requisito({ ok, texto }) {
   return (
     <div className={`flex items-center gap-1 text-xs ${ok ? 'text-green-500' : 'text-gray-400'}`}>
@@ -20,8 +36,8 @@ function CampoEstado({ verificando, error, valor, valido }) {
 
 export default function Register() {
   const { form, errores, verificando, cargando, handleChange, handleSubmit } = useRegister()
-  const [verPass, setVerPass]   = useState(false)
-  const [verConf, setVerConf]   = useState(false)
+  const [verPass, setVerPass]     = useState(false)
+  const [verConf, setVerConf]     = useState(false)
   const [focusPass, setFocusPass] = useState(false)
 
   const passReqs = {
@@ -33,14 +49,10 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-lg">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-primary">SISGEM</h1>
-          <p className="text-sm text-gray-500 dark:text-dark-text/60 mt-1">Crear Cuenta Nueva</p>
-        </div>
+        <Logo />
         <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-dark-border">
           <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* datos personales */}
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Datos Personales</p>
               <div className="grid grid-cols-2 gap-3">
@@ -73,12 +85,8 @@ export default function Register() {
                       placeholder="Solo números" maxLength={15} inputMode="numeric" />
                     {verificando.numero_documento && <Loader2 size={12} className="absolute right-2.5 top-2.5 text-gray-400 animate-spin" />}
                   </div>
-                  <CampoEstado
-                    verificando={verificando.numero_documento}
-                    error={errores.numero_documento}
-                    valor={form.numero_documento}
-                    valido={!errores.numero_documento && form.numero_documento?.length >= 5}
-                  />
+                  <CampoEstado verificando={verificando.numero_documento} error={errores.numero_documento}
+                    valor={form.numero_documento} valido={!errores.numero_documento && form.numero_documento?.length >= 5} />
                 </div>
                 <div className="col-span-2">
                   <label className="campo-label">Teléfono (10 dígitos)</label>
@@ -90,7 +98,6 @@ export default function Register() {
               </div>
             </div>
 
-            {/* datos de acceso */}
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Datos de Acceso</p>
               <div className="space-y-3">
@@ -102,12 +109,8 @@ export default function Register() {
                       placeholder="correo@ejemplo.com" />
                     {verificando.email && <Loader2 size={12} className="absolute right-2.5 top-2.5 text-gray-400 animate-spin" />}
                   </div>
-                  <CampoEstado
-                    verificando={verificando.email}
-                    error={errores.email}
-                    valor={form.email}
-                    valido={!errores.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)}
-                  />
+                  <CampoEstado verificando={verificando.email} error={errores.email}
+                    valor={form.email} valido={!errores.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
