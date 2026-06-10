@@ -1,5 +1,5 @@
 ﻿import { Link } from 'react-router-dom'
-import { Eye, EyeOff, Sun, Moon, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { useLogin } from '../Hooks/useLogin'
 
 function Logo() {
@@ -21,16 +21,11 @@ function Logo() {
 export default function Login() {
   const {
     form, verPass, setVerPass, cargando,
-    errores, errorGeneral,
-    tema, toggleTema, handleChange, handleSubmit,
+    errores, errorGeneral, handleChange, handleSubmit,
   } = useLogin()
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-light-bg dark:bg-dark-bg px-4">
-      <button onClick={toggleTema} className="fixed top-4 right-4 btn-ghost">
-        {tema === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-      </button>
-
       <div className="w-full max-w-sm">
         <Logo />
 

@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
-import { useTema } from '@shared/contexts/ThemeContext'
 import { authService } from '../services/authService'
 import toast from 'react-hot-toast'
- 
+
 const validar = form => {
   const e = {}
   if (!form.email.trim())    e.email    = 'El correo es obligatorio'
@@ -12,37 +11,32 @@ const validar = form => {
   if (!form.password.trim()) e.password = 'La contraseña es obligatoria'
   return e
 }
- 
+
 export function useLogin() {
   const [form, setForm]         = useState({ email: '', password: '' })
   const [verPass, setVerPass]   = useState(false)
   const [cargando, setCargando] = useState(false)
   const [errores, setErrores]   = useState({})
   const [errorGeneral, setErrorGeneral] = useState('')
-  const { login }            = useAuth()
-  const { tema, toggleTema } = useTema()
-  const navigate             = useNavigate()
- 
+  const { login }  = useAuth()
+  const navigate   = useNavigate()
+
   const handleChange = (campo, valor) => {
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
-    // limpiar error general al escribir
     setErrorGeneral('')
     const e = validar(nuevo)
     setErrores(prev => ({ ...prev, [campo]: e[campo] || '' }))
   }
- 
+
   const handleSubmit = async e => {
     e.preventDefault()
     e.stopPropagation()
- 
     const e2 = validar(form)
     if (Object.keys(e2).length) { setErrores(e2); return }
- 
     setErrores({})
     setErrorGeneral('')
     setCargando(true)
- 
     try {
       const { data } = await authService.login(form)
       login(data.token, data.usuario)
@@ -55,6 +49,6 @@ export function useLogin() {
       setCargando(false)
     }
   }
- 
-  return { form, verPass, setVerPass, cargando, errores, errorGeneral, tema, toggleTema, handleChange, handleSubmit }
+
+  return { form, verPass, setVerPass, cargando, errores, errorGeneral, handleChange, handleSubmit }
 }
