@@ -1,10 +1,22 @@
+import { useRef } from 'react'
 import Modal from '@shared/components/Modal'
+import { Upload, Link as LinkIcon, X } from 'lucide-react'
 
 export default function CategoriaForm({
   modal, form, errores,
   handleChange, handleSubmit,
   cerrarModal, guardando
 }) {
+  const fileRef = useRef(null)
+
+  const handleFile = e => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => handleChange('icono', ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
   return (
     <Modal
       abierto={modal.abierto}
@@ -41,22 +53,52 @@ export default function CategoriaForm({
           </div>
         </div>
 
+        {/* ícono */}
         <div>
-          <label className="campo-label">Ícono (URL de imagen)</label>
-          <div className="flex gap-2 items-center">
-            <input
-              value={form.icono ?? ''}
-              onChange={e => handleChange('icono', e.target.value)}
-              className="campo-input text-xs"
-              placeholder="https://ejemplo.com/icono.png"
-            />
-            {form.icono && (
-              <img src={form.icono} alt="preview"
-                className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-dark-border shrink-0"
-                onError={e => e.target.style.display='none'} />
-            )}
+          <label className="campo-label">Ícono de categoría</label>
+          <div className="flex gap-3 items-start">
+
+            {/* preview */}
+            <div className="shrink-0 w-16 h-16 rounded-full bg-primary flex items-center justify-center overflow-hidden border-2 border-primary/30">
+              {form.icono
+                ? <img src={form.icono} alt="preview"
+                    className="w-10 h-10 object-contain"
+                    onError={e => e.target.style.display='none'} />
+                : <span className="text-xs text-white text-center px-1 leading-tight">Sin ícono</span>
+              }
+            </div>
+
+            <div className="flex-1 space-y-2">
+              {/* subir archivo */}
+              <button type="button"
+                onClick={() => fileRef.current?.click()}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed
+                  border-gray-200 dark:border-dark-border text-xs text-gray-400
+                  hover:border-primary/40 hover:text-primary transition-colors">
+                <Upload size={13} /> Subir desde mis archivos
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+
+              {/* o pegar URL */}
+              <div className="relative">
+                <LinkIcon size={12} className="absolute left-2.5 top-2.5 text-gray-400 pointer-events-none" />
+                <input
+                  value={form.icono?.startsWith('data:') ? '' : (form.icono ?? '')}
+                  onChange={e => handleChange('icono', e.target.value)}
+                  className="campo-input pl-7 text-xs"
+                  placeholder="O pegar URL de imagen..."
+                />
+              </div>
+
+              {form.icono && (
+                <button type="button"
+                  onClick={() => handleChange('icono', '')}
+                  className="flex items-center gap-1 text-xs text-red-400 hover:text-red-500">
+                  <X size={11} /> Quitar ícono
+                </button>
+              )}
+            </div>
           </div>
-          <p className="text-xs text-gray-400 mt-1">Se mostrará como ícono circular en la tienda</p>
         </div>
 
         <div>
@@ -72,17 +114,11 @@ export default function CategoriaForm({
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-          <button
-            type="button"
-            onClick={cerrarModal}
-            className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border
-              text-gray-500 rounded-lg hover:border-primary/40">
+          <button type="button" onClick={cerrarModal}
+            className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg hover:border-primary/40">
             Cancelar
           </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="btn-primary">
+          <button type="submit" disabled={guardando} className="btn-primary">
             {guardando ? 'Guardando...' : 'Aceptar'}
           </button>
         </div>
