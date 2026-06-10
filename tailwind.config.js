@@ -9,13 +9,11 @@ export default {
         'dark-card':   '#162018',
         'dark-border': '#243D2C',
         'light-bg':    '#FFFFFF',
-        'light-card':  '#F8FAF9',
+        'light-card':  '#F9FAFB',
         'primary':     '#FFFFFF',
-        'primary-mid': '#F0F7F2',
-        'accent':      '#4CAF72',
-        'accent-mid':  '#3D9960',
-        'dark-text':   '#F0F7F2',
-        'light-text':  '#0F1A14',
+        'secondary':   '#4ADE80',
+        'dark-text':   '#F9FAFB',
+        'light-text':  '#0F172A',
       }
     }
   },
