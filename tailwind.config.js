@@ -5,15 +5,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        'dark-bg':     '#0D1F17',
-        'dark-card':   '#122318',
-        'dark-border': '#1E3D2A',
+        'dark-bg':     '#111827',
+        'dark-card':   '#1F2937',
+        'dark-border': '#374151',
         'light-bg':    '#FFFFFF',
-        'light-card':  '#F5FBF7',
-        'primary':     '#3DBE6E',
-        'primary-mid': '#2DA55A',
-        'dark-text':   '#E8F5EC',
-        'light-text':  '#1A2E22',
+        'light-card':  '#F9FAFB',
+        'primary':     '#16A34A',
+        'primary-mid': '#15803D',
+        'dark-text':   '#F9FAFB',
+        'light-text':  '#111827',
       }
     }
   },
