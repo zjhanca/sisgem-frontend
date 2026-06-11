@@ -1,24 +1,23 @@
-﻿import { Plus, Edit2, Eye, Download, Trash2 } from 'lucide-react'
+﻿import { useState } from 'react'
+import { Plus, Edit2, Eye, Download, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import EstadoToggle from '@shared/components/EstadoToggle'
+import Modal from '@shared/components/Modal'
 import { descargarPDF } from '@shared/utils/reportes'
 import { useClientes } from '../hooks/useClientes'
-import ClienteForm    from '../components/ClienteForm'
+import ClienteForm     from '../components/ClienteForm'
 import ClienteDetalle  from '../components/ClienteDetalle'
 import ClienteEliminar from '../components/ClienteEliminar'
 
 export default function Clientes() {
   const {
-    clientes, historial,
-    form, errores,
-    modal, modalDetalle,
-    filtroEstado, setFiltroEstado,
-    setModalDetalle,
-    abrirModal, cerrarModal,
-    handleChange, handleSubmit,
-    toggleEstado, guardando, verificando,
+    clientes, historial, form, errores,
+    modal, modalDetalle, filtroEstado, setFiltroEstado,
+    setModalDetalle, abrirModal, cerrarModal,
+    handleChange, handleSubmit, toggleEstado, guardando, verificando,
     eliminar, eliminando, modalEliminar, setModalEliminar,
   } = useClientes()
+
+  const [confirmToggle, setConfirmToggle] = useState(null) // { id, nombre, estadoActual }
 
   const columnas = [
     { key: 'nombre', label: 'Nombre', render: r => `${r.nombre} ${r.apellido}` },
@@ -27,12 +26,23 @@ export default function Clientes() {
     { key: 'email',    label: 'Correo',   render: r => r.email    || '—' },
     { key: 'telefono', label: 'Teléfono', render: r => r.telefono || '—' },
     { key: 'permite_fiado', label: 'Fiado',
-      render: r => r.permite_fiado
-        ? <span className="badge-activo">Habilitado</span>
-        : <span className="text-xs text-gray-400">—</span>
+      render: r => (
+        <span className="inline-block w-20 text-center">
+          {r.permite_fiado
+            ? <span className="badge-activo">Habilitado</span>
+            : <span className="text-xs text-gray-400">—</span>
+          }
+        </span>
+      )
     },
     { key: 'estado', label: 'Estado',
-      render: r => <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span>
+      render: r => (
+        <span className="inline-block w-16 text-center">
+          <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>
+            {r.estado ? 'Activo' : 'Inactivo'}
+          </span>
+        </span>
+      )
     },
   ]
 
@@ -68,28 +78,49 @@ export default function Clientes() {
           <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar">
             <Edit2 size={14} />
           </button>
-          <EstadoToggle
-            activo={fila.estado}
-            onChange={() => toggleEstado.mutate(fila.id)}
-            cargando={toggleEstado.isPending}
-          />
-          <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400" title="Eliminar"><Trash2 size={14} /></button>
+          <button
+            onClick={() => setConfirmToggle({ id: fila.id, nombre: `${fila.nombre} ${fila.apellido}`, estadoActual: fila.estado })}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 shrink-0 ${fila.estado ? 'bg-primary' : 'bg-gray-300'}`}
+            title={fila.estado ? 'Desactivar' : 'Activar'}>
+            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${fila.estado ? 'translate-x-4' : 'translate-x-1'}`} />
+          </button>
+          <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400" title="Eliminar">
+            <Trash2 size={14} />
+          </button>
         </>)}
       />
 
-      <ClienteForm verificando={verificando}
-        modal={modal} form={form} errores={errores}
+      <ClienteForm verificando={verificando} modal={modal} form={form} errores={errores}
         handleChange={handleChange} handleSubmit={handleSubmit}
-        cerrarModal={cerrarModal} guardando={guardando}
-      />
-      <ClienteDetalle
-        modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
-        abrirModal={abrirModal} historial={historial}
-      />
-      <ClienteEliminar
-        modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
-        eliminar={eliminar} eliminando={eliminando}
-      />
+        cerrarModal={cerrarModal} guardando={guardando} />
+      <ClienteDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
+        abrirModal={abrirModal} historial={historial} />
+      <ClienteEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
+        eliminar={eliminar} eliminando={eliminando} />
+
+      {/* modal confirmación toggle */}
+      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)}
+        titulo={confirmToggle?.estadoActual ? 'Desactivar Cliente' : 'Activar Cliente'} ancho="max-w-sm">
+        {confirmToggle && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              ¿Estás seguro que deseas <span className="font-semibold text-light-text">{confirmToggle.estadoActual ? 'desactivar' : 'activar'}</span> al cliente{' '}
+              <span className="font-semibold text-primary">{confirmToggle.nombre}</span>?
+            </p>
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+              <button onClick={() => setConfirmToggle(null)}
+                className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50">
+                No, cancelar
+              </button>
+              <button
+                onClick={() => { toggleEstado.mutate(confirmToggle.id); setConfirmToggle(null) }}
+                className={`px-4 py-1.5 text-sm rounded-lg text-white ${confirmToggle.estadoActual ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-mid'}`}>
+                Sí, {confirmToggle.estadoActual ? 'desactivar' : 'activar'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
