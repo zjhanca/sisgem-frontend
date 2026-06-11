@@ -79,10 +79,6 @@ export default function Proveedores() {
               <span className="font-semibold text-primary">{confirmToggle.nombre}</span>?
             </p>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button onClick={() => setConfirmToggle(null)}
-                className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50">
-                No, cancelar
-              </button>
               <button onClick={() => { toggleEstado.mutate(confirmToggle.id); setConfirmToggle(null) }}
                 className={`px-4 py-1.5 text-sm rounded-lg text-white ${confirmToggle.estadoActual ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-mid'}`}>
                 Sí, {confirmToggle.estadoActual ? 'desactivar' : 'activar'}
