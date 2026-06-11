@@ -7,7 +7,7 @@ export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirMod
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
 
   return (
-    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar}
+    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
       titulo="Detalle del Cliente" ancho="max-w-lg">
       {item && (
         <div className="space-y-4">

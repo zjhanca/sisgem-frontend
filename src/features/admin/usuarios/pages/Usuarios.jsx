@@ -86,7 +86,7 @@ export default function Usuarios() {
       <UsuarioEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />
 
       {/* modal confirmación toggle */}
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)}
+      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
         titulo={confirmToggle?.estadoActual ? 'Desactivar Usuario' : 'Activar Usuario'} ancho="max-w-sm">
         {confirmToggle && (
           <div className="space-y-4">

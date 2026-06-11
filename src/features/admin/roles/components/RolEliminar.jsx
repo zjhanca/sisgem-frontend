@@ -4,11 +4,10 @@ export default function RolEliminar({ modalEliminar, setModalEliminar, eliminar,
   const item = modalEliminar.item
   const cerrar = () => setModalEliminar({ abierto: false, item: null })
   return (
-    <Modal abierto={modalEliminar.abierto} onCerrar={cerrar} titulo="Confirmar Eliminación" ancho="max-w-sm">
+    <Modal abierto={modalEliminar.abierto} onCerrar={cerrar} bloquearCierre titulo="Confirmar Eliminación" ancho="max-w-sm">
       <div className="space-y-4">
         <p className="text-sm">¿Eliminar el rol <span className="font-medium text-primary">{item?.nombre}</span>? No se puede si tiene usuarios asignados.</p>
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-          <button onClick={cerrar} className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
           <button onClick={() => eliminar.mutate(item.id)} disabled={eliminando}
             className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
             {eliminando ? 'Eliminando...' : 'Aceptar'}
@@ -18,4 +17,3 @@ export default function RolEliminar({ modalEliminar, setModalEliminar, eliminar,
     </Modal>
   )
 }
- 

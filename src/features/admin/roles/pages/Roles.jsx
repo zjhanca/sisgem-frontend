@@ -70,7 +70,7 @@ export default function Roles() {
       <RolDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} esProtegido={esProtegido} />
       <RolEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />
 
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)}
+      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
         titulo={confirmToggle?.estadoActual ? 'Desactivar Rol' : 'Activar Rol'} ancho="max-w-sm">
         {confirmToggle && (
           <div className="space-y-4">

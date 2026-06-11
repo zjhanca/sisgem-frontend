@@ -5,7 +5,7 @@ export default function ProveedorDetalle({ modalDetalle, setModalDetalle, abrirM
   const item = modalDetalle.item
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
   return (
-    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} titulo="Detalle del Proveedor">
+    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo="Detalle del Proveedor">
       {item && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3 text-sm">

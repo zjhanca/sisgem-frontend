@@ -70,7 +70,7 @@ export default function Proveedores() {
       <ProveedorEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
         eliminar={eliminar} eliminando={eliminando} />
 
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)}
+      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
         titulo={confirmToggle?.estadoActual ? 'Desactivar Proveedor' : 'Activar Proveedor'} ancho="max-w-sm">
         {confirmToggle && (
           <div className="space-y-4">

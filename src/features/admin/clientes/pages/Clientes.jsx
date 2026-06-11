@@ -99,7 +99,7 @@ export default function Clientes() {
         eliminar={eliminar} eliminando={eliminando} />
 
       {/* modal confirmación toggle */}
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)}
+      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
         titulo={confirmToggle?.estadoActual ? 'Desactivar Cliente' : 'Activar Cliente'} ancho="max-w-sm">
         {confirmToggle && (
           <div className="space-y-4">
