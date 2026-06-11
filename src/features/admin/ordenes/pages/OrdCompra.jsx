@@ -12,14 +12,6 @@ import { useProductos } from '../../productos/hooks/useProductos'
 
 const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
 
-const getBadgeOrden = nombre => {
-  if (!nombre) return { clase: 'badge-pendiente', label: 'Pendiente' }
-  const l = nombre.toLowerCase()
-  if (l.includes('anula'))   return { clase: 'badge-anulado',  label: 'Anulado' }
-  if (l.includes('complet')) return { clase: 'badge-activo',   label: 'Completado' }
-  return { clase: 'badge-pendiente', label: 'Pendiente' }
-}
-
 export default function OrdCompra() {
   const {
     ordenesFiltradas, proveedores, productos, ordenesVencidas,
@@ -38,7 +30,6 @@ export default function OrdCompra() {
     creando, editando, anulando,
   } = useOrdenes()
 
-  // hook de productos para el modal de crear producto rápido
   const {
     modal: modalProd, form: formProd, setForm: setFormProd, errores: erroresProd,
     handleChange: handleChangeProd, handleSubmit: handleSubmitProd,
@@ -55,21 +46,23 @@ export default function OrdCompra() {
     { key: 'total',        label: 'Total',  render: r => formatPrecio(r.total) },
     { key: 'estado', label: 'Estado',
       render: r => {
-        const esAnulada   = r.estado?.toLowerCase().includes('anula')
+        const esAnulada    = r.estado?.toLowerCase().includes('anula')
         const esCompletada = r.estado?.toLowerCase().includes('complet')
-        if (esAnulada)   return <span className="badge-anulado">Anulado</span>
-        if (esCompletada) return <span className="badge-activo">Completado</span>
+        if (esAnulada)    return <span className="inline-block w-20 text-center"><span className="badge-anulado">Anulado</span></span>
+        if (esCompletada) return <span className="inline-block w-20 text-center"><span className="badge-activo">Completado</span></span>
         return (
-          <button type="button"
-            onClick={e => {
-              e.stopPropagation()
-              const id = getEstadoId('activo') || getEstadoId('complet')
-              if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
-            }}
-            title="Clic para marcar como Completado"
-            className="badge-pendiente hover:opacity-80 transition-opacity cursor-pointer">
-            Pendiente
-          </button>
+          <span className="inline-block w-20 text-center">
+            <button type="button"
+              onClick={e => {
+                e.stopPropagation()
+                const id = getEstadoId('activo') || getEstadoId('complet')
+                if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
+              }}
+              title="Clic para marcar como Completado"
+              className="badge-pendiente hover:opacity-80 transition-opacity cursor-pointer">
+              Pendiente
+            </button>
+          </span>
         )
       }
     },
@@ -83,16 +76,16 @@ export default function OrdCompra() {
           <button onClick={() => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
-<button onClick={() => setModalNuevo(true)} className="btn-primary">
+          <button onClick={() => setModalNuevo(true)} className="btn-primary">
             <Plus size={14} /> Nueva Orden
           </button>
         </div>
       </div>
 
       {ordenesVencidas > 0 && (
-        <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-400/20">
+        <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200">
           <AlertTriangle size={16} className="text-red-500 shrink-0" />
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p className="text-sm text-red-600">
             <span className="font-semibold">{ordenesVencidas}</span> orden{ordenesVencidas > 1 ? 'es' : ''} con factura vencida
           </p>
           <button onClick={() => setFiltroEstado('vencida')} className="ml-auto text-xs text-red-500 hover:underline">Ver vencidas →</button>
@@ -114,16 +107,20 @@ export default function OrdCompra() {
               className="btn-ghost text-xs text-red-400">Limpiar</button>
           )}
         </>}
-        acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
-          {getKeyEstado(fila.estado) !== 'activo' && (
-            <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar" disabled={getKeyEstado(fila.estado) === 'anulado'}><Edit2 size={14} /></button>
-          )}
-          <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
-          {getKeyEstado(fila.estado) !== 'anulado' && (
-            <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><Ban size={14} /></button>
-          )}
-        </>)}
+        acciones={fila => {
+          const esAnulada    = getKeyEstado(fila.estado) === 'anulado'
+          const esCompletada = getKeyEstado(fila.estado) === 'activo'
+          return (<>
+            <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
+            {!esAnulada && !esCompletada && (
+              <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
+            )}
+            <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
+            {!esAnulada && (
+              <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><Ban size={14} /></button>
+            )}
+          </>)
+        }}
       />
 
       <OrdenForm
@@ -149,11 +146,11 @@ export default function OrdCompra() {
       />
 
       {/* modal editar */}
-      <Modal abierto={modalEditar.abierto} onCerrar={() => setModalEditar({ abierto: false, orden: null })}
+      <Modal abierto={modalEditar.abierto} onCerrar={() => setModalEditar({ abierto: false, orden: null })} bloquearCierre
         titulo={`Editar Orden #${modalEditar.orden?.id}`} ancho="max-w-lg">
         {modalEditar.orden && (
           <form onSubmit={handleEditar} className="space-y-3">
-            <div className="p-3 rounded-lg bg-light-bg dark:bg-dark-bg text-xs">
+            <div className="p-3 rounded-lg bg-gray-50 text-xs">
               <span className="text-gray-400">Proveedor: </span>
               <span className="font-medium">{modalEditar.orden.proveedor}</span>
             </div>
@@ -179,17 +176,17 @@ export default function OrdCompra() {
                   className="campo-input resize-none" placeholder="Observaciones..." />
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-              <button type="button" onClick={() => setModalEditar({ abierto: false, orden: null })}
-                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
-              <button type="submit" disabled={editando} className="btn-primary">{editando ? 'Guardando...' : 'Aceptar'}</button>
+            <div className="flex justify-end pt-2 border-t border-gray-100">
+              <button type="submit" disabled={editando} className="btn-primary disabled:opacity-50">
+                {editando ? 'Guardando...' : 'Aceptar'}
+              </button>
             </div>
           </form>
         )}
       </Modal>
 
-      {/* modal anular — mismo estilo que pagos */}
-      <Modal abierto={modalAnular.abierto} onCerrar={() => setModalAnular({ abierto: false, orden: null })}
+      {/* modal anular */}
+      <Modal abierto={modalAnular.abierto} onCerrar={() => setModalAnular({ abierto: false, orden: null })} bloquearCierre
         titulo="Confirmar Anulación" ancho="max-w-sm">
         {modalAnular.orden && (
           <div className="space-y-4">
@@ -198,9 +195,7 @@ export default function OrdCompra() {
               <span className="text-primary"> {modalAnular.orden.proveedor}</span>?
               Esta acción no se puede deshacer.
             </p>
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-              <button onClick={() => setModalAnular({ abierto: false, orden: null })}
-                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-lg">Cancelar</button>
+            <div className="flex justify-end pt-2 border-t border-gray-100">
               <button onClick={() => anular.mutate(modalAnular.orden.id)} disabled={anulando}
                 className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
                 {anulando ? 'Anulando...' : 'Aceptar'}
@@ -210,7 +205,6 @@ export default function OrdCompra() {
         )}
       </Modal>
 
-      {/* modal crear producto rápido */}
       {modalCrearProd && (
         <ProductoForm
           modal={{ ...modalProd, abierto: true }}
