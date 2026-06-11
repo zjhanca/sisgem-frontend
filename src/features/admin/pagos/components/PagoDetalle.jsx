@@ -1,12 +1,12 @@
 import Modal from '@shared/components/Modal'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
- 
+
 export default function PagoDetalle({ modalDetalle, setModalDetalle, setModalAnular, esAnulado }) {
   const pago = modalDetalle.pago
   const cerrar = () => setModalDetalle({ abierto: false, pago: null })
   return (
-    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} titulo={`Pago #${pago?.id}`}>
+    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo={`Pago #${pago?.id}`}>
       {pago && (
         <div className="space-y-3 text-sm">
           <div className="grid grid-cols-2 gap-3">
@@ -16,16 +16,20 @@ export default function PagoDetalle({ modalDetalle, setModalDetalle, setModalAnu
             <div><p className="campo-label">Método</p><p className="capitalize">{pago.metodo}</p></div>
             <div><p className="campo-label">Estado</p>
               <div className="flex items-center gap-1">
-                {esAnulado(pago.estado) ? <XCircle size={13} className="text-red-400" /> : <CheckCircle size={13} className="text-green-400" />}
-                <span className={esAnulado(pago.estado) ? 'badge-anulado' : 'badge-activo'}>
-                  {esAnulado(pago.estado) ? 'Anulado' : 'Pagado'}
+                {esAnulado(pago.estado)
+                  ? <XCircle size={13} className="text-red-400" />
+                  : <CheckCircle size={13} className="text-green-400" />}
+                <span className="inline-block w-16 text-center">
+                  <span className={esAnulado(pago.estado) ? 'badge-anulado' : 'badge-activo'}>
+                    {esAnulado(pago.estado) ? 'Anulado' : 'Pagado'}
+                  </span>
                 </span>
               </div>
             </div>
             <div><p className="campo-label">Fecha</p><p>{formatFecha(pago.created_at)}</p></div>
           </div>
           {!esAnulado(pago.estado) && (
-            <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-dark-border">
+            <div className="flex justify-end pt-2 border-t border-gray-100">
               <button onClick={() => { cerrar(); setModalAnular({ abierto: true, pago }) }}
                 className="px-3 py-1.5 text-xs border border-red-400/40 text-red-400 rounded-lg hover:bg-red-400/10">
                 Anular Pago
