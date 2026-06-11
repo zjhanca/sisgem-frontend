@@ -4,7 +4,7 @@ import { usuariosService } from '../services/usuariosService'
 import toast from 'react-hot-toast'
  
 const formVacio = {
-  nombre: '', apellido: '', email: '', password: '',
+  nombre: '', apellido: '', email: '',
   telefono: '', rol_id: '', tipo_documento: 'CC', numero_documento: ''
 }
  
@@ -132,7 +132,7 @@ export function useUsuarios() {
  
   const handleSubmit = e => {
     e.preventDefault()
-    const campos = ['nombre', 'apellido', 'email', 'password', 'telefono', 'numero_documento', 'rol_id']
+    const campos = ['nombre', 'apellido', 'email', 'telefono', 'numero_documento', 'rol_id']
     const nuevosErrores = {}
     campos.forEach(c => { nuevosErrores[c] = validarCampo(c, form[c], !!modal.item) })
     setErrores(nuevosErrores)
