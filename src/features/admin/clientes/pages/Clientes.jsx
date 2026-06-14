@@ -8,6 +8,21 @@ import ClienteForm     from '../components/ClienteForm'
 import ClienteDetalle  from '../components/ClienteDetalle'
 import ClienteEliminar from '../components/ClienteEliminar'
 
+function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
+  return (
+    <button type="button" onClick={e => { e.stopPropagation(); onClick() }}
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer ${
+        activo ? 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/20' : 'bg-gray-100 border-gray-200 text-gray-400 hover:bg-gray-200'
+      }`}>
+      <span className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors shrink-0 ${activo ? 'bg-primary' : 'bg-gray-300'}`}>
+        <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform ${activo ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+      </span>
+      {activo ? labelActivo : labelInactivo}
+    </button>
+  )
+}
+
+
 export default function Clientes() {
   const {
     clientes, historial, form, errores,
@@ -35,14 +50,9 @@ export default function Clientes() {
         </span>
       )
     },
-    { key: 'estado', label: 'Estado',
-      render: r => (
-        <span className="inline-block w-16 text-center">
-          <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>
-            {r.estado ? 'Activo' : 'Inactivo'}
-          </span>
-        </span>
-      )
+        { key: 'estado', label: 'Estado',
+      render: r => <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
+        onClick={() => setConfirmToggle({ id: r.id, nombre: `${r.nombre} ${r.apellido}`, estadoActual: r.estado })} />
     },
   ]
 
@@ -77,12 +87,6 @@ export default function Clientes() {
           </button>
           <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar">
             <Edit2 size={14} />
-          </button>
-          <button
-            onClick={() => setConfirmToggle({ id: fila.id, nombre: `${fila.nombre} ${fila.apellido}`, estadoActual: fila.estado })}
-            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 shrink-0 ${fila.estado ? 'bg-primary' : 'bg-gray-300'}`}
-            title={fila.estado ? 'Desactivar' : 'Activar'}>
-            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${fila.estado ? 'translate-x-4' : 'translate-x-1'}`} />
           </button>
           <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400" title="Eliminar">
             <Trash2 size={14} />

@@ -9,6 +9,21 @@ import ProductoForm     from '../components/ProductoForm'
 import ProductoDetalle  from '../components/ProductoDetalle'
 import ProductoEliminar from '../components/ProductoEliminar'
 
+function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
+  return (
+    <button type="button" onClick={e => { e.stopPropagation(); onClick() }}
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer ${
+        activo ? 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/20' : 'bg-gray-100 border-gray-200 text-gray-400 hover:bg-gray-200'
+      }`}>
+      <span className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors shrink-0 ${activo ? 'bg-primary' : 'bg-gray-300'}`}>
+        <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform ${activo ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+      </span>
+      {activo ? labelActivo : labelInactivo}
+    </button>
+  )
+}
+
+
 export default function Productos() {
   const {
     productos, categorias, proveedores, marcas,
@@ -32,15 +47,11 @@ export default function Productos() {
     { key: 'marca',         label: 'Marca',     render: r => r.marca || '—' },
     { key: 'precio',        label: 'Precio',    render: r => formatPrecio(r.precio) },
     { key: 'stock',         label: 'Stock',     render: r => <span className={r.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{r.stock}</span> },
-    { key: 'estado', label: 'Estado',
-      render: r => (
-        <span className="inline-block w-16 text-center">
-          {r.stock <= 0
-            ? <span className="badge-anulado">Sin stock</span>
-            : <span className={r.estado ? 'badge-activo' : 'badge-inactivo'}>{r.estado ? 'Activo' : 'Inactivo'}</span>
-          }
-        </span>
-      )
+        { key: 'estado', label: 'Estado',
+      render: r => r.stock <= 0
+        ? <span className="badge-anulado">Sin stock</span>
+        : <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
+            onClick={() => setConfirmToggle({ id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
     },
   ]
 
@@ -60,14 +71,6 @@ export default function Productos() {
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost"><Eye size={14} /></button>
           <button onClick={() => abrirModal(fila)} className="btn-ghost"><Edit2 size={14} /></button>
-          {fila.stock > 0 && (
-            <button
-              onClick={() => setConfirmToggle({ id: fila.id, nombre: fila.nombre, estadoActual: fila.estado })}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 shrink-0 ${fila.estado ? 'bg-primary' : 'bg-gray-300'}`}
-              title={fila.estado ? 'Desactivar' : 'Activar'}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${fila.estado ? 'translate-x-4' : 'translate-x-1'}`} />
-            </button>
-          )}
           <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400"><Trash2 size={14} /></button>
         </>)}
       />
