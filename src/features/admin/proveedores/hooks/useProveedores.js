@@ -26,6 +26,7 @@ const validarCampo = (campo, valor) => {
     case 'telefono':
       if (!valor) return ''
       if (!/^\d+$/.test(valor)) return 'Solo números'
+      if (valor.length !== 10) return 'Debe tener 10 dígitos'
       return ''
     default: return ''
   }
@@ -100,6 +101,7 @@ export function useProveedores() {
   }
 
   const handleChange = (campo, valor) => {
+    if (campo === 'telefono' && valor && !/^\d*$/.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
     const err = validarCampo(campo, valor)

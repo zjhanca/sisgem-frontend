@@ -81,7 +81,7 @@ export default function ProveedorForm({ modal, form, errores, verificando = {}, 
               <input value={form.telefono} onChange={e => handleChange('telefono', e.target.value)}
                 disabled={bloqueado}
                 className={`campo-input ${errores.telefono ? 'border-red-400' : ''}`}
-                placeholder="Ej: 3001234567" inputMode="numeric" />
+                placeholder="Ej: 3001234567" inputMode="numeric" maxLength={10} />
               {errores.telefono && <p className="campo-error">{errores.telefono}</p>}
             </div>
             <div>
