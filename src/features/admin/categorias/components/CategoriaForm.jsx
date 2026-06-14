@@ -31,7 +31,7 @@ export default function CategoriaForm({ modal, form, errores, handleChange, hand
             <div>
               <label className="campo-label">Margen de ganancia (%) *</label>
               <input type="number" min="0" max="500" step="0.5"
-                value={form.margen ?? ''}
+                value={form.margen === 0 || form.margen ? form.margen : ''}
                 onChange={e => handleChange('margen', e.target.value)}
                 className={`campo-input ${errores.margen ? 'border-red-400' : ''}`}
                 placeholder="Ej: 45" />
