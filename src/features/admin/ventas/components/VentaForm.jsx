@@ -1,13 +1,13 @@
 import { useRef, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Trash2, CreditCard, Clock } from 'lucide-react'
+import { Search, Scan, Trash2, CreditCard, Clock, AlertTriangle } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
   clientes, clientesFiltrados, clienteBusqueda, setClienteBusqueda,
   prodBusqueda, prodsFiltrados, buscarProducto, buscarPorCodigo,
-  agregarProducto, quitarProducto, cambiarCantidad, totalVenta, handleCrear, creando
+  agregarProducto, quitarProducto, cambiarCantidad, totalVenta, handleCrear, creando, cruzaLote
 }) {
   const cerrar = () => {
     setModalNuevo(false)
@@ -166,6 +166,7 @@ export default function VentaForm({
                 const cantInvalida = !p.cantidad || +p.cantidad < 1
                 const excede = !cantInvalida && stock !== Infinity && +p.cantidad > stock
                 const hayError = cantInvalida || excede
+                const cruza = !hayError && cruzaLote && cruzaLote(p)
                 return (
                   <div key={i} className="flex flex-col">
                     <div className="flex justify-between items-center text-xs p-2 rounded bg-gray-50">
@@ -179,14 +180,16 @@ export default function VentaForm({
                           <input type="text" inputMode="numeric" value={p.cantidad}
                             onChange={e => { const v = e.target.value; if (v === '') { cambiarCantidad(i, ''); return }; if (/^\d+$/.test(v)) cambiarCantidad(i, v) }}
                             className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
-                              hayError ? 'border-red-400 focus:ring-red-400/30 text-red-400' : 'border-gray-200 focus:ring-primary/20'
+                              hayError ? 'border-red-400 focus:ring-red-400/30 text-red-400'
+                              : cruza ? 'border-amber-400 focus:ring-amber-400/30 text-amber-600'
+                              : 'border-gray-200 focus:ring-primary/20'
                             }`} />
                           <button type="button"
                             onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
                             disabled={stock !== Infinity && +p.cantidad >= stock}
                             className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">+</button>
                         </div>
-                        <span className={`font-medium w-16 text-right ${hayError ? 'text-red-400' : 'text-primary'}`}>
+                        <span className={`font-medium w-16 text-right ${hayError ? 'text-red-400' : cruza ? 'text-amber-600' : 'text-primary'}`}>
                           {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
                         </span>
                         <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500">
@@ -197,6 +200,14 @@ export default function VentaForm({
                     {hayError && (
                       <p className="text-xs text-red-400 px-2 pb-0.5">
                         ⚠ {cantInvalida ? 'La cantidad debe ser al menos 1' : `Solo hay ${stock} unidades disponibles`}
+                      </p>
+                    )}
+                    {cruza && (
+                      <p className="text-xs text-amber-600 px-2 pb-0.5 flex items-center gap-1">
+                        <AlertTriangle size={11} className="shrink-0" />
+                        Las primeras {p.stock_lote_activo} unidades son a {formatPrecio(p.precio_unitario)} c/u —
+                        el resto pasará a un costo distinto una vez se agote ese lote, y el precio de venta
+                        de este producto se actualizará para las próximas ventas.
                       </p>
                     )}
                   </div>

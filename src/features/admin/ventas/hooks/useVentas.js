@@ -29,6 +29,12 @@ export function useVentas() {
   const estadoPendiente = estados.find(e => e.nombre?.toLowerCase().includes('pendiente'))
 
   const getStock = producto_id => productos.find(p => p.id === producto_id)?.stock ?? Infinity
+  // cantidad que queda en el lote de costo activo (el que define el precio mostrado).
+  // Si el producto no tiene lote registrado (dato viejo sin migrar), null = "no se sabe / no limitar"
+  const getStockLoteActivo = producto_id => {
+    const p = productos.find(p => p.id === producto_id)
+    return p?.stock_lote_activo != null ? +p.stock_lote_activo : null
+  }
 
   const crearVenta = useMutation({
     mutationFn: async data => {
@@ -89,6 +95,7 @@ export function useVentas() {
 
   const agregarProducto = prod => {
     const stock = prod.stock ?? getStock(prod.id)
+    const stockLoteActivo = prod.stock_lote_activo != null ? +prod.stock_lote_activo : null
     const existe = form.productos.find(p => p.producto_id === prod.id)
     if (existe) {
       if (existe.cantidad >= stock) { toast.error(`Stock insuficiente — solo hay ${stock} unidades`); return }
@@ -101,6 +108,7 @@ export function useVentas() {
         producto_id: prod.id, cantidad: 1,
         precio_unitario: parseFloat(prod.precio),
         nombre: prod.nombre, stock,
+        stock_lote_activo: stockLoteActivo,
       }]}))
     }
     setProdBusqueda(''); setProdsFiltrados([])
@@ -121,6 +129,16 @@ export function useVentas() {
 
   const quitarProducto = idx => setForm(f => ({ ...f, productos: f.productos.filter((_, i) => i !== idx) }))
   const totalVenta = form.productos.reduce((s, p) => s + p.precio_unitario * (+p.cantidad || 0), 0)
+
+  // indica si la cantidad pedida de un ítem del carrito cruza el lote activo,
+  // es decir, si parte de esa cantidad terminará vendiéndose a un costo (y
+  // por lo tanto eventualmente a un precio) distinto al que se está mostrando.
+  // No bloquea nada — solo informa.
+  const cruzaLote = item => {
+    const cant = +item.cantidad || 0
+    if (item.stock_lote_activo == null) return false // producto sin lote registrado, no se puede avisar
+    return cant > item.stock_lote_activo
+  }
 
   const handleCrear = e => {
     e.preventDefault()
@@ -149,9 +167,7 @@ export function useVentas() {
     return 'badge-pendiente'
   }
 
-  // Ventana de anulación: ahora aplica a TODAS las ventas (no solo fiado), 72 horas.
-  // Usa la columna física fecha_limite_anulacion si viene del backend; si no existe
-  // (datos antiguos sin migrar todavía), calcula como fallback fecha_pedido + 72h.
+  // Ventana de anulación: aplica a TODAS las ventas, 72 horas.
   const getFechaLimiteAnulacion = venta => {
     if (!venta) return null
     if (venta.fecha_limite_anulacion) return new Date(venta.fecha_limite_anulacion)
@@ -189,7 +205,7 @@ export function useVentas() {
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, getBadge,
+    totalVenta, handleCrear, anular, getBadge, cruzaLote,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     creando: crearVenta.isPending, anulando: anular.isPending,
   }
