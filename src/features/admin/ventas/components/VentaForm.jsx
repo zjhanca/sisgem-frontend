@@ -1,13 +1,13 @@
 import { useRef, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Trash2, CreditCard, Clock, AlertTriangle } from 'lucide-react'
+import { Search, Scan, Trash2, CreditCard, Clock, Layers } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
   clientes, clientesFiltrados, clienteBusqueda, setClienteBusqueda,
   prodBusqueda, prodsFiltrados, buscarProducto, buscarPorCodigo,
-  agregarProducto, quitarProducto, cambiarCantidad, totalVenta, handleCrear, creando, cruzaLote
+  agregarProducto, quitarProducto, cambiarCantidad, totalVenta, handleCrear, creando
 }) {
   const cerrar = () => {
     setModalNuevo(false)
@@ -30,6 +30,10 @@ export default function VentaForm({
 
   const clienteSeleccionado = clientes.find(c => c.id === +form.cliente_id)
   const permitefiado = clienteSeleccionado?.permite_fiado
+
+  // cantidad total por producto (suma de todas sus líneas, si está dividido por lote)
+  const totalPorProducto = {}
+  for (const p of form.productos) totalPorProducto[p.producto_id] = (totalPorProducto[p.producto_id] || 0) + (+p.cantidad || 0)
 
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
@@ -164,13 +168,18 @@ export default function VentaForm({
               {form.productos.map((p, i) => {
                 const stock = p.stock ?? Infinity
                 const cantInvalida = !p.cantidad || +p.cantidad < 1
-                const excede = !cantInvalida && stock !== Infinity && +p.cantidad > stock
+                const totalProd = totalPorProducto[p.producto_id] || 0
+                const excede = !cantInvalida && stock !== Infinity && totalProd > stock
                 const hayError = cantInvalida || excede
-                const cruza = !hayError && cruzaLote && cruzaLote(p)
+                const esSegundoLote = !!p.es_lote_siguiente
                 return (
-                  <div key={i} className="flex flex-col">
-                    <div className="flex justify-between items-center text-xs p-2 rounded bg-gray-50">
-                      <span className="flex-1 truncate">{p.nombre}</span>
+                  <div key={`${p.producto_id}-${p.lote_id}-${i}`} className="flex flex-col">
+                    <div className={`flex justify-between items-center text-xs p-2 rounded ${esSegundoLote ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                      <span className="flex-1 truncate flex items-center gap-1.5">
+                        {esSegundoLote && <Layers size={11} className="text-amber-500 shrink-0" />}
+                        {p.nombre}
+                        {esSegundoLote && <span className="text-amber-600 text-xs">(siguiente lote)</span>}
+                      </span>
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="flex items-center gap-1">
                           <button type="button"
@@ -180,16 +189,14 @@ export default function VentaForm({
                           <input type="text" inputMode="numeric" value={p.cantidad}
                             onChange={e => { const v = e.target.value; if (v === '') { cambiarCantidad(i, ''); return }; if (/^\d+$/.test(v)) cambiarCantidad(i, v) }}
                             className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
-                              hayError ? 'border-red-400 focus:ring-red-400/30 text-red-400'
-                              : cruza ? 'border-amber-400 focus:ring-amber-400/30 text-amber-600'
-                              : 'border-gray-200 focus:ring-primary/20'
+                              hayError ? 'border-red-400 focus:ring-red-400/30 text-red-400' : 'border-gray-200 focus:ring-primary/20'
                             }`} />
                           <button type="button"
                             onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
-                            disabled={stock !== Infinity && +p.cantidad >= stock}
+                            disabled={stock !== Infinity && totalProd >= stock}
                             className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">+</button>
                         </div>
-                        <span className={`font-medium w-16 text-right ${hayError ? 'text-red-400' : cruza ? 'text-amber-600' : 'text-primary'}`}>
+                        <span className={`font-medium w-16 text-right ${hayError ? 'text-red-400' : esSegundoLote ? 'text-amber-600' : 'text-primary'}`}>
                           {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
                         </span>
                         <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500">
@@ -200,12 +207,6 @@ export default function VentaForm({
                     {hayError && (
                       <p className="text-xs text-red-400 px-2 pb-0.5">
                         ⚠ {cantInvalida ? 'La cantidad debe ser al menos 1' : `Solo hay ${stock} unidades disponibles`}
-                      </p>
-                    )}
-                    {cruza && (
-                      <p className="text-xs text-amber-600 px-2 pb-0.5 flex items-center gap-1">
-                        <AlertTriangle size={11} className="shrink-0" />
-                        Solo {p.stock_lote_activo} uds a este precio — el resto cambiará de costo.
                       </p>
                     )}
                   </div>
@@ -220,7 +221,7 @@ export default function VentaForm({
 
         <div className="flex justify-end pt-2 border-t border-gray-100">
           <button type="submit"
-            disabled={creando || form.productos.some(p => !p.cantidad || +p.cantidad < 1 || (p.stock !== undefined && +p.cantidad > p.stock))}
+            disabled={creando || Object.values(totalPorProducto).length === 0 || form.productos.some(p => !p.cantidad || +p.cantidad < 1)}
             className={`btn-primary disabled:opacity-50 ${form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''}`}>
             {creando ? 'Registrando...' : form.tipo_pago === 'fiado' ? 'Registrar Fiado' : 'Aceptar'}
           </button>

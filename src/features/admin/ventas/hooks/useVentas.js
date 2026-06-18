@@ -29,11 +29,43 @@ export function useVentas() {
   const estadoPendiente = estados.find(e => e.nombre?.toLowerCase().includes('pendiente'))
 
   const getStock = producto_id => productos.find(p => p.id === producto_id)?.stock ?? Infinity
-  // cantidad que queda en el lote de costo activo (el que define el precio mostrado).
-  // Si el producto no tiene lote registrado (dato viejo sin migrar), null = "no se sabe / no limitar"
-  const getStockLoteActivo = producto_id => {
-    const p = productos.find(p => p.id === producto_id)
-    return p?.stock_lote_activo != null ? +p.stock_lote_activo : null
+
+  // Construye, para un producto y una cantidad total deseada, las líneas de carrito
+  // necesarias: si la cantidad cabe dentro del lote activo, una sola línea con el
+  // precio actual. Si la cruza, dos líneas: una al precio actual (hasta agotar el
+  // lote activo) y otra al precio proyectado del siguiente lote (con el resto).
+  const construirLineas = (prod, cantidadTotal) => {
+    const stockLoteActivo = prod.stock_lote_activo != null ? +prod.stock_lote_activo : null
+    const siguienteLote = prod.siguiente_lote || null
+
+    if (stockLoteActivo == null || cantidadTotal <= stockLoteActivo || !siguienteLote) {
+      // no hay info de lotes, o la cantidad no cruza, o no hay un siguiente lote disponible:
+      // una sola línea al precio actual (tope natural es el stock global, ya validado afuera)
+      return [{
+        producto_id: prod.id, lote_id: 'activo', cantidad: cantidadTotal,
+        precio_unitario: parseFloat(prod.precio), nombre: prod.nombre, stock: prod.stock,
+        stock_lote_activo: stockLoteActivo,
+      }]
+    }
+
+    const cantLinea1 = stockLoteActivo
+    const cantLinea2 = cantidadTotal - stockLoteActivo
+    const lineas = []
+    if (cantLinea1 > 0) {
+      lineas.push({
+        producto_id: prod.id, lote_id: 'activo', cantidad: cantLinea1,
+        precio_unitario: parseFloat(prod.precio), nombre: prod.nombre, stock: prod.stock,
+        stock_lote_activo: stockLoteActivo,
+      })
+    }
+    lineas.push({
+      producto_id: prod.id, lote_id: siguienteLote.id, cantidad: cantLinea2,
+      precio_unitario: siguienteLote.precio_venta_proyectado,
+      nombre: prod.nombre, stock: prod.stock,
+      stock_lote_activo: stockLoteActivo,
+      es_lote_siguiente: true,
+    })
+    return lineas
   }
 
   const crearVenta = useMutation({
@@ -93,52 +125,72 @@ export function useVentas() {
     } catch { toast.error('Producto no encontrado') }
   }
 
+  // cantidad total ya en el carrito para un producto (sumando todas sus líneas,
+  // sin importar si están repartidas entre lote activo y lote siguiente)
+  const cantidadEnCarrito = (prods, producto_id) =>
+    prods.filter(p => p.producto_id === producto_id).reduce((s, p) => s + (+p.cantidad || 0), 0)
+
   const agregarProducto = prod => {
     const stock = prod.stock ?? getStock(prod.id)
-    const stockLoteActivo = prod.stock_lote_activo != null ? +prod.stock_lote_activo : null
-    const existe = form.productos.find(p => p.producto_id === prod.id)
-    if (existe) {
-      if (existe.cantidad >= stock) { toast.error(`Stock insuficiente — solo hay ${stock} unidades`); return }
-      setForm(f => ({ ...f, productos: f.productos.map(p =>
-        p.producto_id === prod.id ? { ...p, cantidad: p.cantidad + 1 } : p
-      )}))
-    } else {
-      if (stock < 1) { toast.error('Sin stock disponible'); return }
-      setForm(f => ({ ...f, productos: [...f.productos, {
-        producto_id: prod.id, cantidad: 1,
-        precio_unitario: parseFloat(prod.precio),
-        nombre: prod.nombre, stock,
-        stock_lote_activo: stockLoteActivo,
-      }]}))
-    }
+    const yaEnCarrito = cantidadEnCarrito(form.productos, prod.id)
+    const nuevaCantidadTotal = yaEnCarrito + 1
+
+    if (nuevaCantidadTotal > stock) { toast.error(`Stock insuficiente — solo hay ${stock} unidades`); return }
+
+    const lineasNuevas = construirLineas(prod, nuevaCantidadTotal)
+    setForm(f => ({
+      ...f,
+      productos: [...f.productos.filter(p => p.producto_id !== prod.id), ...lineasNuevas],
+    }))
     setProdBusqueda(''); setProdsFiltrados([])
   }
 
+  // cambia la cantidad TOTAL deseada para un producto (suma de sus líneas);
+  // reconstruye las líneas correspondientes, dividiendo en dos precios si corresponde
+  const cambiarCantidadProducto = (producto_id, nuevaCantidadTotal) => {
+    const prod = productos.find(p => p.id === producto_id)
+    if (!prod) return
+    const stock = prod.stock ?? Infinity
+
+    if (nuevaCantidadTotal === '' || nuevaCantidadTotal === 0) {
+      setForm(f => ({ ...f, productos: f.productos.map(p =>
+        p.producto_id === producto_id ? { ...p, cantidad: '' } : p
+      )}))
+      return
+    }
+
+    const num = Math.max(1, +nuevaCantidadTotal || 1)
+    const cant = Math.min(num, stock)
+    if (+nuevaCantidadTotal > stock) toast.error(`Stock insuficiente — máximo ${stock} unidades`)
+
+    const lineasNuevas = construirLineas(prod, cant)
+    setForm(f => ({
+      ...f,
+      productos: [...f.productos.filter(p => p.producto_id !== producto_id), ...lineasNuevas],
+    }))
+  }
+
+  // mantiene compatibilidad con el índice usado en el formulario: identifica
+  // la línea por posición, pero el cambio de cantidad aplica al TOTAL del producto
   const cambiarCantidad = (idx, nuevaCantidad) => {
-    const prod = form.productos[idx]
-    const stock = prod.stock ?? getStock(prod.producto_id)
+    const linea = form.productos[idx]
+    if (!linea) return
     if (nuevaCantidad === '') {
       setForm(f => ({ ...f, productos: f.productos.map((p, i) => i === idx ? { ...p, cantidad: '' } : p) }))
       return
     }
-    const num = Math.max(1, +nuevaCantidad || 1)
-    const cant = Math.min(num, stock)
-    if (+nuevaCantidad > stock) toast.error(`Stock insuficiente — máximo ${stock} unidades`)
-    setForm(f => ({ ...f, productos: f.productos.map((p, i) => i === idx ? { ...p, cantidad: cant } : p) }))
+    const otrasLineas = cantidadEnCarrito(form.productos, linea.producto_id) - (+linea.cantidad || 0)
+    cambiarCantidadProducto(linea.producto_id, otrasLineas + Math.max(1, +nuevaCantidad || 1))
   }
 
-  const quitarProducto = idx => setForm(f => ({ ...f, productos: f.productos.filter((_, i) => i !== idx) }))
+  const quitarProducto = idx => {
+    const linea = form.productos[idx]
+    if (!linea) return
+    // quitar TODAS las líneas de ese producto (las dos partes del lote, si las hay)
+    setForm(f => ({ ...f, productos: f.productos.filter(p => p.producto_id !== linea.producto_id) }))
+  }
+
   const totalVenta = form.productos.reduce((s, p) => s + p.precio_unitario * (+p.cantidad || 0), 0)
-
-  // indica si la cantidad pedida de un ítem del carrito cruza el lote activo,
-  // es decir, si parte de esa cantidad terminará vendiéndose a un costo (y
-  // por lo tanto eventualmente a un precio) distinto al que se está mostrando.
-  // No bloquea nada — solo informa.
-  const cruzaLote = item => {
-    const cant = +item.cantidad || 0
-    if (item.stock_lote_activo == null) return false // producto sin lote registrado, no se puede avisar
-    return cant > item.stock_lote_activo
-  }
 
   const handleCrear = e => {
     e.preventDefault()
@@ -147,8 +199,16 @@ export function useVentas() {
     if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
     for (const p of form.productos) {
       if (!p.cantidad || +p.cantidad < 1) { toast.error(`${p.nombre}: la cantidad debe ser al menos 1`); return }
-      const stock = p.stock ?? getStock(p.producto_id)
-      if (p.cantidad > stock) { toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return }
+    }
+    // validar stock total por producto (sumando sus líneas)
+    const totalesPorProducto = {}
+    for (const p of form.productos) totalesPorProducto[p.producto_id] = (totalesPorProducto[p.producto_id] || 0) + (+p.cantidad || 0)
+    for (const producto_id of Object.keys(totalesPorProducto)) {
+      const stock = getStock(+producto_id)
+      if (totalesPorProducto[producto_id] > stock) {
+        const nombre = form.productos.find(p => p.producto_id === +producto_id)?.nombre
+        toast.error(`${nombre}: solo hay ${stock} unidades en stock`); return
+      }
     }
     crearVenta.mutate({
       cliente_id:     form.tipo_cliente === 'registrado' ? form.cliente_id    : null,
@@ -205,7 +265,7 @@ export function useVentas() {
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, getBadge, cruzaLote,
+    totalVenta, handleCrear, anular, getBadge,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     creando: crearVenta.isPending, anulando: anular.isPending,
   }
