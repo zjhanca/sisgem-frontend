@@ -1,10 +1,12 @@
-﻿import { DollarSign, Clock, TrendingUp, Calendar, Download } from 'lucide-react'
+﻿import { useState } from 'react'
+import { DollarSign, Clock, TrendingUp, Calendar, Download } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 import { useDashboard } from '../hooks/useDashboard'
-import DashboardStatCard     from '../components/DashboardStatCard'
-import DashboardVentas       from '../components/DashboardVentas'
-import DashboardTopProductos from '../components/DashboardTopProductos'
-import DashboardVentasMes    from '../components/DashboardVentasMes'
+import DashboardStatCard       from '../components/DashboardStatCard'
+import DashboardVentas         from '../components/DashboardVentas'
+import DashboardTopProductos   from '../components/DashboardTopProductos'
+import DashboardVentasMes      from '../components/DashboardVentasMes'
+import DashboardConfirmDescarga from '../components/Dashboardconfirmdescarga'
 
 export default function Dashboard() {
   const {
@@ -13,6 +15,8 @@ export default function Dashboard() {
     periodoVentas, setPeriodoVentas,
     descargarReporte,
   } = useDashboard()
+
+  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'semana' } | { tipo: 'mes' }
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
@@ -27,10 +31,10 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <h1 className="page-title">Dashboard</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarReporte('semana')} className="btn-outline">
+          <button onClick={() => setConfirmDescarga({ tipo: 'semana' })} className="btn-outline">
             <Download size={14} /> Semanal
           </button>
-          <button onClick={() => descargarReporte('mes')} className="btn-outline">
+          <button onClick={() => setConfirmDescarga({ tipo: 'mes' })} className="btn-outline">
             <Download size={14} /> Mensual
           </button>
         </div>
@@ -71,6 +75,9 @@ export default function Dashboard() {
         <DashboardTopProductos productos={data.productos_top} />
         <DashboardVentasMes ventasMes={ventasMes} />
       </div>
+
+      <DashboardConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga}
+        descargarReporte={descargarReporte} />
     </div>
   )
 }
