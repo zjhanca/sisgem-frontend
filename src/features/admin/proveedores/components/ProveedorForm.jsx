@@ -96,11 +96,6 @@ export default function ProveedorForm({ modal, form, errores, verificando = {}, 
               <CampoEstado verificando={verificando.email} error={errores.email}
                 valor={form.email} valido={!errores.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)} />
             </div>
-            <div>
-              <label className="campo-label">Dirección</label>
-              <input value={form.direccion} onChange={e => handleChange('direccion', e.target.value)}
-                disabled={bloqueado} className="campo-input" placeholder="Dirección del proveedor" />
-            </div>
           </div>
         </div>
 

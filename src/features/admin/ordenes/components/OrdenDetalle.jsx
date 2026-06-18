@@ -1,7 +1,9 @@
+import { useQuery } from '@tanstack/react-query'
 import Modal from '@shared/components/Modal'
-import { Download, Edit2 } from 'lucide-react'
+import { Download, Edit2, Loader2, Package, TrendingUp } from 'lucide-react'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
+import { ordenesService } from '../services/ordenesService'
 
 export default function OrdenDetalle({
   modalDetalle, setModalDetalle,
@@ -12,6 +14,14 @@ export default function OrdenDetalle({
   const cerrar = () => setModalDetalle({ abierto: false, orden: null })
   const esAnulada    = getKeyEstado(orden?.estado) === 'anulado'
   const esCompletada = getKeyEstado(orden?.estado) === 'activo'
+
+  const { data: detalle, isLoading } = useQuery({
+    queryKey: ['orden-detalle', orden?.id],
+    queryFn: () => ordenesService.getDetalle(orden.id),
+    enabled: !!orden?.id && modalDetalle.abierto,
+  })
+
+  const productos = detalle?.productos || []
 
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
@@ -33,6 +43,55 @@ export default function OrdenDetalle({
             {esAnulada    ? <span className="badge-anulado">Anulado</span>
              : esCompletada ? <span className="badge-activo">Completado</span>
              : <span className="badge-pendiente">Pendiente</span>}
+          </div>
+
+          <div className="pt-2 border-t border-gray-100">
+            <p className="campo-label mb-1.5 flex items-center gap-1"><Package size={11} /> Productos comprados al proveedor</p>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-4 text-gray-400 text-xs">
+                <Loader2 size={14} className="animate-spin mr-2" /> Cargando productos...
+              </div>
+            ) : productos.length === 0 ? (
+              <p className="text-center text-gray-400 text-xs py-3">Sin productos registrados</p>
+            ) : (
+              <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                {productos.map(p => (
+                  <div key={p.id} className="p-2.5 rounded-lg bg-gray-50 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium truncate">{p.producto}</span>
+                      <span className="text-gray-400 shrink-0 ml-2">× {p.cantidad}</span>
+                    </div>
+                    {p.codigo_barras && <p className="text-gray-400 font-mono">{p.codigo_barras}</p>}
+                    <div className="flex items-center justify-between pt-1 border-t border-gray-200/70">
+                      <div>
+                        <span className="text-gray-400">Costo compra: </span>
+                        <span className="font-medium">{formatPrecio(p.costo_unitario)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <TrendingUp size={10} className="text-primary" />
+                        <span className="text-gray-400">
+                          {esCompletada ? 'Precio aplicado: ' : 'Precio proyectado: '}
+                        </span>
+                        <span className="font-semibold text-primary">
+                          {formatPrecio(esCompletada ? (p.precio_aplicado ?? p.precio_venta_proyectado) : p.precio_venta_proyectado)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-end text-gray-400">
+                      Subtotal: <span className="text-light-text font-medium ml-1">{formatPrecio(p.subtotal)}</span>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex justify-between text-xs font-bold pt-1.5 border-t border-gray-200">
+                  <span>Total Orden</span><span className="text-primary">{formatPrecio(orden.total)}</span>
+                </div>
+                {!esCompletada && !esAnulada && (
+                  <p className="text-xs text-gray-400 italic pt-1">
+                    El precio proyectado se aplicará automáticamente al producto cuando la orden se marque como Completada (margen del 45%).
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 pt-2 border-t border-gray-100">

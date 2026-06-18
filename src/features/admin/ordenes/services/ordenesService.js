@@ -2,6 +2,7 @@ import api from '@shared/services/api'
  
 export const ordenesService = {
   getAll:        ()         => api.get('/ordenes').then(r => r.data.datos),
+  getDetalle:    id         => api.get(`/ordenes/${id}`).then(r => r.data.datos),
   create:        data       => api.post('/ordenes', data),
   update:        (id, data) => api.put(`/ordenes/${id}`, data),
   anular:        id         => api.patch(`/ordenes/${id}/anular`),

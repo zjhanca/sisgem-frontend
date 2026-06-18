@@ -2,6 +2,7 @@ import api from '@shared/services/api'
 
 export const ventasService = {
   getAll:        () => api.get('/pedidos').then(r => r.data.datos),
+  getDetalle:    id => api.get(`/pedidos/${id}`).then(r => r.data.datos),
   create:        data => api.post('/pedidos', data),
   cambiarEstado: (id, data) => api.patch(`/pedidos/${id}/estado`, data),
   getClientes:   () => api.get('/clientes').then(r => r.data.datos.filter(c => c.estado)),
