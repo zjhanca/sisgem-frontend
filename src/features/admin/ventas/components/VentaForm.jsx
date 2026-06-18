@@ -205,9 +205,7 @@ export default function VentaForm({
                     {cruza && (
                       <p className="text-xs text-amber-600 px-2 pb-0.5 flex items-center gap-1">
                         <AlertTriangle size={11} className="shrink-0" />
-                        Las primeras {p.stock_lote_activo} unidades son a {formatPrecio(p.precio_unitario)} c/u —
-                        el resto pasará a un costo distinto una vez se agote ese lote, y el precio de venta
-                        de este producto se actualizará para las próximas ventas.
+                        Solo {p.stock_lote_activo} uds a este precio — el resto cambiará de costo.
                       </p>
                     )}
                   </div>
