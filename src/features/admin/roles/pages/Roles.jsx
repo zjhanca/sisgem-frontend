@@ -1,11 +1,11 @@
 ﻿import { useState } from 'react'
 import { Plus, Edit2, Eye, Trash2, Lock } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import Modal from '@shared/components/Modal'
 import { useRoles } from '../hooks/useRoles'
-import RolForm     from '../components/RolForm'
-import RolDetalle  from '../components/RolDetalle'
-import RolEliminar from '../components/RolEliminar'
+import RolForm         from '../components/RolForm'
+import RolDetalle      from '../components/RolDetalle'
+import RolEliminar     from '../components/RolEliminar'
+import RolConfirmEstado from '../components/RolConfirmEstado'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (
@@ -20,7 +20,6 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
     </button>
   )
 }
-
 
 export default function Roles() {
   const {
@@ -40,7 +39,7 @@ export default function Roles() {
     { key: 'nombre',         label: 'Rol' },
     { key: 'descripcion',    label: 'Descripción', render: r => r.descripcion || '—' },
     { key: 'total_usuarios', label: 'Usuarios',    render: r => <span className="badge-proceso">{r.total_usuarios}</span> },
-        { key: 'estado', label: 'Estado',
+    { key: 'estado', label: 'Estado',
       render: r => esProtegido(r.id)
         ? <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium w-24 justify-center bg-gray-100 border-gray-200 text-gray-400">
             <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-gray-200 shrink-0">
@@ -80,24 +79,7 @@ export default function Roles() {
         seleccionarTodos={seleccionarTodos} limpiarTodos={limpiarTodos} />
       <RolDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} esProtegido={esProtegido} />
       <RolEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />
-
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
-        titulo={confirmToggle?.estadoActual ? 'Desactivar Rol' : 'Activar Rol'} ancho="max-w-sm">
-        {confirmToggle && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro que deseas <span className="font-semibold text-light-text">{confirmToggle.estadoActual ? 'desactivar' : 'activar'}</span> el rol{' '}
-              <span className="font-semibold text-primary">{confirmToggle.nombre}</span>?
-            </p>
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button onClick={() => { toggleEstado.mutate(confirmToggle.id); setConfirmToggle(null) }}
-                className={`px-4 py-1.5 text-sm rounded-lg text-white ${confirmToggle.estadoActual ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-mid'}`}>
-                Sí, {confirmToggle.estadoActual ? 'desactivar' : 'activar'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <RolConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle} toggleEstado={toggleEstado} />
     </div>
   )
 }

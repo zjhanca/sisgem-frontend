@@ -1,13 +1,13 @@
 ﻿import { useState } from 'react'
 import { Plus, Edit2, Eye, Trash2, Download } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import Modal from '@shared/components/Modal'
 import { formatPrecio } from '@shared/utils/validaciones'
-import { descargarPDF } from '@shared/utils/reportes'
 import { useProductos } from '../hooks/useProductos'
-import ProductoForm     from '../components/ProductoForm'
-import ProductoDetalle  from '../components/ProductoDetalle'
-import ProductoEliminar from '../components/ProductoEliminar'
+import ProductoForm            from '../components/ProductoForm'
+import ProductoDetalle         from '../components/ProductoDetalle'
+import ProductoEliminar        from '../components/ProductoEliminar'
+import ProductoConfirmEstado   from '../components/ProductoConfirmEstado'
+import ProductoConfirmDescarga from '../components/ProductoConfirmDescarga'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (
@@ -23,7 +23,6 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
   )
 }
 
-
 export default function Productos() {
   const {
     productos, categorias, proveedores, marcas,
@@ -34,6 +33,7 @@ export default function Productos() {
   } = useProductos()
 
   const [confirmToggle, setConfirmToggle] = useState(null)
+  const [confirmDescarga, setConfirmDescarga] = useState(false)
 
   const columnas = [
     { key: 'imagen_url', label: 'Img',
@@ -47,7 +47,7 @@ export default function Productos() {
     { key: 'marca',         label: 'Marca',     render: r => r.marca || '—' },
     { key: 'precio',        label: 'Precio',    render: r => formatPrecio(r.precio) },
     { key: 'stock',         label: 'Stock',     render: r => <span className={r.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{r.stock}</span> },
-        { key: 'estado', label: 'Estado',
+    { key: 'estado', label: 'Estado',
       render: r => r.stock <= 0
         ? <span className="badge-anulado">Sin stock</span>
         : <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
@@ -60,7 +60,7 @@ export default function Productos() {
       <div className="page-header">
         <h1 className="page-title">Productos</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarPDF('/reportes/productos', 'reporte-productos.pdf')} className="btn-outline">
+          <button onClick={() => setConfirmDescarga(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo Producto</button>
@@ -80,24 +80,8 @@ export default function Productos() {
         guardando={guardando} categorias={categorias} marcas={marcas} verificandoCodigo={verificandoCodigo} />
       <ProductoDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} />
       <ProductoEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />
-
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
-        titulo={confirmToggle?.estadoActual ? 'Desactivar Producto' : 'Activar Producto'} ancho="max-w-sm">
-        {confirmToggle && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro que deseas <span className="font-semibold text-light-text">{confirmToggle.estadoActual ? 'desactivar' : 'activar'}</span> el producto{' '}
-              <span className="font-semibold text-primary">{confirmToggle.nombre}</span>?
-            </p>
-            <div className="flex justify-end pt-2 border-t border-gray-100">
-              <button onClick={() => { toggleEstado.mutate(confirmToggle.id); setConfirmToggle(null) }}
-                className={`px-4 py-1.5 text-sm rounded-lg text-white ${confirmToggle.estadoActual ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-mid'}`}>
-                Sí, {confirmToggle.estadoActual ? 'desactivar' : 'activar'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <ProductoConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle} toggleEstado={toggleEstado} />
+      <ProductoConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} />
     </div>
   )
 }

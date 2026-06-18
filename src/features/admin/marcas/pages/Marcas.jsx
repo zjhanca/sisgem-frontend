@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Plus, Edit2, Eye, Trash2, ExternalLink } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import Modal from '@shared/components/Modal'
 import { useMarcas, normalizarUrl } from '../hooks/useMarcas'
-import MarcaForm     from '../components/MarcaForm'
-import MarcaDetalle  from '../components/MarcaDetalle'
-import MarcaEliminar from '../components/MarcaEliminar'
+import MarcaForm         from '../components/MarcaForm'
+import MarcaDetalle      from '../components/MarcaDetalle'
+import MarcaEliminar     from '../components/MarcaEliminar'
+import MarcaConfirmEstado from '../components/MarcaConfirmEstado'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (
@@ -20,7 +20,6 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
     </button>
   )
 }
-
 
 export default function Marcas() {
   const {
@@ -53,7 +52,7 @@ export default function Marcas() {
         : '—'
     },
     { key: 'total_productos', label: 'Productos', render: r => <span className="badge-proceso">{r.total_productos}</span> },
-        { key: 'estado', label: 'Estado',
+    { key: 'estado', label: 'Estado',
       render: r => <SwitchEstado activo={r.estado} labelActivo="Activa" labelInactivo="Inactiva"
         onClick={() => setConfirmToggle({ id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
     },
@@ -79,24 +78,7 @@ export default function Marcas() {
         guardando={guardando} proveedores={proveedores} verificandoNombre={verificandoNombre} />
       <MarcaDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} />
       <MarcaEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />
-
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
-        titulo={confirmToggle?.estadoActual ? 'Desactivar Marca' : 'Activar Marca'} ancho="max-w-sm">
-        {confirmToggle && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro que deseas <span className="font-semibold text-light-text">{confirmToggle.estadoActual ? 'desactivar' : 'activar'}</span> la marca{' '}
-              <span className="font-semibold text-primary">{confirmToggle.nombre}</span>?
-            </p>
-            <div className="flex justify-end pt-2 border-t border-gray-100">
-              <button onClick={() => { toggleEstado.mutate(confirmToggle.id); setConfirmToggle(null) }}
-                className={`px-4 py-1.5 text-sm rounded-lg text-white ${confirmToggle.estadoActual ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-mid'}`}>
-                Sí, {confirmToggle.estadoActual ? 'desactivar' : 'activar'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <MarcaConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle} toggleEstado={toggleEstado} />
     </div>
   )
 }

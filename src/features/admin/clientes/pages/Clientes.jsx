@@ -1,12 +1,12 @@
 ﻿import { useState } from 'react'
 import { Plus, Edit2, Eye, Download, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import Modal from '@shared/components/Modal'
-import { descargarPDF } from '@shared/utils/reportes'
 import { useClientes } from '../hooks/useClientes'
-import ClienteForm     from '../components/ClienteForm'
-import ClienteDetalle  from '../components/ClienteDetalle'
-import ClienteEliminar from '../components/ClienteEliminar'
+import ClienteForm           from '../components/ClienteForm'
+import ClienteDetalle        from '../components/ClienteDetalle'
+import ClienteEliminar       from '../components/ClienteEliminar'
+import ClienteConfirmEstado  from '../components/ClienteConfirmEstado'
+import ClienteConfirmDescarga from '../components/ClienteConfirmDescarga'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (
@@ -22,7 +22,6 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
   )
 }
 
-
 export default function Clientes() {
   const {
     clientes, historial, form, errores,
@@ -32,7 +31,8 @@ export default function Clientes() {
     eliminar, eliminando, modalEliminar, setModalEliminar,
   } = useClientes()
 
-  const [confirmToggle, setConfirmToggle] = useState(null) // { id, nombre, estadoActual }
+  const [confirmToggle, setConfirmToggle] = useState(null)
+  const [confirmDescarga, setConfirmDescarga] = useState(false)
 
   const columnas = [
     { key: 'nombre', label: 'Nombre', render: r => `${r.nombre} ${r.apellido}` },
@@ -50,7 +50,7 @@ export default function Clientes() {
         </span>
       )
     },
-        { key: 'estado', label: 'Estado',
+    { key: 'estado', label: 'Estado',
       render: r => <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
         onClick={() => setConfirmToggle({ id: r.id, nombre: `${r.nombre} ${r.apellido}`, estadoActual: r.estado })} />
     },
@@ -61,7 +61,7 @@ export default function Clientes() {
       <div className="page-header">
         <h1 className="page-title">Clientes</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarPDF('/reportes/clientes', 'reporte-clientes.pdf')} className="btn-outline">
+          <button onClick={() => setConfirmDescarga(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => abrirModal()} className="btn-primary">
@@ -101,26 +101,9 @@ export default function Clientes() {
         abrirModal={abrirModal} historial={historial} />
       <ClienteEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
         eliminar={eliminar} eliminando={eliminando} />
-
-      {/* modal confirmación toggle */}
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
-        titulo={confirmToggle?.estadoActual ? 'Desactivar Cliente' : 'Activar Cliente'} ancho="max-w-sm">
-        {confirmToggle && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro que deseas <span className="font-semibold text-light-text">{confirmToggle.estadoActual ? 'desactivar' : 'activar'}</span> al cliente{' '}
-              <span className="font-semibold text-primary">{confirmToggle.nombre}</span>?
-            </p>
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button
-                onClick={() => { toggleEstado.mutate(confirmToggle.id); setConfirmToggle(null) }}
-                className={`px-4 py-1.5 text-sm rounded-lg text-white ${confirmToggle.estadoActual ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-mid'}`}>
-                Sí, {confirmToggle.estadoActual ? 'desactivar' : 'activar'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <ClienteConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle}
+        toggleEstado={toggleEstado} />
+      <ClienteConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} />
     </div>
   )
 }

@@ -1,11 +1,12 @@
-﻿import { Plus, Eye, Download, Ban, Search } from 'lucide-react'
+﻿import { useState } from 'react'
+import { Plus, Eye, Download, Ban, Search } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
-import { descargarPDF } from '@shared/utils/reportes'
 import { usePagos } from '../hooks/usePagos'
-import PagoForm    from '../components/PagoForm'
-import PagoDetalle from '../components/PagoDetalle'
-import PagoAnular  from '../components/PagoAnular'
+import PagoForm            from '../components/PagoForm'
+import PagoDetalle         from '../components/PagoDetalle'
+import PagoAnular          from '../components/PagoAnular'
+import PagoConfirmDescarga from '../components/PagoConfirmDescarga'
 
 export default function Pagos() {
   const {
@@ -22,6 +23,8 @@ export default function Pagos() {
     pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
     creando, anulando,
   } = usePagos()
+
+  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'reporte' } | { tipo: 'pago', id }
 
   const hayFiltros = filtroEstado || filtroDesde || filtroHasta || filtroBusqueda
 
@@ -43,7 +46,7 @@ export default function Pagos() {
       <div className="page-header">
         <h1 className="page-title">Pagos</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarPDF('/reportes/pagos', 'reporte-pagos.pdf')} className="btn-outline">
+          <button onClick={() => setConfirmDescarga({ tipo: 'reporte' })} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
@@ -83,7 +86,7 @@ export default function Pagos() {
         </>}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, pago: fila })} className="btn-ghost"><Eye size={14} /></button>
-          <button onClick={() => descargarPDF(`/reportes/pagos/${fila.id}`, `pago-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
+          <button onClick={() => setConfirmDescarga({ tipo: 'pago', id: fila.id })} className="btn-ghost"><Download size={14} /></button>
           {!esAnulado(fila.estado) && (
             <button onClick={() => setModalAnular({ abierto: true, pago: fila })} className="btn-ghost hover:text-red-400"><Ban size={14} /></button>
           )}
@@ -101,6 +104,7 @@ export default function Pagos() {
         setModalAnular={setModalAnular} esAnulado={esAnulado} />
       <PagoAnular modalAnular={modalAnular} setModalAnular={setModalAnular}
         anular={anular} anulando={anulando} />
+      <PagoConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
     </div>
   )
 }

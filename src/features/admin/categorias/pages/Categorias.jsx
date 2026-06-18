@@ -1,12 +1,12 @@
 ﻿import { useState } from 'react'
 import { Plus, Edit2, Eye, Trash2, Percent } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import Modal from '@shared/components/Modal'
 import { useCategorias } from '../hooks/useCategorias'
-import CategoriaForm     from '../components/CategoriaForm'
-import CategoriaDetalle  from '../components/CategoriaDetalle'
-import CategoriaEliminar from '../components/CategoriaEliminar'
-import CategoriaMargen   from '../components/CategoriaMargen'
+import CategoriaForm          from '../components/CategoriaForm'
+import CategoriaDetalle       from '../components/CategoriaDetalle'
+import CategoriaEliminar      from '../components/CategoriaEliminar'
+import CategoriaMargen        from '../components/CategoriaMargen'
+import CategoriaConfirmEstado from '../components/CategoriaConfirmEstado'
 import { formatFecha } from '@shared/utils/validaciones'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
@@ -22,7 +22,6 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
     </button>
   )
 }
-
 
 export default function Categorias() {
   const {
@@ -42,7 +41,7 @@ export default function Categorias() {
     { key: 'descripcion', label: 'Descripción', render: r => r.descripcion || '—' },
     { key: 'margen',      label: 'Margen %', render: r => `${r.margen ?? 45}%` },
     { key: 'created_at',  label: 'Creada', render: r => formatFecha(r.created_at) },
-        { key: 'estado', label: 'Estado',
+    { key: 'estado', label: 'Estado',
       render: r => <SwitchEstado activo={r.estado} labelActivo="Activa" labelInactivo="Inactiva"
         onClick={() => setConfirmToggle({ id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
     },
@@ -75,25 +74,8 @@ export default function Categorias() {
         eliminar={eliminar} eliminando={eliminando} />
       <CategoriaMargen modalMargen={modalMargen} setModalMargen={setModalMargen}
         actualizarMargen={actualizarMargen} />
-
-      {/* confirm toggle */}
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
-        titulo={confirmToggle?.estadoActual ? 'Desactivar Categoría' : 'Activar Categoría'} ancho="max-w-sm">
-        {confirmToggle && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro que deseas <span className="font-semibold text-light-text">{confirmToggle.estadoActual ? 'desactivar' : 'activar'}</span> la categoría{' '}
-              <span className="font-semibold text-primary">{confirmToggle.nombre}</span>?
-            </p>
-            <div className="flex justify-end pt-2 border-t border-gray-100">
-              <button onClick={() => { toggleEstado.mutate(confirmToggle.id); setConfirmToggle(null) }}
-                className={`px-4 py-1.5 text-sm rounded-lg text-white ${confirmToggle.estadoActual ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-mid'}`}>
-                Sí, {confirmToggle.estadoActual ? 'desactivar' : 'activar'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <CategoriaConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle}
+        toggleEstado={toggleEstado} />
     </div>
   )
 }

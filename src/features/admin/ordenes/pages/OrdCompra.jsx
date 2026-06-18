@@ -3,10 +3,10 @@ import { Plus, Eye, Download, Ban, AlertTriangle, Edit2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
-import { descargarPDF } from '@shared/utils/reportes'
 import { useOrdenes } from '../hooks/useOrdenes'
-import OrdenForm    from '../components/OrdenForm'
-import OrdenDetalle from '../components/OrdenDetalle'
+import OrdenForm           from '../components/OrdenForm'
+import OrdenDetalle        from '../components/OrdenDetalle'
+import OrdenConfirmDescarga from '../components/OrdenConfirmDescarga'
 import ProductoForm from '../../productos/components/ProductoForm'
 import { useProductos } from '../../productos/hooks/useProductos'
 
@@ -38,6 +38,7 @@ export default function OrdCompra() {
   } = useProductos()
 
   const [modalCrearProd, setModalCrearProd] = useState(false)
+  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'reporte' } | { tipo: 'orden', id }
 
   const columnas = [
     { key: 'proveedor',    label: 'Proveedor' },
@@ -73,7 +74,7 @@ export default function OrdCompra() {
       <div className="page-header">
         <h1 className="page-title">Órdenes de Compra</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarPDF('/reportes/ordenes', 'reporte-ordenes.pdf')} className="btn-outline">
+          <button onClick={() => setConfirmDescarga({ tipo: 'reporte' })} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
@@ -115,7 +116,7 @@ export default function OrdCompra() {
             {!esAnulada && !esCompletada && (
               <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
             )}
-            <button onClick={() => descargarPDF(`/reportes/ordenes/${fila.id}`, `orden-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
+            <button onClick={() => setConfirmDescarga({ tipo: 'orden', id: fila.id })} className="btn-ghost"><Download size={14} /></button>
             {!esAnulada && (
               <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><Ban size={14} /></button>
             )}
@@ -204,6 +205,8 @@ export default function OrdCompra() {
           </div>
         )}
       </Modal>
+
+      <OrdenConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
 
       {modalCrearProd && (
         <ProductoForm

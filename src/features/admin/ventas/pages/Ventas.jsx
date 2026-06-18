@@ -1,13 +1,14 @@
+import { useState } from 'react'
 import { Plus, Eye, Download, Ban, Search, CreditCard } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
-import { descargarPDF } from '@shared/utils/reportes'
 import { useVentas } from '../hooks/useVentas'
 import { usePagos } from '@features/admin/pagos/hooks/usePagos'
-import VentaForm    from '../components/VentaForm'
-import VentaDetalle from '../components/VentaDetalle'
-import VentaAnular  from '../components/VentaAnular'
-import PagoForm     from '@features/admin/pagos/components/PagoForm'
+import VentaForm            from '../components/VentaForm'
+import VentaDetalle         from '../components/VentaDetalle'
+import VentaAnular          from '../components/VentaAnular'
+import VentaConfirmDescarga from '../components/VentaConfirmDescarga'
+import PagoForm             from '@features/admin/pagos/components/PagoForm'
 
 const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''
 
@@ -42,6 +43,8 @@ export default function Ventas() {
     creando: creandoPago,
   } = usePagos()
 
+  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'reporte' } | { tipo: 'comprobante', id }
+
   const estadosVenta = estados.filter(e => {
     const n = e.nombre?.toLowerCase()
     return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula')
@@ -74,7 +77,7 @@ export default function Ventas() {
       <div className="page-header">
         <h1 className="page-title">Ventas</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarPDF('/reportes/ventas', 'reporte-ventas.pdf')} className="btn-outline">
+          <button onClick={() => setConfirmDescarga({ tipo: 'reporte' })} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
@@ -114,7 +117,7 @@ export default function Ventas() {
         </>}
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost"><Eye size={14} /></button>
-          <button onClick={() => descargarPDF(`/reportes/pedido/${fila.id}`, `comprobante-${fila.id}.pdf`)} className="btn-ghost"><Download size={14} /></button>
+          <button onClick={() => setConfirmDescarga({ tipo: 'comprobante', id: fila.id })} className="btn-ghost"><Download size={14} /></button>
           {fila.permite_fiado && fila.estado?.toLowerCase().includes('pendiente') && (
             <button onClick={() => abrirConPedido(fila.id)}
               className="btn-ghost hover:text-primary" title="Registrar abono">
@@ -152,6 +155,7 @@ export default function Ventas() {
         totalVenta={totalVenta} handleCrear={handleCrear} creando={creando} />
       <VentaDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} setModalAnular={setModalAnular} getBadge={getBadge} />
       <VentaAnular modalAnular={modalAnular} setModalAnular={setModalAnular} anular={anular} anulando={anulando} />
+      <VentaConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
       <PagoForm modalNuevo={modalPago} setModalNuevo={setModalPago}
         form={formPago} setForm={setFormPago} errores={erroresPago} pedidos={pedidos}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}

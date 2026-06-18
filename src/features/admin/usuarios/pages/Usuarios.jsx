@@ -1,11 +1,11 @@
 ﻿import { useState } from 'react'
 import { Plus, Edit2, Eye, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import Modal from '@shared/components/Modal'
 import { useUsuarios } from '../hooks/useUsuarios'
-import UsuarioForm     from '../components/UsuarioForm'
-import UsuarioDetalle  from '../components/UsuarioDetalle'
-import UsuarioEliminar from '../components/UsuarioEliminar'
+import UsuarioForm          from '../components/UsuarioForm'
+import UsuarioDetalle       from '../components/UsuarioDetalle'
+import UsuarioEliminar      from '../components/UsuarioEliminar'
+import UsuarioConfirmEstado from '../components/UsuarioConfirmEstado'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (
@@ -20,7 +20,6 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
     </button>
   )
 }
-
 
 export default function Usuarios() {
   const {
@@ -40,7 +39,7 @@ export default function Usuarios() {
       render: r => r.numero_documento ? `${r.tipo_documento}: ${r.numero_documento}` : '—' },
     { key: 'email',  label: 'Correo' },
     { key: 'rol',    label: 'Rol' },
-        { key: 'estado', label: 'Estado',
+    { key: 'estado', label: 'Estado',
       render: r => <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
         onClick={() => setConfirmToggle({ id: r.id, nombre: `${r.nombre} ${r.apellido}`, estadoActual: r.estado })} />
     },
@@ -88,26 +87,7 @@ export default function Usuarios() {
         cerrarModal={cerrarModal} guardando={guardando} />
       <UsuarioDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} />
       <UsuarioEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />
-
-      {/* modal confirmación toggle */}
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
-        titulo={confirmToggle?.estadoActual ? 'Desactivar Usuario' : 'Activar Usuario'} ancho="max-w-sm">
-        {confirmToggle && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro que deseas <span className="font-semibold text-light-text">{confirmToggle.estadoActual ? 'desactivar' : 'activar'}</span> al usuario{' '}
-              <span className="font-semibold text-primary">{confirmToggle.nombre}</span>?
-            </p>
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button
-                onClick={() => { toggleEstado.mutate(confirmToggle.id); setConfirmToggle(null) }}
-                className={`px-4 py-1.5 text-sm rounded-lg text-white ${confirmToggle.estadoActual ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-mid'}`}>
-                Sí, {confirmToggle.estadoActual ? 'desactivar' : 'activar'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <UsuarioConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle} toggleEstado={toggleEstado} />
     </div>
   )
 }

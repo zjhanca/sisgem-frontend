@@ -1,12 +1,12 @@
 ﻿import { useState } from 'react'
 import { Plus, Edit2, Eye, Trash2, Download } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import Modal from '@shared/components/Modal'
-import { descargarPDF } from '@shared/utils/reportes'
 import { useProveedores } from '../hooks/useProveedores'
-import ProveedorForm     from '../components/ProveedorForm'
-import ProveedorDetalle  from '../components/ProveedorDetalle'
-import ProveedorEliminar from '../components/ProveedorEliminar'
+import ProveedorForm            from '../components/ProveedorForm'
+import ProveedorDetalle         from '../components/ProveedorDetalle'
+import ProveedorEliminar        from '../components/ProveedorEliminar'
+import ProveedorConfirmEstado   from '../components/ProveedorConfirmEstado'
+import ProveedorConfirmDescarga from '../components/ProveedorConfirmDescarga'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (
@@ -22,7 +22,6 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
   )
 }
 
-
 export default function Proveedores() {
   const {
     proveedores, form, errores,
@@ -33,6 +32,7 @@ export default function Proveedores() {
   } = useProveedores()
 
   const [confirmToggle, setConfirmToggle] = useState(null)
+  const [confirmDescarga, setConfirmDescarga] = useState(false)
 
   const columnas = [
     { key: 'nombre',         label: 'Nombre' },
@@ -40,7 +40,7 @@ export default function Proveedores() {
     { key: 'documento',      label: 'Documento' },
     { key: 'telefono',       label: 'Teléfono', render: r => r.telefono || '—' },
     { key: 'email',          label: 'Correo',   render: r => r.email    || '—' },
-        { key: 'estado', label: 'Estado',
+    { key: 'estado', label: 'Estado',
       render: r => <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
         onClick={() => setConfirmToggle({ id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
     },
@@ -51,7 +51,7 @@ export default function Proveedores() {
       <div className="page-header">
         <h1 className="page-title">Proveedores</h1>
         <div className="flex gap-2">
-          <button onClick={() => descargarPDF('/reportes/proveedores', 'reporte-proveedores.pdf')} className="btn-outline">
+          <button onClick={() => setConfirmDescarga(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo Proveedor</button>
@@ -73,24 +73,8 @@ export default function Proveedores() {
         abrirModal={abrirModal} toggleEstado={toggleEstado} />
       <ProveedorEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
         eliminar={eliminar} eliminando={eliminando} />
-
-      <Modal abierto={!!confirmToggle} onCerrar={() => setConfirmToggle(null)} bloquearCierre
-        titulo={confirmToggle?.estadoActual ? 'Desactivar Proveedor' : 'Activar Proveedor'} ancho="max-w-sm">
-        {confirmToggle && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro que deseas <span className="font-semibold text-light-text">{confirmToggle.estadoActual ? 'desactivar' : 'activar'}</span> al proveedor{' '}
-              <span className="font-semibold text-primary">{confirmToggle.nombre}</span>?
-            </p>
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button onClick={() => { toggleEstado.mutate(confirmToggle.id); setConfirmToggle(null) }}
-                className={`px-4 py-1.5 text-sm rounded-lg text-white ${confirmToggle.estadoActual ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-mid'}`}>
-                Sí, {confirmToggle.estadoActual ? 'desactivar' : 'activar'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <ProveedorConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle} toggleEstado={toggleEstado} />
+      <ProveedorConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} />
     </div>
   )
 }
