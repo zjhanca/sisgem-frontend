@@ -5,7 +5,7 @@ import { useUsuarios } from '../hooks/useUsuarios'
 import UsuarioForm          from '../components/UsuarioForm'
 import UsuarioDetalle       from '../components/UsuarioDetalle'
 import UsuarioEliminar      from '../components/UsuarioEliminar'
-import UsuarioConfirmEstado from '../components/UsuarioConfirmEstado'
+import UsuarioConfirmEstado from '../components/Usuarioconfirmestado'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (

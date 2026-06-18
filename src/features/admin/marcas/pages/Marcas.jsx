@@ -5,7 +5,7 @@ import { useMarcas, normalizarUrl } from '../hooks/useMarcas'
 import MarcaForm         from '../components/MarcaForm'
 import MarcaDetalle      from '../components/MarcaDetalle'
 import MarcaEliminar     from '../components/MarcaEliminar'
-import MarcaConfirmEstado from '../components/MarcaConfirmEstado'
+import MarcaConfirmEstado from '../components/Marcaconfirmestado'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (

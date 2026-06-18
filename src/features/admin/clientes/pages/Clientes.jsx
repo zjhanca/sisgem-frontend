@@ -5,8 +5,8 @@ import { useClientes } from '../hooks/useClientes'
 import ClienteForm           from '../components/ClienteForm'
 import ClienteDetalle        from '../components/ClienteDetalle'
 import ClienteEliminar       from '../components/ClienteEliminar'
-import ClienteConfirmEstado  from '../components/ClienteConfirmEstado'
-import ClienteConfirmDescarga from '../components/ClienteConfirmDescarga'
+import ClienteConfirmEstado  from '../components/Clienteconfirmestado'
+import ClienteConfirmDescarga from '../components/Clienteconfirmdescarga'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (

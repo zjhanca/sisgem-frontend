@@ -5,7 +5,7 @@ import { useRoles } from '../hooks/useRoles'
 import RolForm         from '../components/RolForm'
 import RolDetalle      from '../components/RolDetalle'
 import RolEliminar     from '../components/RolEliminar'
-import RolConfirmEstado from '../components/RolConfirmEstado'
+import RolConfirmEstado from '../components/Rolconfirmestado'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (

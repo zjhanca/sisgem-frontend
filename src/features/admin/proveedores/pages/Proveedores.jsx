@@ -5,8 +5,8 @@ import { useProveedores } from '../hooks/useProveedores'
 import ProveedorForm            from '../components/ProveedorForm'
 import ProveedorDetalle         from '../components/ProveedorDetalle'
 import ProveedorEliminar        from '../components/ProveedorEliminar'
-import ProveedorConfirmEstado   from '../components/ProveedorConfirmEstado'
-import ProveedorConfirmDescarga from '../components/ProveedorConfirmDescarga'
+import ProveedorConfirmEstado   from '../components/Proveedorconfirmestado'
+import ProveedorConfirmDescarga from '../components/Proveedorconfirmdescarga'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (

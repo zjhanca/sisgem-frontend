@@ -7,7 +7,7 @@ import { usePagos } from '@features/admin/pagos/hooks/usePagos'
 import VentaForm            from '../components/VentaForm'
 import VentaDetalle         from '../components/VentaDetalle'
 import VentaAnular          from '../components/VentaAnular'
-import VentaConfirmDescarga from '../components/VentaConfirmDescarga'
+import VentaConfirmDescarga from '../components/Ventaconfirmdescarga'
 import PagoForm             from '@features/admin/pagos/components/PagoForm'
 
 const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''

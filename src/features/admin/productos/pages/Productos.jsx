@@ -6,8 +6,8 @@ import { useProductos } from '../hooks/useProductos'
 import ProductoForm            from '../components/ProductoForm'
 import ProductoDetalle         from '../components/ProductoDetalle'
 import ProductoEliminar        from '../components/ProductoEliminar'
-import ProductoConfirmEstado   from '../components/ProductoConfirmEstado'
-import ProductoConfirmDescarga from '../components/ProductoConfirmDescarga'
+import ProductoConfirmEstado   from '../components/Productoconfirmestado'
+import ProductoConfirmDescarga from '../components/Productoconfirmdescarga'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (

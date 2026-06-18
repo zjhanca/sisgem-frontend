@@ -6,7 +6,7 @@ import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { useOrdenes } from '../hooks/useOrdenes'
 import OrdenForm           from '../components/OrdenForm'
 import OrdenDetalle        from '../components/OrdenDetalle'
-import OrdenConfirmDescarga from '../components/OrdenConfirmDescarga'
+import OrdenConfirmDescarga from '../components/Ordenconfirmdescarga'
 import ProductoForm from '../../productos/components/ProductoForm'
 import { useProductos } from '../../productos/hooks/useProductos'
 

@@ -6,7 +6,7 @@ import CategoriaForm          from '../components/CategoriaForm'
 import CategoriaDetalle       from '../components/CategoriaDetalle'
 import CategoriaEliminar      from '../components/CategoriaEliminar'
 import CategoriaMargen        from '../components/CategoriaMargen'
-import CategoriaConfirmEstado from '../components/CategoriaConfirmEstado'
+import CategoriaConfirmEstado from '../components/Categoriaconfirmestado'
 import { formatFecha } from '@shared/utils/validaciones'
 
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {

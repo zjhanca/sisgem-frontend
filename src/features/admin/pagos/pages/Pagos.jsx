@@ -6,7 +6,7 @@ import { usePagos } from '../hooks/usePagos'
 import PagoForm            from '../components/PagoForm'
 import PagoDetalle         from '../components/PagoDetalle'
 import PagoAnular          from '../components/PagoAnular'
-import PagoConfirmDescarga from '../components/PagoConfirmDescarga'
+import PagoConfirmDescarga from '../components/Pagoconfirmdescarga'
 
 export default function Pagos() {
   const {
