@@ -61,6 +61,7 @@ export function useVentas() {
       return ventasService.cambiarEstado(id, { estado_id: e?.id || 3 })
     },
     onSuccess: () => { qc.invalidateQueries(['pedidos']); setModalAnular({ abierto: false, venta: null }); toast.success('Venta anulada') },
+    onError: err => toast.error(err.response?.data?.mensaje || 'No se pudo anular la venta'),
   })
 
   const cambiarEstado = useMutation({
@@ -148,6 +149,30 @@ export function useVentas() {
     return 'badge-pendiente'
   }
 
+  // Ventana de anulación: ahora aplica a TODAS las ventas (no solo fiado), 72 horas.
+  // Usa la columna física fecha_limite_anulacion si viene del backend; si no existe
+  // (datos antiguos sin migrar todavía), calcula como fallback fecha_pedido + 72h.
+  const getFechaLimiteAnulacion = venta => {
+    if (!venta) return null
+    if (venta.fecha_limite_anulacion) return new Date(venta.fecha_limite_anulacion)
+    if (!venta.fecha_pedido) return null
+    const f = new Date(venta.fecha_pedido)
+    f.setHours(f.getHours() + 72)
+    return f
+  }
+
+  const puedeAnular = venta => {
+    const limite = getFechaLimiteAnulacion(venta)
+    if (!limite) return true
+    return new Date() <= limite
+  }
+
+  const horasRestantesAnulacion = venta => {
+    const limite = getFechaLimiteAnulacion(venta)
+    if (!limite) return null
+    return Math.max(0, Math.ceil((limite - new Date()) / (1000 * 60 * 60)))
+  }
+
   const ventasFiltradas = ventas.filter(v => {
     if (filtroEstado && v.estado_id !== +filtroEstado) return false
     if (filtroBusqueda && !`${v.id} ${v.cliente}`.toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
@@ -165,6 +190,7 @@ export function useVentas() {
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
     totalVenta, handleCrear, anular, getBadge,
+    getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     creando: crearVenta.isPending, anulando: anular.isPending,
   }
 }

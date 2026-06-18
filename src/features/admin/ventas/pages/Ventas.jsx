@@ -30,6 +30,7 @@ export default function Ventas() {
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
     totalVenta, handleCrear, anular, getBadge, estados,
+    getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     creando, anulando,
   } = useVentas()
 
@@ -70,6 +71,20 @@ export default function Ventas() {
       }
     },
     { key: 'fecha_pedido', label: 'Fecha', render: r => formatFechaHora(r.fecha_pedido) },
+    { key: 'fecha_limite_anulacion', label: 'Cambio hasta',
+      render: r => {
+        const esAnulada = r.estado?.toLowerCase().includes('anula')
+        if (esAnulada) return <span className="text-gray-400">—</span>
+        const limite = getFechaLimiteAnulacion(r)
+        if (!limite) return <span className="text-gray-400">—</span>
+        const vencido = new Date() > limite
+        return (
+          <span className={vencido ? 'text-gray-400' : 'text-amber-600'}>
+            {formatFechaHora(limite)}
+          </span>
+        )
+      }
+    },
   ]
 
   return (
@@ -127,18 +142,15 @@ export default function Ventas() {
           {(() => {
             const esAnulada = fila.estado?.toLowerCase().includes('anula')
             if (esAnulada) return null
-            const esFiado = fila.permite_fiado && fila.estado?.toLowerCase().includes('pendiente')
-            if (esFiado) {
-              const horas = (new Date() - new Date(fila.fecha_pedido)) / (1000 * 60 * 60)
-              if (horas > 48) return (
-                <button disabled title="Solo se puede anular dentro de las primeras 48 horas"
-                  className="btn-ghost opacity-30 cursor-not-allowed"><Ban size={14} /></button>
-              )
-            }
+            if (!puedeAnular(fila)) return (
+              <button disabled title="Solo se puede anular dentro de las primeras 72 horas"
+                className="btn-ghost opacity-30 cursor-not-allowed"><Ban size={14} /></button>
+            )
+            const horas = horasRestantesAnulacion(fila)
             return (
               <button onClick={() => setModalAnular({ abierto: true, venta: fila })}
                 className="btn-ghost hover:text-red-400"
-                title={esFiado ? `Anular fiado (quedan ${Math.max(0, Math.ceil(48 - (new Date() - new Date(fila.fecha_pedido)) / (1000 * 60 * 60)))}h)` : 'Anular'}>
+                title={horas !== null ? `Anular (quedan ${horas}h)` : 'Anular'}>
                 <Ban size={14} />
               </button>
             )
