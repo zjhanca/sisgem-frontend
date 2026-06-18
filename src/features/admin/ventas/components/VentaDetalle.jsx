@@ -115,12 +115,6 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
           <div className="flex gap-2 pt-2 border-t border-gray-100">
             <button onClick={() => descargarPDF(`/reportes/pedido/${venta.id}`, `comprobante-${venta.id}.pdf`)}
               className="btn-outline text-xs"><Download size={12} /> Comprobante</button>
-            {!venta.estado?.toLowerCase().includes('anula') && (
-              <button onClick={() => { cerrar(); setModalAnular({ abierto: true, venta }) }}
-                className="px-3 py-1.5 text-xs border border-red-400/40 text-red-400 rounded-lg hover:bg-red-400/10">
-                Anular Venta
-              </button>
-            )}
           </div>
         </div>
       )}

@@ -1,9 +1,53 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Modal from '@shared/components/Modal'
-import { Download, Edit2, Loader2, Package, TrendingUp } from 'lucide-react'
+import { Download, Edit2, Loader2, Package, ChevronDown, TrendingUp } from 'lucide-react'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { ordenesService } from '../services/ordenesService'
+
+function FilaProducto({ p, esCompletada }) {
+  const [abierto, setAbierto] = useState(false)
+  const precioMostrar = esCompletada ? (p.precio_aplicado ?? p.precio_venta_proyectado) : p.precio_venta_proyectado
+
+  return (
+    <div className="rounded-lg bg-gray-50 overflow-hidden">
+      <button type="button" onClick={() => setAbierto(a => !a)}
+        className="w-full flex items-center gap-2 p-2 text-xs hover:bg-gray-100 transition-colors">
+        <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary/50 shrink-0">
+          <Package size={13} />
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <p className="truncate font-medium">{p.producto}</p>
+          {p.codigo_barras && <p className="text-gray-400 font-mono">{p.codigo_barras}</p>}
+        </div>
+        <span className="text-gray-400 shrink-0">{p.cantidad} × {formatPrecio(p.costo_unitario)}</span>
+        <span className="text-primary font-semibold shrink-0">{formatPrecio(p.subtotal)}</span>
+        <ChevronDown size={13} className={`text-gray-400 shrink-0 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+      </button>
+
+      {abierto && (
+        <div className="px-2.5 pb-2.5 pt-1 text-xs space-y-1.5 border-t border-gray-200/70 animate-fadeIn">
+          <div className="flex justify-between">
+            <span className="text-gray-400">Costo de compra (unitario)</span>
+            <span className="font-medium">{formatPrecio(p.costo_unitario)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400 flex items-center gap-1">
+              <TrendingUp size={11} className="text-primary" />
+              {esCompletada ? 'Precio de venta aplicado' : 'Precio de venta proyectado'}
+            </span>
+            <span className="font-semibold text-primary">{formatPrecio(precioMostrar)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">Stock actual del producto</span>
+            <span className="font-medium">{p.stock_actual}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function OrdenDetalle({
   modalDetalle, setModalDetalle,
@@ -46,7 +90,7 @@ export default function OrdenDetalle({
           </div>
 
           <div className="pt-2 border-t border-gray-100">
-            <p className="campo-label mb-1.5 flex items-center gap-1"><Package size={11} /> Productos comprados al proveedor</p>
+            <p className="campo-label mb-1.5 flex items-center gap-1"><Package size={11} /> Productos comprados</p>
             {isLoading ? (
               <div className="flex items-center justify-center py-4 text-gray-400 text-xs">
                 <Loader2 size={14} className="animate-spin mr-2" /> Cargando productos...
@@ -54,42 +98,13 @@ export default function OrdenDetalle({
             ) : productos.length === 0 ? (
               <p className="text-center text-gray-400 text-xs py-3">Sin productos registrados</p>
             ) : (
-              <div className="space-y-1.5 max-h-56 overflow-y-auto">
+              <div className="space-y-1 max-h-56 overflow-y-auto">
                 {productos.map(p => (
-                  <div key={p.id} className="p-2.5 rounded-lg bg-gray-50 text-xs space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium truncate">{p.producto}</span>
-                      <span className="text-gray-400 shrink-0 ml-2">× {p.cantidad}</span>
-                    </div>
-                    {p.codigo_barras && <p className="text-gray-400 font-mono">{p.codigo_barras}</p>}
-                    <div className="flex items-center justify-between pt-1 border-t border-gray-200/70">
-                      <div>
-                        <span className="text-gray-400">Costo compra: </span>
-                        <span className="font-medium">{formatPrecio(p.costo_unitario)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <TrendingUp size={10} className="text-primary" />
-                        <span className="text-gray-400">
-                          {esCompletada ? 'Precio aplicado: ' : 'Precio proyectado: '}
-                        </span>
-                        <span className="font-semibold text-primary">
-                          {formatPrecio(esCompletada ? (p.precio_aplicado ?? p.precio_venta_proyectado) : p.precio_venta_proyectado)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex justify-end text-gray-400">
-                      Subtotal: <span className="text-light-text font-medium ml-1">{formatPrecio(p.subtotal)}</span>
-                    </div>
-                  </div>
+                  <FilaProducto key={p.id} p={p} esCompletada={esCompletada} />
                 ))}
                 <div className="flex justify-between text-xs font-bold pt-1.5 border-t border-gray-200">
-                  <span>Total Orden</span><span className="text-primary">{formatPrecio(orden.total)}</span>
+                  <span>Total</span><span className="text-primary">{formatPrecio(orden.total)}</span>
                 </div>
-                {!esCompletada && !esAnulada && (
-                  <p className="text-xs text-gray-400 italic pt-1">
-                    El precio proyectado se aplicará automáticamente al producto cuando la orden se marque como Completada (margen del 45%).
-                  </p>
-                )}
               </div>
             )}
           </div>
