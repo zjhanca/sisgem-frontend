@@ -174,34 +174,41 @@ export default function VentaForm({
                 const esSegundoLote = !!p.es_lote_siguiente
                 return (
                   <div key={`${p.producto_id}-${p.lote_id}-${i}`} className="flex flex-col">
-                    <div className={`flex justify-between items-center text-xs p-2 rounded ${esSegundoLote ? 'bg-amber-50' : 'bg-gray-50'}`}>
-                      <span className="flex-1 truncate flex items-center gap-1.5">
-                        {esSegundoLote && <Layers size={11} className="text-amber-500 shrink-0" />}
-                        {p.nombre}
-                        {esSegundoLote && <span className="text-amber-600 text-xs">(siguiente lote)</span>}
-                      </span>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="flex items-center gap-1">
-                          <button type="button"
-                            onClick={() => cambiarCantidad(i, Math.max(1, (+p.cantidad || 2) - 1))}
-                            disabled={!p.cantidad || +p.cantidad <= 1}
-                            className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">−</button>
-                          <input type="text" inputMode="numeric" value={p.cantidad}
-                            onChange={e => { const v = e.target.value; if (v === '') { cambiarCantidad(i, ''); return }; if (/^\d+$/.test(v)) cambiarCantidad(i, v) }}
-                            className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
-                              hayError ? 'border-red-400 focus:ring-red-400/30 text-red-400' : 'border-gray-200 focus:ring-primary/20'
-                            }`} />
-                          <button type="button"
-                            onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
-                            disabled={stock !== Infinity && totalProd >= stock}
-                            className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">+</button>
-                        </div>
-                        <span className={`font-medium w-16 text-right ${hayError ? 'text-red-400' : esSegundoLote ? 'text-amber-600' : 'text-primary'}`}>
-                          {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
+                    <div className={`flex flex-col gap-1 text-xs p-2 rounded ${esSegundoLote ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="flex-1 truncate flex items-center gap-1.5">
+                          {esSegundoLote && <Layers size={11} className="text-amber-500 shrink-0" />}
+                          {p.nombre}
+                          {esSegundoLote && <span className="text-amber-600">(siguiente lote)</span>}
                         </span>
-                        <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500">
+                        <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500 shrink-0 ml-2">
                           <Trash2 size={12} />
                         </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className={`${esSegundoLote ? 'text-amber-600' : 'text-gray-500'}`}>
+                          {formatPrecio(p.precio_unitario)} c/u
+                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1">
+                            <button type="button"
+                              onClick={() => cambiarCantidad(i, Math.max(1, (+p.cantidad || 2) - 1))}
+                              disabled={!p.cantidad || +p.cantidad <= 1}
+                              className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">−</button>
+                            <input type="text" inputMode="numeric" value={p.cantidad}
+                              onChange={e => { const v = e.target.value; if (v === '') { cambiarCantidad(i, ''); return }; if (/^\d+$/.test(v)) cambiarCantidad(i, v) }}
+                              className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
+                                hayError ? 'border-red-400 focus:ring-red-400/30 text-red-400' : 'border-gray-200 focus:ring-primary/20'
+                              }`} />
+                            <button type="button"
+                              onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
+                              disabled={stock !== Infinity && totalProd >= stock}
+                              className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">+</button>
+                          </div>
+                          <span className={`font-semibold w-16 text-right ${hayError ? 'text-red-400' : esSegundoLote ? 'text-amber-600' : 'text-primary'}`}>
+                            {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     {hayError && (

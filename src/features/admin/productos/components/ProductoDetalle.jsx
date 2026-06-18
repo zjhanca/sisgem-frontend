@@ -77,7 +77,7 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
           </div>
 
           {(loteActivo || loteEnCola) && (
-            <div className="pt-2 border-t border-gray-100 space-y-2">
+            <div className="pt-2 border-t border-gray-100 space-y-2 max-h-52 overflow-y-auto pr-1">
               <p className="text-xs font-semibold text-light-text flex items-center gap-1.5">
                 <Layers size={12} className="text-primary" /> Lotes de costo
               </p>
