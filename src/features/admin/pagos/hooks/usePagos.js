@@ -12,7 +12,7 @@ function esAnulado(n) { return n && (n.toLowerCase().includes('anula') || n.toLo
 export function usePagos() {
   const qc = useQueryClient()
   const [modalNuevo, setModalNuevo]     = useState(false)
-  const [modalDetalle, setModalDetalle] = useState({ abierto: false, pedido_id: null }) // ahora es el historial por venta
+  const [modalDetalle, setModalDetalle] = useState({ abierto: false, pedido_id: null }) // historial por venta
   const [modalAnular, setModalAnular]   = useState({ abierto: false, pago: null })
   const [form, setForm]       = useState(formVacio)
   const [errores, setErrores] = useState({})
@@ -49,8 +49,8 @@ export function usePagos() {
   // ===========================================================
   // AGRUPACIÓN "estilo distinct": una fila por venta (pedido_id),
   // con el total acumulado de pagos activos, saldo pendiente,
-  // y la fecha del último movimiento. Los pagos anulados no
-  // cuentan en el total pero sí quedan disponibles en el detalle.
+  // fecha del último movimiento, y la fecha límite de anulación
+  // de la venta (heredada de pedidos.fecha_limite_anulacion).
   // ===========================================================
   const pagosAgrupados = useMemo(() => {
     const grupos = new Map()
@@ -62,6 +62,8 @@ export function usePagos() {
           pedido_id: key,
           cliente: pago.cliente || '—',
           total_pedido: +pago.total_pedido || 0,
+          fecha_pedido: pago.fecha_pedido || null,
+          fecha_limite_anulacion: pago.fecha_limite_anulacion || null,
           pagos: [],
           total_pagado: 0,
           ultima_fecha: null,
@@ -83,11 +85,32 @@ export function usePagos() {
     return Array.from(grupos.values()).map(g => {
       const saldoPendiente = Math.max(0, g.total_pedido - g.total_pagado)
       const completo = g.total_pedido > 0 && saldoPendiente === 0
-      // ordenar pagos individuales del más reciente al más antiguo para el historial
       const pagosOrdenados = [...g.pagos].sort((a, b) => new Date(getFechaPago(b)) - new Date(getFechaPago(a)))
       return { ...g, pagos: pagosOrdenados, saldo_pendiente: saldoPendiente, completo }
     }).sort((a, b) => new Date(b.ultima_fecha) - new Date(a.ultima_fecha))
   }, [pagos])
+
+  // ===========================================================
+  // Regla: un pago solo se puede anular si la VENTA asociada
+  // todavía está dentro de su ventana de 72h (fecha_limite_anulacion).
+  // Si no hay fecha_limite_anulacion (dato viejo sin migrar), se
+  // calcula como fallback fecha_pedido + 72h.
+  // ===========================================================
+  const getLimiteAnulacionVenta = grupo => {
+    if (!grupo) return null
+    if (grupo.fecha_limite_anulacion) return new Date(grupo.fecha_limite_anulacion)
+    if (!grupo.fecha_pedido) return null
+    const f = new Date(grupo.fecha_pedido)
+    f.setHours(f.getHours() + 72)
+    return f
+  }
+
+  const puedeAnularPago = pedido_id => {
+    const grupo = pagosAgrupados.find(g => g.pedido_id === pedido_id)
+    const limite = getLimiteAnulacionVenta(grupo)
+    if (!limite) return true
+    return new Date() <= limite
+  }
 
   const pedidoSel      = pedidos.find(p => p.id === +form.pedido_id)
   const esFiado        = !!pedidoSel?.permite_fiado
@@ -119,25 +142,26 @@ export function usePagos() {
   })
 
   // ===========================================================
-  // Validación en tiempo real: se recalcula en cada cambio de
-  // form.monto / form.pedido_id, no solo al hacer submit.
+  // Validación BLOQUEANTE en tiempo real: el input de monto
+  // directamente no permite escribir/aceptar un valor mayor al
+  // saldo pendiente. No hay toast ni notificación flotante;
+  // si el usuario intenta superar el límite, el valor se capa
+  // automáticamente al máximo permitido.
   // ===========================================================
-  const validarMonto = (montoVal = form.monto) => {
-    if (!form.pedido_id) return 'Selecciona un pedido'
-    if (montoVal === '' || montoVal === null) return null // campo vacío: aún no mostrar error mientras escribe
-    const m = +montoVal
-    if (isNaN(m) || m <= 0) return 'El monto debe ser mayor a $0'
-    if (pagoCompleto) return 'El pedido ya está completamente pagado'
-    if (!esFiado && m > montoPendiente) {
-      return `El monto no puede superar ${montoPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}`
-    }
-    return null
-  }
-
   const handleMontoChange = val => {
-    setForm(f => ({ ...f, monto: val }))
-    const error = validarMonto(val)
-    setErrores(prev => ({ ...prev, monto: error || undefined }))
+    if (val === '') { setForm(f => ({ ...f, monto: '' })); setErrores(prev => ({ ...prev, monto: undefined })); return }
+
+    let num = +val
+    if (isNaN(num)) return // ignora caracteres no numéricos, no actualiza el form
+
+    if (num < 0) num = 0
+
+    if (!esFiado && montoPendiente > 0 && num > montoPendiente) {
+      num = montoPendiente // capar automáticamente al máximo permitido, sin mostrar error
+    }
+
+    setForm(f => ({ ...f, monto: String(num) }))
+    setErrores(prev => ({ ...prev, monto: undefined }))
   }
 
   const handlePedidoChange = pedido_id => {
@@ -148,9 +172,8 @@ export function usePagos() {
   const validar = () => {
     const e = {}
     if (!form.pedido_id) e.pedido_id = 'Selecciona un pedido'
-    const errorMonto = validarMonto(form.monto)
     if (!form.monto || +form.monto <= 0) e.monto = 'Monto inválido'
-    else if (errorMonto) e.monto = errorMonto
+    if (pagoCompleto) e.monto = 'El pedido ya está completamente pagado'
     return e
   }
 
@@ -168,7 +191,7 @@ export function usePagos() {
     return { label: 'Pagado', clase: 'badge-activo' }
   }
 
-  // filtros ahora se aplican sobre los grupos (una fila por venta)
+  // filtros sobre los grupos (una fila por venta)
   const pagosAgrupadosFiltrados = pagosAgrupados.filter(g => {
     if (filtroEstado === 'pagado'  && !g.completo) return false
     if (filtroEstado === 'abono'   && (g.completo || g.saldo_pendiente <= 0)) return false
@@ -198,6 +221,7 @@ export function usePagos() {
     totalPedido, totalPagado, montoPendiente, pagoCompleto, esFiado,
     handleSubmit, handleMontoChange, handlePedidoChange,
     anular, esPagado, esAbono, esAnulado, getFechaPago,
+    puedeAnularPago, getLimiteAnulacionVenta,
     pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
     getEstadoPago, tipoPagoActual,
     abrirConPedido,

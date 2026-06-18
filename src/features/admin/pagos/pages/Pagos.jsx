@@ -20,6 +20,7 @@ export default function Pagos() {
     totalPedido, totalPagado, montoPendiente, pagoCompleto, esFiado,
     handleSubmit, handleMontoChange, handlePedidoChange,
     anular, esAnulado, getFechaPago,
+    puedeAnularPago, getLimiteAnulacionVenta,
     getEstadoPago, tipoPagoActual,
     pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
     abrirConPedido,
@@ -31,10 +32,9 @@ export default function Pagos() {
   const hayFiltros = filtroEstado || filtroDesde || filtroHasta || filtroBusqueda
 
   const columnas = [
-    { key: 'pedido_id', label: 'Venta', render: r => <span className="font-medium text-primary">#{r.pedido_id}</span> },
     { key: 'cliente',   label: 'Cliente', render: r => r.cliente || '—' },
     { key: 'total_pagado', label: 'Pagado', render: r => <span className="text-green-600 font-medium">{formatPrecio(r.total_pagado)}</span> },
-    { key: 'saldo_pendiente', label: 'Pendiente',
+    { key: 'saldo_pendiente', label: 'Pendiente/Estado',
       render: r => r.completo
         ? <span className="badge-activo">Completo</span>
         : <span className="text-primary font-medium">{formatPrecio(r.saldo_pendiente)}</span>
@@ -51,7 +51,7 @@ export default function Pagos() {
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
-            <Plus size={14} /> Nuevo Pago
+            <Plus size={14} /> Nuevo
           </button>
         </div>
       </div>
@@ -106,7 +106,8 @@ export default function Pagos() {
         pedidoDropdown={pedidoDropdown} setPedidoDropdown={setPedidoDropdown} />
       <PagoDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         grupoDetalle={grupoDetalle} setModalAnular={setModalAnular} esAnulado={esAnulado}
-        getEstadoPago={getEstadoPago} getFechaPago={getFechaPago} />
+        getEstadoPago={getEstadoPago} getFechaPago={getFechaPago}
+        puedeAnularPago={puedeAnularPago} getLimiteAnulacionVenta={getLimiteAnulacionVenta} />
       <PagoAnular modalAnular={modalAnular} setModalAnular={setModalAnular}
         anular={anular} anulando={anulando} />
       <PagoConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />

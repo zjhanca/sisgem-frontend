@@ -1,10 +1,15 @@
 import Modal from '@shared/components/Modal'
-import { Ban, History } from 'lucide-react'
+import { Ban, History, Clock } from 'lucide-react'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 
-export default function PagoDetalle({ modalDetalle, setModalDetalle, grupoDetalle, setModalAnular, esAnulado, getEstadoPago, getFechaPago }) {
+export default function PagoDetalle({
+  modalDetalle, setModalDetalle, grupoDetalle, setModalAnular,
+  esAnulado, getEstadoPago, getFechaPago, puedeAnularPago, getLimiteAnulacionVenta,
+}) {
   const cerrar = () => setModalDetalle({ abierto: false, pedido_id: null })
   const grupo = grupoDetalle
+  const puedeAnular = grupo ? puedeAnularPago(grupo.pedido_id) : false
+  const limite = grupo ? getLimiteAnulacionVenta(grupo) : null
 
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
@@ -21,6 +26,19 @@ export default function PagoDetalle({ modalDetalle, setModalDetalle, grupoDetall
               </p>
             </div>
           </div>
+
+          {limite && (
+            <div className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs ${
+              puedeAnular ? 'bg-amber-500/5 border-amber-400/20 text-amber-600' : 'bg-gray-50 border-gray-200 text-gray-400'
+            }`}>
+              <Clock size={13} className="shrink-0" />
+              <span>
+                {puedeAnular
+                  ? `Los pagos de esta venta se pueden anular hasta el ${formatFechaHora(limite)}`
+                  : `El plazo para anular pagos de esta venta venció el ${formatFechaHora(limite)}`}
+              </span>
+            </div>
+          )}
 
           <div className="pt-2 border-t border-gray-100">
             <p className="campo-label mb-1.5 flex items-center gap-1"><History size={11} /> Movimientos ({grupo.pagos.length})</p>
@@ -47,10 +65,17 @@ export default function PagoDetalle({ modalDetalle, setModalDetalle, grupoDetall
                       </p>
                     </div>
                     {!anulado && (
-                      <button onClick={() => { cerrar(); setModalAnular({ abierto: true, pago }) }}
-                        className="btn-ghost hover:text-red-400 shrink-0" title="Anular este pago">
-                        <Ban size={13} />
-                      </button>
+                      puedeAnular ? (
+                        <button onClick={() => { cerrar(); setModalAnular({ abierto: true, pago }) }}
+                          className="btn-ghost hover:text-red-400 shrink-0" title="Anular este pago">
+                          <Ban size={13} />
+                        </button>
+                      ) : (
+                        <button disabled title="El plazo de 72 horas de la venta ya expiró"
+                          className="btn-ghost opacity-30 cursor-not-allowed shrink-0">
+                          <Ban size={13} />
+                        </button>
+                      )
                     )}
                   </div>
                 )
