@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Modal from '@shared/components/Modal'
 import { Download, Clock, Loader2, Package } from 'lucide-react'
-import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
+import { formatPrecio, formatFecha, formatFechaHora } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { ventasService } from '../services/ventasService'
 
@@ -9,7 +9,7 @@ function proximoAbono(fechaVenta) {
   if (!fechaVenta) return null
   const fecha = new Date(fechaVenta)
   fecha.setDate(fecha.getDate() + 15)
-  return fecha.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
+  return formatFecha(fecha)
 }
 
 function diasRestantes(fechaVenta) {

@@ -1,6 +1,5 @@
 import Modal from '@shared/components/Modal'
-import { CheckCircle, XCircle } from 'lucide-react'
-import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
+import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 
 export default function PagoDetalle({ modalDetalle, setModalDetalle, setModalAnular, esAnulado }) {
   const pago = modalDetalle.pago
@@ -14,19 +13,7 @@ export default function PagoDetalle({ modalDetalle, setModalDetalle, setModalAnu
             <div><p className="campo-label">Cliente</p><p>{pago.cliente || '—'}</p></div>
             <div><p className="campo-label">Monto</p><p className="text-primary font-bold text-base">{formatPrecio(pago.monto)}</p></div>
             <div><p className="campo-label">Método</p><p className="capitalize">{pago.metodo}</p></div>
-            <div><p className="campo-label">Estado</p>
-              <div className="flex items-center gap-1">
-                {esAnulado(pago.estado)
-                  ? <XCircle size={13} className="text-red-400" />
-                  : <CheckCircle size={13} className="text-green-400" />}
-                <span className="inline-block w-16 text-center">
-                  <span className={esAnulado(pago.estado) ? 'badge-anulado' : 'badge-activo'}>
-                    {esAnulado(pago.estado) ? 'Anulado' : 'Pagado'}
-                  </span>
-                </span>
-              </div>
-            </div>
-            <div><p className="campo-label">Fecha</p><p>{formatFecha(pago.created_at)}</p></div>
+            <div className="col-span-2"><p className="campo-label">Fecha</p><p>{formatFechaHora(pago.fecha)}</p></div>
           </div>
           {!esAnulado(pago.estado) && (
             <div className="flex justify-end pt-2 border-t border-gray-100">

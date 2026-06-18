@@ -39,10 +39,6 @@ function FilaProducto({ p, esCompletada }) {
             </span>
             <span className="font-semibold text-primary">{formatPrecio(precioMostrar)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Stock actual del producto</span>
-            <span className="font-medium">{p.stock_actual}</span>
-          </div>
         </div>
       )}
     </div>

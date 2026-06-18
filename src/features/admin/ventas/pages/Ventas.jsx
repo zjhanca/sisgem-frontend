@@ -49,9 +49,6 @@ export default function Ventas() {
 
   const columnas = [
     { key: 'cliente', label: 'Cliente' },
-    { key: 'tipo_venta', label: 'Tipo',
-      render: r => <span className="badge-activo">{r.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}</span>
-    },
     { key: 'total', label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado_id', label: 'Estado',
       render: r => {

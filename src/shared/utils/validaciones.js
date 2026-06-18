@@ -37,15 +37,19 @@ export function formatPrecio(valor) {
 
 export function formatFecha(fecha) {
   if (!fecha) return '-'
-  return new Date(fecha).toLocaleDateString('es-CO', {
-    year: 'numeric', month: 'short', day: 'numeric'
-  })
+  const d = new Date(fecha)
+  const dia = String(d.getDate()).padStart(2, '0')
+  const mes = String(d.getMonth() + 1).padStart(2, '0')
+  const anio = d.getFullYear()
+  return `${dia}/${mes}/${anio}`
 }
 
 export function formatFechaHora(fecha) {
   if (!fecha) return '-'
-  return new Date(fecha).toLocaleString('es-CO', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  })
+  const d = new Date(fecha)
+  const dia = String(d.getDate()).padStart(2, '0')
+  const mes = String(d.getMonth() + 1).padStart(2, '0')
+  const anio = d.getFullYear()
+  const hora = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+  return `${dia}/${mes}/${anio}, ${hora}`
 }
