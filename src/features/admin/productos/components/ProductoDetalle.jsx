@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
-import { Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Edit2, ChevronLeft, ChevronRight, Layers } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirModal }) {
@@ -23,6 +23,14 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
 
   const prev = () => setImgIdx(i => (i - 1 + imagenes.length) % imagenes.length)
   const next = () => setImgIdx(i => (i + 1) % imagenes.length)
+
+  // lotes que vienen del backend vía productosController adjuntarInfoLotes
+  const loteActivo = item?.stock_lote_activo != null ? {
+    stock: item.stock_lote_activo,
+    costo: item.costo_lote_activo,
+    precio_venta: item.precio,
+  } : null
+  const loteEnCola = item?.siguiente_lote || null
 
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo="Detalle del Producto">
@@ -61,12 +69,73 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
                 <span className={item.estado ? 'badge-activo' : 'badge-inactivo'}>{item.estado ? 'Activo' : 'Inactivo'}</span>
               </span>
             </div>
-            <div><p className="campo-label">Precio</p><p className="text-primary font-bold">{formatPrecio(item.precio)}</p></div>
-            <div><p className="campo-label">Stock</p><p className={item.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{item.stock} uds</p></div>
+            <div><p className="campo-label">Precio venta</p><p className="text-primary font-bold">{formatPrecio(item.precio)}</p></div>
+            <div><p className="campo-label">Stock total</p><p className={item.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{item.stock} uds</p></div>
             <div><p className="campo-label">Categoría</p><p>{item.categoria || '—'}</p></div>
             <div><p className="campo-label">Marca</p><p>{item.marca || '—'}</p></div>
-            <div><p className="campo-label">Código Barras</p><p className="font-mono text-xs">{item.codigo_barras || '—'}</p></div>
+            <div className="col-span-2"><p className="campo-label">Código Barras</p><p className="font-mono text-xs">{item.codigo_barras || '—'}</p></div>
           </div>
+
+          {(loteActivo || loteEnCola) && (
+            <div className="pt-2 border-t border-gray-100 space-y-2">
+              <p className="text-xs font-semibold text-light-text flex items-center gap-1.5">
+                <Layers size={12} className="text-primary" /> Lotes de costo
+              </p>
+
+              {loteActivo && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-2.5 text-xs">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-semibold text-primary">Lote activo</span>
+                    <span className="badge-activo">Vigente</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <p className="campo-label">Stock en lote</p>
+                      <p className="font-medium">{loteActivo.stock} uds</p>
+                    </div>
+                    <div>
+                      <p className="campo-label">Costo unitario</p>
+                      <p className="font-medium">{loteActivo.costo ? formatPrecio(loteActivo.costo) : '—'}</p>
+                    </div>
+                    <div>
+                      <p className="campo-label">Precio venta</p>
+                      <p className="font-bold text-primary">{formatPrecio(loteActivo.precio_venta)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {loteEnCola && (
+                <div className="rounded-lg border border-amber-400/20 bg-amber-50 p-2.5 text-xs">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-semibold text-amber-600">Siguiente lote (en cola)</span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 text-xs font-medium">En espera</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <p className="campo-label">Stock en lote</p>
+                      <p className="font-medium">{loteEnCola.cantidad_disponible} uds</p>
+                    </div>
+                    <div>
+                      <p className="campo-label">Costo unitario</p>
+                      <p className="font-medium">{formatPrecio(loteEnCola.costo_unitario)}</p>
+                    </div>
+                    <div>
+                      <p className="campo-label">Precio proyectado</p>
+                      <p className="font-bold text-amber-600">{formatPrecio(loteEnCola.precio_venta_proyectado)}</p>
+                    </div>
+                  </div>
+                  <p className="text-amber-500 mt-1.5">
+                    Se activará cuando se agoten las {loteActivo?.stock ?? '?'} uds del lote actual.
+                  </p>
+                </div>
+              )}
+
+              {!loteActivo && (
+                <p className="text-xs text-gray-400 text-center py-1">Sin lotes registrados aún.</p>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end pt-2 border-t border-gray-100">
             <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs">
