@@ -5,17 +5,10 @@ import { formatPrecio } from '@shared/utils/validaciones'
 export default function PagoForm({
   modalNuevo, setModalNuevo, form, setForm, errores,
   pedidos, totalPedido, totalPagado, montoPendiente, pagoCompleto,
-  handleSubmit, creando, tipoPagoActual, esFiado,
+  handleSubmit, handleMontoChange, handlePedidoChange, creando, tipoPagoActual, esFiado,
   pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
 }) {
   const cerrar = () => { setModalNuevo(false); setPedidoBusqueda(''); setPedidoDropdown(false) }
-
-  const handleMonto = e => {
-    const val = e.target.value
-    if (!esFiado && montoPendiente > 0 && +val > montoPendiente)
-      setForm(p => ({ ...p, monto: montoPendiente }))
-    else setForm(p => ({ ...p, monto: val }))
-  }
 
   const pedidoSeleccionado = pedidos.find(p => p.id === +form.pedido_id)
   const pedidosFiltrados = pedidos.filter(p => {
@@ -25,7 +18,7 @@ export default function PagoForm({
   }).slice(0, 8)
 
   const seleccionarPedido = p => {
-    setForm(f => ({ ...f, pedido_id: p.id, monto: '' }))
+    handlePedidoChange(p.id)
     setPedidoBusqueda(''); setPedidoDropdown(false)
   }
 
@@ -43,7 +36,7 @@ export default function PagoForm({
                 <span className="text-primary ml-2">{formatPrecio(pedidoSeleccionado.total)}</span>
               </div>
               <button type="button"
-                onClick={() => { setForm(f => ({ ...f, pedido_id: '', monto: '' })); setPedidoBusqueda('') }}
+                onClick={() => { handlePedidoChange(''); setPedidoBusqueda('') }}
                 className="text-gray-400 hover:text-red-400 ml-2">✕</button>
             </div>
           ) : (
@@ -112,13 +105,12 @@ export default function PagoForm({
               )}
             </div>
             <input type="number" step="0.01" min="0.01"
-              max={montoPendiente > 0 ? montoPendiente : undefined}
-              value={form.monto} onChange={handleMonto}
-              className={`campo-input ${errores.monto ? 'border-red-400' : ''}`}
+              value={form.monto} onChange={e => handleMontoChange(e.target.value)}
+              className={`campo-input ${errores.monto ? 'border-red-400 focus:ring-red-400/30' : ''}`}
               placeholder="0.00" disabled={pagoCompleto} />
             {errores.monto && <p className="campo-error">{errores.monto}</p>}
             {!pagoCompleto && montoPendiente > 0 && (
-              <button type="button" onClick={() => setForm(p => ({ ...p, monto: montoPendiente }))}
+              <button type="button" onClick={() => handleMontoChange(String(montoPendiente))}
                 className="text-xs text-primary mt-1 hover:underline">
                 Usar pendiente ({formatPrecio(montoPendiente)})
               </button>
@@ -136,7 +128,7 @@ export default function PagoForm({
 
         <div className="flex justify-end pt-2 border-t border-gray-100">
           <button type="submit"
-            disabled={creando || pagoCompleto || (!esFiado && +form.monto > montoPendiente)}
+            disabled={creando || pagoCompleto || !!errores.monto || !form.pedido_id || !form.monto}
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
           </button>
