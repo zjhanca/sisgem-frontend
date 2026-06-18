@@ -5,6 +5,8 @@ import { descargarPDF } from '@shared/utils/reportes'
 
 /**
  * confirmDescarga: null | { tipo: 'reporte' } | { tipo: 'pago', id }
+ * Para tipo 'pago', el id corresponde al pedido_id de la venta (no a un pago individual),
+ * ya que la vista de Pagos ahora está agrupada por venta.
  */
 export default function PagoConfirmDescarga({ confirmDescarga, setConfirmDescarga }) {
   const [descargando, setDescargando] = useState(false)
@@ -15,7 +17,7 @@ export default function PagoConfirmDescarga({ confirmDescarga, setConfirmDescarg
     setDescargando(true)
     try {
       if (confirmDescarga.tipo === 'pago') {
-        await descargarPDF(`/reportes/pagos/${confirmDescarga.id}`, `pago-${confirmDescarga.id}.pdf`)
+        await descargarPDF(`/reportes/pagos/pedido/${confirmDescarga.id}`, `pagos-pedido-${confirmDescarga.id}.pdf`)
       } else {
         await descargarPDF('/reportes/pagos', 'reporte-pagos.pdf')
       }
@@ -26,7 +28,7 @@ export default function PagoConfirmDescarga({ confirmDescarga, setConfirmDescarg
   }
 
   const etiqueta = confirmDescarga?.tipo === 'pago'
-    ? `el comprobante del pago #${confirmDescarga.id}`
+    ? `el historial de pagos de la venta #${confirmDescarga.id}`
     : 'el reporte de pagos'
 
   return (
