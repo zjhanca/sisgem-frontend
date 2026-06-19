@@ -22,9 +22,9 @@ export default function MarcaDetalle({ modalDetalle, setModalDetalle, abrirModal
           {/* logo + datos en dos columnas */}
           <div className="flex gap-3">
             {item.logo
-              ? <img src={item.logo} alt="" className="w-20 h-20 object-contain rounded-xl border border-gray-200 shrink-0"
+              ? <img src={item.logo} alt="" className="w-24 h-24 object-contain rounded-xl border border-gray-200 shrink-0"
                   onError={e => e.target.style.display='none'} />
-              : <div className="w-20 h-20 rounded-xl border border-gray-200 bg-primary/10 flex items-center justify-center shrink-0">
+              : <div className="w-24 h-24 rounded-xl border border-gray-200 bg-primary/10 flex items-center justify-center shrink-0">
                   <span className="text-primary font-bold text-3xl">{item.nombre?.charAt(0).toUpperCase()}</span>
                 </div>
             }
@@ -42,8 +42,9 @@ export default function MarcaDetalle({ modalDetalle, setModalDetalle, abrirModal
                 <div>
                   <p className="campo-label">Sitio web</p>
                   <a href={urlFinal} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-primary flex items-center gap-1 hover:underline truncate">
-                    <ExternalLink size={10} className="shrink-0" /> {urlFinal}
+                    className="text-xs text-primary flex items-center gap-1 hover:underline max-w-[160px]">
+                    <ExternalLink size={10} className="shrink-0" />
+                    <span className="truncate">{urlFinal}</span>
                   </a>
                 </div>
               )}
