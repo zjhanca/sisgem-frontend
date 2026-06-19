@@ -87,18 +87,14 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
                 <p className="campo-label">Marca</p>
                 <p className="truncate">{item.marca || '—'}</p>
               </div>
-              <div className="col-span-2">
-              </div>
+              {item.codigo_barras && (
+                <div className="col-span-2">
+                  <p className="campo-label">Código Barras</p>
+                  <p className="font-mono text-xs">{item.codigo_barras}</p>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* código de barras */}
-          {item.codigo_barras && (
-            <div className="px-1">
-              <p className="campo-label">Código Barras</p>
-              <p className="font-mono text-xs">{item.codigo_barras}</p>
-            </div>
-          )}
 
           {/* lotes de costo */}
           {(loteActivo || loteEnCola) && (
