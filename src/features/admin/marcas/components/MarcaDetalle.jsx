@@ -15,32 +15,52 @@ export default function MarcaDetalle({ modalDetalle, setModalDetalle, abrirModal
   })()
 
   return (
-    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo="Detalle de la Marca" ancho="max-w-lg">
+    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo="Detalle de la Marca" ancho="max-w-sm">
       {item && (
-        <div className="space-y-4">
-          <div className="flex items-start gap-4">
+        <div className="space-y-3 text-sm">
+
+          {/* logo + datos en dos columnas */}
+          <div className="flex gap-3">
             {item.logo
-              ? <img src={item.logo} alt="" className="w-16 h-16 object-contain rounded-xl border border-gray-200"
+              ? <img src={item.logo} alt="" className="w-20 h-20 object-contain rounded-xl border border-gray-200 shrink-0"
                   onError={e => e.target.style.display='none'} />
-              : <div className="w-16 h-16 rounded-xl border border-gray-200 bg-primary/10 flex items-center justify-center">
-                  <span className="text-primary font-bold text-2xl">{item.nombre?.charAt(0).toUpperCase()}</span>
+              : <div className="w-20 h-20 rounded-xl border border-gray-200 bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-primary font-bold text-3xl">{item.nombre?.charAt(0).toUpperCase()}</span>
                 </div>
             }
-            <div className="flex-1">
-              <h3 className="font-semibold text-light-text">{item.nombre}</h3>
-              <span className={item.estado ? 'badge-activo' : 'badge-inactivo'}>{item.estado ? 'Activa' : 'Inactiva'}</span>
-              {item.descripcion && <p className="text-xs text-gray-400 mt-1">{item.descripcion}</p>}
+
+            <div className="flex-1 min-w-0 space-y-1.5 content-start">
+              <div>
+                <p className="campo-label">Nombre</p>
+                <p className="font-semibold truncate">{item.nombre}</p>
+              </div>
+              <div>
+                <p className="campo-label">Estado</p>
+                <span className={item.estado ? 'badge-activo' : 'badge-inactivo'}>{item.estado ? 'Activa' : 'Inactiva'}</span>
+              </div>
               {urlFinal && (
-                <a href={urlFinal} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-primary flex items-center gap-1 mt-1 hover:underline">
-                  <ExternalLink size={10} /> {urlFinal}
-                </a>
+                <div>
+                  <p className="campo-label">Sitio web</p>
+                  <a href={urlFinal} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-primary flex items-center gap-1 hover:underline truncate">
+                    <ExternalLink size={10} className="shrink-0" /> {urlFinal}
+                  </a>
+                </div>
               )}
             </div>
           </div>
 
+          {/* descripción */}
+          {item.descripcion && (
+            <div className="pt-2 border-t border-gray-100">
+              <p className="campo-label">Descripción</p>
+              <p className="text-xs text-gray-500">{item.descripcion}</p>
+            </div>
+          )}
+
+          {/* proveedores */}
           {proveedores.length > 0 && (
-            <div>
+            <div className="pt-2 border-t border-gray-100">
               <p className="campo-label mb-1.5">Proveedores relacionados</p>
               <div className="flex flex-wrap gap-1.5">
                 {proveedores.map(p => (
