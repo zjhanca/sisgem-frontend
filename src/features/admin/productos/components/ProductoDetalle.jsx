@@ -88,8 +88,6 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
                 <p className="truncate">{item.marca || '—'}</p>
               </div>
               <div className="col-span-2">
-                <p className="campo-label">Estado</p>
-                <span className={item.estado ? 'badge-activo' : 'badge-inactivo'}>{item.estado ? 'Activo' : 'Inactivo'}</span>
               </div>
             </div>
           </div>
