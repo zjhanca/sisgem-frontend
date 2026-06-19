@@ -66,23 +66,17 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
               </div>
             )}
 
-            <div className="flex-1 min-w-0 grid grid-cols-2 gap-x-3 gap-y-2 text-sm content-start">
-              <div className="col-span-2">
+            <div className="flex-1 min-w-0 grid grid-cols-3 gap-x-2 gap-y-2 text-sm content-start">
+              <div>
                 <p className="campo-label">Nombre</p>
-                <p className="font-medium truncate">{item.nombre}</p>
+                <p className="font-medium truncate col-span-3">{item.nombre}</p>
               </div>
-              {item.codigo_barras && (
-                <div className="col-span-2">
-                  <p className="campo-label">Código Barras</p>
-                  <p className="font-mono text-xs">{item.codigo_barras}</p>
-                </div>
-              )}
               <div>
                 <p className="campo-label">Precio venta</p>
                 <p className="text-primary font-bold">{formatPrecio(item.precio)}</p>
               </div>
               <div>
-                <p className="campo-label">Stock total</p>
+                <p className="campo-label">Stock</p>
                 <p className={item.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{item.stock} uds</p>
               </div>
               <div>
@@ -92,6 +86,10 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
               <div>
                 <p className="campo-label">Marca</p>
                 <p className="truncate">{item.marca || '—'}</p>
+              </div>
+              <div>
+                <p className="campo-label">Código Barras</p>
+                <p className="font-mono text-xs">{item.codigo_barras || '—'}</p>
               </div>
             </div>
           </div>
