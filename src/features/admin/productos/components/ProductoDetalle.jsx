@@ -71,6 +71,12 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
                 <p className="campo-label">Nombre</p>
                 <p className="font-medium truncate">{item.nombre}</p>
               </div>
+              {item.codigo_barras && (
+                <div className="col-span-2">
+                  <p className="campo-label">Código Barras</p>
+                  <p className="font-mono text-xs">{item.codigo_barras}</p>
+                </div>
+              )}
               <div>
                 <p className="campo-label">Precio venta</p>
                 <p className="text-primary font-bold">{formatPrecio(item.precio)}</p>
@@ -87,12 +93,6 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
                 <p className="campo-label">Marca</p>
                 <p className="truncate">{item.marca || '—'}</p>
               </div>
-              {item.codigo_barras && (
-                <div className="col-span-2">
-                  <p className="campo-label">Código Barras</p>
-                  <p className="font-mono text-xs">{item.codigo_barras}</p>
-                </div>
-              )}
             </div>
           </div>
 
