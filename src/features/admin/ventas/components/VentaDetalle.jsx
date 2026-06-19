@@ -51,7 +51,7 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo={`Venta #${venta?.id}`}>
       {venta && (
-        <div className="space-y-3 text-xs">
+        <div className="space-y-3 text-xs overflow-y-auto max-h-[75vh]">
           <div className="grid grid-cols-2 gap-3">
             <div><p className="campo-label">Cliente</p><p className="font-medium">{venta.cliente}</p></div>
             <div><p className="campo-label">Tipo</p>
@@ -116,7 +116,7 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
             ) : productos.length === 0 ? (
               <p className="text-center text-gray-400 py-3">Sin productos registrados</p>
             ) : (
-              <div className="space-y-1 max-h-48 overflow-y-auto">
+              <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
                 {productos.map(p => (
                   <div key={p.id} className="flex items-center gap-2 p-2 rounded bg-gray-50">
                     {p.imagen_url

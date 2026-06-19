@@ -67,7 +67,7 @@ export default function OrdenDetalle({
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
       titulo={`Orden #${orden?.id}`} ancho="max-w-lg">
       {orden && (
-        <div className="space-y-3">
+        <div className="space-y-3 overflow-y-auto max-h-[75vh]">
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div><p className="campo-label">Proveedor</p><p className="font-medium">{orden.proveedor}</p></div>
             <div><p className="campo-label">Total</p><p className="text-primary font-bold text-sm">{formatPrecio(orden.total)}</p></div>
@@ -94,7 +94,7 @@ export default function OrdenDetalle({
             ) : productos.length === 0 ? (
               <p className="text-center text-gray-400 text-xs py-3">Sin productos registrados</p>
             ) : (
-              <div className="space-y-1 max-h-56 overflow-y-auto">
+              <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
                 {productos.map(p => (
                   <FilaProducto key={p.id} p={p} esCompletada={esCompletada} />
                 ))}

@@ -15,7 +15,7 @@ export default function PagoDetalle({
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
       titulo={grupo ? `Historial de Pagos — Venta #${grupo.pedido_id}` : 'Historial de Pagos'}>
       {grupo && (
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-sm overflow-y-auto max-h-[75vh]">
           <div className="grid grid-cols-2 gap-3">
             <div><p className="campo-label">Cliente</p><p className="font-medium">{grupo.cliente || '—'}</p></div>
             <div><p className="campo-label">Total venta</p><p>{formatPrecio(grupo.total_pedido)}</p></div>
@@ -42,7 +42,7 @@ export default function PagoDetalle({
 
           <div className="pt-2 border-t border-gray-100">
             <p className="campo-label mb-1.5 flex items-center gap-1"><History size={11} /> Movimientos ({grupo.pagos.length})</p>
-            <div className="space-y-1.5 max-h-72 overflow-y-auto">
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
               {grupo.pagos.map(pago => {
                 const anulado = esAnulado(pago.estado)
                 const { label, clase } = getEstadoPago(pago.estado)
