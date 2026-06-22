@@ -65,7 +65,7 @@ export default function Clientes() {
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => abrirModal()} className="btn-primary">
-            <Plus size={14} /> Nuevo Cliente
+            <Plus size={14} /> Nuevo
           </button>
         </div>
       </div>

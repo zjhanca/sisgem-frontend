@@ -78,7 +78,7 @@ export default function OrdCompra() {
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
-            <Plus size={14} /> Nueva Orden
+            <Plus size={14} /> Nueva 
           </button>
         </div>
       </div>

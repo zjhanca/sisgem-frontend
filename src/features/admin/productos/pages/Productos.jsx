@@ -63,7 +63,7 @@ export default function Productos() {
           <button onClick={() => setConfirmDescarga(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
-          <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo Producto</button>
+          <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo </button>
         </div>
       </div>
 

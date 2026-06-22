@@ -56,7 +56,7 @@ export default function Roles() {
     <div>
       <div className="page-header">
         <h1 className="page-title">Roles y Permisos</h1>
-        <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo Rol</button>
+        <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo </button>
       </div>
 
       <Tabla columnas={columnas} datos={roles}

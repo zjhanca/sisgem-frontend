@@ -54,7 +54,7 @@ export default function Proveedores() {
           <button onClick={() => setConfirmDescarga(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
-          <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo Proveedor</button>
+          <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo </button>
         </div>
       </div>
 

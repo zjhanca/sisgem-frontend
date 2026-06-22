@@ -49,7 +49,7 @@ export default function Usuarios() {
     <div>
       <div className="page-header">
         <h1 className="page-title">Usuarios</h1>
-        <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo Usuario</button>
+        <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo </button>
       </div>
 
       <Tabla columnas={columnas} datos={usuarios}

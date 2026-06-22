@@ -82,7 +82,7 @@ export default function Pedidos() {
           )}
           {p.tabActivo === 'pedidos' && (
             <button onClick={() => p.setModalNuevo(true)} className="btn-primary">
-              <Plus size={14} /> Nuevo Pedido
+              <Plus size={14} /> Nuevo 
             </button>
           )}
         </div>

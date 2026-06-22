@@ -62,7 +62,7 @@ export default function Marcas() {
     <div>
       <div className="page-header">
         <h1 className="page-title">Marcas</h1>
-        <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nueva Marca</button>
+        <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nueva</button>
       </div>
 
       <Tabla columnas={columnas} datos={marcas}

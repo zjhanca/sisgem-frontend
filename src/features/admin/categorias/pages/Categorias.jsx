@@ -52,7 +52,7 @@ export default function Categorias() {
       <div className="page-header">
         <h1 className="page-title">Categorías</h1>
         <button onClick={() => abrirModal()} className="btn-primary">
-          <Plus size={14} /> Nueva Categoría
+          <Plus size={14} /> Nueva
         </button>
       </div>
 

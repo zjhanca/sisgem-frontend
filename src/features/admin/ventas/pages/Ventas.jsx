@@ -96,7 +96,7 @@ export default function Ventas() {
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
-            <Plus size={14} /> Nueva Venta
+            <Plus size={14} /> Nueva 
           </button>
         </div>
       </div>
