@@ -22,13 +22,10 @@ export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirMod
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div><p className="campo-label">Nombre</p>
               <p className="font-medium">{item.nombre} {item.apellido}</p></div>
-            <div><p className="campo-label">Estado</p>
-              <span className={item.estado ? 'badge-activo' : 'badge-inactivo'}>
-                {item.estado ? 'Activo' : 'Inactivo'}</span></div>
+            <div><p className="campo-label">Correo</p><p>{item.email || '—'}</p></div>
             <div><p className="campo-label">Documento</p>
               <p>{item.tipo_documento}: {item.numero_documento || '—'}</p></div>
             <div><p className="campo-label">Teléfono</p><p>{item.telefono || '—'}</p></div>
-            <div className="col-span-2"><p className="campo-label">Correo</p><p>{item.email || '—'}</p></div>
           </div>
 
           {/* sección fiado */}
