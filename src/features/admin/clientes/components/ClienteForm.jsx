@@ -91,7 +91,7 @@ export default function ClienteForm({ modal, form, errores, verificando = {}, ha
               {errores.telefono && <p className="campo-error">{errores.telefono}</p>}
             </div>
           </div>
-          {!modal.item && form.email && !errores.email && (
+          {!modal.item && (
             <div className="mt-2 p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs text-primary">
               Se generará una contraseña automática y se enviará al correo del cliente.
             </div>
