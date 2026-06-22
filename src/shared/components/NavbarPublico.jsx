@@ -1,22 +1,24 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Menu, X, LogOut } from 'lucide-react'
 
 export default function NavbarPublico() {
   const { usuario, logout } = useAuth()
-  const navigate  = useNavigate()
+  const navigate   = useNavigate()
+  const location   = useLocation()
   const [menuMovil, setMenuMovil] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/') }
-  const esAdmin   = usuario && +usuario.rol_id === 1
-  const esCliente = usuario && +usuario.rol_id !== 1
+  const esAdmin      = usuario && +usuario.rol_id === 1
+  const esCliente    = usuario && +usuario.rol_id !== 1
+  const enAdmin      = location.pathname.startsWith('/admin')
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center gap-4">
 
-        <Link to="/" className="shrink-0 flex items-center gap-2 group">
+        <Link to="/" className="shrink-0 flex items-center gap-2">
           <img src="/logo.png" alt="Sisgem"
             className="h-9 w-auto object-contain"
             onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='block' }} />
@@ -27,26 +29,38 @@ export default function NavbarPublico() {
           {usuario ? (
             <div className="flex items-center gap-2">
 
-              {esCliente && (
-                <Link to="/perfil"
-                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg
-                    hover:bg-gray-50 transition-colors group">
-                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center
-                    text-white text-xs font-bold shrink-0">
-                    {usuario.nombre?.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-xs font-medium text-light-text group-hover:text-primary transition-colors">
-                    Hola, {usuario.nombre}
+              {/* saludo — siempre visible, no clickeable */}
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center
+                  text-white text-xs font-bold shrink-0">
+                  {usuario.nombre?.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-xs font-medium text-light-text">
+                  Hola, {usuario.nombre}
+                </span>
+              </div>
+
+              {/* botón panel — admin va a /admin, cliente va a /perfil */}
+              {esAdmin && (
+                enAdmin ? (
+                  <span className="hidden md:block px-3 py-1.5 text-xs rounded-lg
+                    bg-light-text text-white font-medium cursor-default select-none">
+                    Panel Admin
                   </span>
-                </Link>
+                ) : (
+                  <Link to="/admin"
+                    className="hidden md:block px-3 py-1.5 text-xs rounded-lg
+                      bg-light-text text-white hover:bg-gray-700 transition-colors font-medium">
+                    Panel Admin
+                  </Link>
+                )
               )}
 
-              {esAdmin && (
-                <Link to="/admin"
+              {esCliente && (
+                <Link to="/perfil"
                   className="hidden md:block px-3 py-1.5 text-xs rounded-lg
-                    bg-light-text text-white hover:bg-gray-700
-                    transition-colors font-medium">
-                  Panel Admin
+                    border border-primary/30 text-primary hover:bg-primary/5 transition-colors font-medium">
+                  Mi Panel
                 </Link>
               )}
 
@@ -79,18 +93,19 @@ export default function NavbarPublico() {
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-2">
           {usuario ? (
             <>
-              {esCliente && (
-                <Link to="/perfil" onClick={() => setMenuMovil(false)}
-                  className="flex items-center gap-2 py-1.5">
-                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-                    {usuario.nombre?.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium text-light-text">Hola, {usuario.nombre}</span>
-                </Link>
-              )}
+              <div className="flex items-center gap-2 py-1.5">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+                  {usuario.nombre?.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium text-light-text">Hola, {usuario.nombre}</span>
+              </div>
               {esAdmin && (
                 <Link to="/admin" onClick={() => setMenuMovil(false)}
                   className="block text-sm py-1.5 text-light-text font-medium">Panel Admin</Link>
+              )}
+              {esCliente && (
+                <Link to="/perfil" onClick={() => setMenuMovil(false)}
+                  className="block text-sm py-1.5 text-primary font-medium">Mi Panel</Link>
               )}
               <button onClick={handleLogout} className="block text-sm py-1.5 text-red-400 text-left w-full">
                 Cerrar Sesión

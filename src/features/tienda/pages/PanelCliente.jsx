@@ -5,9 +5,8 @@ import { usePanelCliente } from '../hooks/usePanelCliente'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 
 const TABS = [
-  { id: 'pedidos', label: 'Mis Pedidos', icon: ShoppingBag },
-  { id: 'abonos',  label: 'Abonos',      icon: CreditCard  },
-  { id: 'perfil',  label: 'Mi Perfil',   icon: User        },
+  { id: 'actividad', label: 'Actividad',  icon: ShoppingBag },
+  { id: 'perfil',    label: 'Mi Perfil',  icon: User        },
 ]
 
 export default function PanelCliente() {
@@ -27,114 +26,129 @@ export default function PanelCliente() {
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
 
-      <div className="bg-light-card dark:bg-dark-card border-b border-gray-100 dark:border-dark-border px-4 py-3">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link to="/" className="text-lg font-bold text-primary">SISGEM</Link>
+      {/* header igual al home */}
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
+          <Link to="/" className="text-xl font-bold text-primary">SISGEM</Link>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
                 {usuario?.nombre?.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm text-gray-600 dark:text-dark-text/70 hidden sm:inline">
-                Hola, <span className="font-semibold text-light-text dark:text-dark-text">{usuario?.nombre}</span>
+              <span className="text-xs font-medium text-light-text hidden sm:inline">
+                Hola, {usuario?.nombre}
               </span>
             </div>
             <button onClick={handleLogout}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-400 transition-colors">
-              <LogOut size={13} /> Salir
+              className="p-1.5 rounded-lg border border-gray-200 hover:border-red-200 hover:text-red-400 transition-colors text-gray-400">
+              <LogOut size={13} />
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex gap-1 mb-6 bg-light-card dark:bg-dark-card p-1 rounded-xl border border-gray-100 dark:border-dark-border overflow-x-auto">
+      <main className="max-w-6xl mx-auto px-4 py-8">
+
+        {/* tabs */}
+        <div className="flex gap-1 mb-8 bg-light-card dark:bg-dark-card p-1 rounded-xl border border-gray-100 dark:border-dark-border w-fit">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                tab === t.id ? 'bg-primary text-dark-bg shadow-sm' : 'text-gray-500 dark:text-dark-text/60 hover:text-primary'
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                tab === t.id ? 'bg-primary text-white shadow-sm' : 'text-gray-500 hover:text-primary'
               }`}>
               <t.icon size={13} /> {t.label}
             </button>
           ))}
         </div>
 
-        {tab === 'pedidos' && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-light-text dark:text-dark-text">Mis Pedidos</h2>
-              <Link to="/productos" className="btn-primary text-xs"><Plus size={12} /> Nuevo Pedido</Link>
-            </div>
-            {loadPedidos && <p className="text-sm text-gray-400 text-center py-8">Cargando...</p>}
-            {!loadPedidos && pedidos.length === 0 && (
-              <div className="text-center py-12">
-                <ShoppingBag size={40} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-400 text-sm">Aún no tienes pedidos</p>
-                <Link to="/productos" className="btn-primary text-xs mt-3 inline-flex"><Plus size={12} /> Hacer un Pedido</Link>
+        {/* ACTIVIDAD: pedidos + abonos en 2 columnas */}
+        {tab === 'actividad' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* columna pedidos */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-sm font-semibold text-light-text dark:text-dark-text">Pedidos</h2>
+                <Link to="/productos" className="btn-primary text-xs py-1 px-2.5">
+                  <Plus size={11} /> Nuevo
+                </Link>
               </div>
-            )}
-            {pedidos.map(p => (
-              <div key={p.id} className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-light-text dark:text-dark-text">Pedido #{p.id}</span>
-                      <span className={getBadge(p.estado)}>{p.estado || 'Pendiente'}</span>
+              {loadPedidos && (
+                <div className="space-y-2">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="h-20 rounded-xl bg-light-card dark:bg-dark-card border border-gray-100 dark:border-dark-border animate-pulse" />
+                  ))}
+                </div>
+              )}
+              {!loadPedidos && pedidos.length === 0 && (
+                <div className="text-center py-10 bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border">
+                  <ShoppingBag size={32} className="mx-auto text-gray-300 mb-2" />
+                  <p className="text-gray-400 text-xs">Sin pedidos aún</p>
+                </div>
+              )}
+              {pedidos.map(p => (
+                <div key={p.id} className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm text-light-text dark:text-dark-text">Pedido #{p.id}</span>
+                        <span className={getBadge(p.estado)}>{p.estado || 'Pendiente'}</span>
+                      </div>
+                      <p className="text-xs text-gray-400 flex items-center gap-1">
+                        <Clock size={10} /> {formatFechaHora(p.fecha_pedido)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {p.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}
+                      </p>
+                      {p.notas && <p className="text-xs italic text-gray-400">{p.notas}</p>}
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                      <Clock size={10} /> {formatFechaHora(p.fecha_pedido)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {p.tipo_venta === 'domicilio' ? '🛵 Domicilio' : '🏪 Mostrador'}
-                    </p>
-                    {p.notas && <p className="text-xs italic text-gray-400 mt-1">{p.notas}</p>}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-primary font-bold">{formatPrecio(p.total)}</p>
-                    <button onClick={() => setModalAbono({ abierto: true, pedido: p })}
-                      className="text-xs text-primary hover:underline mt-1 block">
-                      Registrar Abono
-                    </button>
+                    <div className="text-right shrink-0">
+                      <p className="text-primary font-bold text-sm">{formatPrecio(p.total)}</p>
+                      <button onClick={() => setModalAbono({ abierto: true, pedido: p })}
+                        className="text-xs text-primary hover:underline mt-1 block">
+                        Abonar
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* columna abonos */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">Abonos</h2>
+              {misAbonos.length === 0 && (
+                <div className="text-center py-10 bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border">
+                  <CreditCard size={32} className="mx-auto text-gray-300 mb-2" />
+                  <p className="text-gray-400 text-xs">Sin abonos registrados</p>
+                </div>
+              )}
+              {misAbonos.map(a => (
+                <div key={a.id} className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-sm font-medium text-light-text dark:text-dark-text">
+                        {a.numero_comprobante || `Comprobante #${a.id}`}
+                      </span>
+                      <p className="text-xs text-gray-400">Pedido #{a.pedido_id} · {a.metodo}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-primary font-bold text-sm">{formatPrecio(a.monto)}</p>
+                      <span className={a.estado?.toLowerCase().includes('anula') ? 'badge-anulado' : 'badge-activo'}>
+                        {a.estado || 'Activo'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
           </div>
         )}
 
-        {tab === 'abonos' && (
-          <div className="space-y-3">
-            <h2 className="font-semibold text-light-text dark:text-dark-text">Mis Abonos</h2>
-            {misAbonos.length === 0 && (
-              <div className="text-center py-12">
-                <CreditCard size={40} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-400 text-sm">Sin abonos registrados</p>
-              </div>
-            )}
-            {misAbonos.map(a => (
-              <div key={a.id} className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-medium text-light-text dark:text-dark-text">
-                      Comprobante {a.numero_comprobante || `#${a.id}`}
-                    </span>
-                    <p className="text-xs text-gray-400">Pedido #{a.pedido_id} · {a.metodo}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-primary font-bold">{formatPrecio(a.monto)}</p>
-                    <span className={a.estado?.toLowerCase().includes('anula') ? 'badge-anulado' : 'badge-activo'}>
-                      {a.estado || 'Activo'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
+        {/* PERFIL */}
         {tab === 'perfil' && (
-          <div className="space-y-4">
-            <h2 className="font-semibold text-light-text dark:text-dark-text">Mi Perfil</h2>
+          <div className="max-w-lg space-y-4">
             {clienteData ? (
               <>
                 <div className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-6 space-y-4">
@@ -149,7 +163,7 @@ export default function PanelCliente() {
                       <p className="text-xs text-gray-400">{clienteData.email || '—'}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t border-gray-100 dark:border-dark-border">
+                  <div className="grid grid-cols-2 gap-3 text-sm pt-3 border-t border-gray-100 dark:border-dark-border">
                     <div><p className="campo-label">Teléfono</p><p className="font-medium">{clienteData.telefono || '—'}</p></div>
                     <div><p className="campo-label">Documento</p><p className="font-medium">{clienteData.tipo_documento}: {clienteData.numero_documento || '—'}</p></div>
                   </div>
@@ -176,19 +190,18 @@ export default function PanelCliente() {
             )}
           </div>
         )}
-      </div>
+      </main>
 
+      {/* MODAL ABONO */}
       {modalAbono.abierto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4">
             <h3 className="font-semibold text-light-text dark:text-dark-text">
               Registrar Abono — Pedido #{modalAbono.pedido?.id}
             </h3>
-            <div className="text-sm p-3 rounded-lg bg-light-bg dark:bg-dark-bg">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Total Pedido</span>
-                <span>{formatPrecio(modalAbono.pedido?.total)}</span>
-              </div>
+            <div className="text-sm p-3 rounded-lg bg-light-bg dark:bg-dark-bg flex justify-between">
+              <span className="text-gray-400">Total Pedido</span>
+              <span className="font-medium">{formatPrecio(modalAbono.pedido?.total)}</span>
             </div>
             <div>
               <label className="campo-label">Monto *</label>
@@ -221,6 +234,7 @@ export default function PanelCliente() {
         </div>
       )}
 
+      {/* MODAL CAMBIAR CONTRASEÑA */}
       {modalPass && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4">
