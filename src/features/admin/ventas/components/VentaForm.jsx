@@ -30,6 +30,9 @@ export default function VentaForm({
 
   const clienteSeleccionado = clientes.find(c => c.id === +form.cliente_id)
   const permitefiado = clienteSeleccionado?.permite_fiado
+  const limiteFiado = clienteSeleccionado?.limite_fiado ? +clienteSeleccionado.limite_fiado : null
+  const fiadoExcedido = form.tipo_pago === 'fiado' && limiteFiado != null && totalVenta > limiteFiado
+  const fiadoPorcentaje = form.tipo_pago === 'fiado' && limiteFiado ? Math.min(100, (totalVenta / limiteFiado) * 100) : 0
 
   // cantidad total por producto (suma de todas sus líneas, si está dividido por lote)
   const totalPorProducto = {}
@@ -105,6 +108,22 @@ export default function VentaForm({
                 </div>
               )}
 
+              {clienteSeleccionado && form.tipo_pago === 'fiado' && limiteFiado != null && (
+                <div className="mt-1.5 space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-400">Límite fiado</span>
+                    <span className={fiadoExcedido ? 'text-red-400 font-semibold' : 'text-amber-600 font-semibold'}>
+                      {fiadoExcedido
+                        ? `Excede por $${(totalVenta - limiteFiado).toLocaleString('es-CO')}`
+                        : `$${totalVenta.toLocaleString('es-CO')} / $${limiteFiado.toLocaleString('es-CO')}`}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${fiadoExcedido ? 'bg-red-400' : fiadoPorcentaje > 80 ? 'bg-amber-400' : 'bg-primary'}`}
+                      style={{ width: `${Math.min(100, fiadoPorcentaje)}%` }} />
+                  </div>
+                </div>
+              )}
               {clienteSeleccionado && (
                 <div className="flex gap-2 pt-1">
                   {[{ val:'total', label:'Pago Total', icon:CreditCard, active:'bg-primary text-white border-primary' },

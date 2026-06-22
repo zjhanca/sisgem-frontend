@@ -6,6 +6,14 @@ export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirMod
   const item = modalDetalle.item
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
 
+  // calcular fiado consumido: suma de pedidos pendientes (fiado sin pagar)
+  const fiadoConsumido = historial
+    .filter(p => p.estado?.toLowerCase().includes('pendiente'))
+    .reduce((s, p) => s + parseFloat(p.total || 0), 0)
+  const limiteFiado = item?.limite_fiado ? +item.limite_fiado : null
+  const fiadoDisponible = limiteFiado != null ? Math.max(0, limiteFiado - fiadoConsumido) : null
+  const fiadoPorcentaje = limiteFiado ? Math.min(100, (fiadoConsumido / limiteFiado) * 100) : 0
+
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
       titulo="Detalle del Cliente" ancho="max-w-lg">
@@ -29,18 +37,36 @@ export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirMod
               ? 'bg-amber-500/5 border-amber-500/20'
               : 'bg-light-bg dark:bg-dark-bg border-gray-200 dark:border-dark-border'
           }`}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-1">
               <p className="campo-label mb-0">Fiado</p>
               <span className={item.permite_fiado ? 'badge-activo' : 'text-xs text-gray-400'}>
                 {item.permite_fiado ? 'Habilitado' : 'No habilitado'}
               </span>
             </div>
-            {item.permite_fiado && (
-              <p className="text-xs text-gray-400 mt-1">
-                Límite: <span className="text-amber-500 font-medium">
-                  {item.limite_fiado ? formatPrecio(item.limite_fiado) : 'Sin límite'}
-                </span>
-              </p>
+            {item.permite_fiado && limiteFiado != null && (
+              <div className="space-y-1.5 mt-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-400">Consumido</span>
+                  <span className="text-amber-600 font-medium">{formatPrecio(fiadoConsumido)}</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${fiadoPorcentaje >= 100 ? 'bg-red-400' : fiadoPorcentaje > 70 ? 'bg-amber-400' : 'bg-primary'}`}
+                    style={{ width: `${Math.min(100, fiadoPorcentaje)}%` }} />
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-400">Disponible</span>
+                  <span className={`font-semibold ${fiadoDisponible === 0 ? 'text-red-400' : 'text-primary'}`}>
+                    {fiadoDisponible === 0 ? 'Sin límite disponible' : formatPrecio(fiadoDisponible)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs pt-0.5 border-t border-amber-200/50">
+                  <span className="text-gray-400">Límite total</span>
+                  <span className="text-amber-500 font-medium">{formatPrecio(limiteFiado)}</span>
+                </div>
+              </div>
+            )}
+            {item.permite_fiado && !limiteFiado && (
+              <p className="text-xs text-gray-400 mt-1">Sin límite configurado</p>
             )}
           </div>
 
