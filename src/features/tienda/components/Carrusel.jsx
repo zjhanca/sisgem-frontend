@@ -37,8 +37,10 @@ export default function Carrusel() {
   const prev = () => { setIdx(i => (i - 1 + BANNERS.length) % BANNERS.length); resetTimer() }
   const next = () => { setIdx(i => (i + 1) % BANNERS.length); resetTimer() }
 
+  // Alturas originales: h-60 (240px) sm:h-80 (320px) md:h-[420px]
+  // -15%:              h-[204px]      sm:h-[272px]   md:h-[357px]
   return (
-    <section className="relative w-full overflow-hidden h-60 sm:h-80 md:h-[420px] select-none bg-gray-900">
+    <section className="relative w-full overflow-hidden h-[204px] sm:h-[272px] md:h-[357px] select-none bg-gray-900">
       {BANNERS.map((b, i) => (
         <div key={b.id}
           className={`absolute inset-0 transition-opacity duration-700 ${i === idx ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>

@@ -11,4 +11,5 @@ export const tiendaService = {
   crearAbono:          data       => api.post('/abonos', data),
   getDirecciones:      id         => api.get(`/clientes/${id}/direcciones`).then(r => r.data.datos),
   crearDireccion:      (id, data) => api.post(`/clientes/${id}/direcciones`, data),
+  cambiarPassword: data => api.put('/auth/cambiar-password', data),
 }
