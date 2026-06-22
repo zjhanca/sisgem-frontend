@@ -210,10 +210,20 @@ export function useVentas() {
         toast.error(`${nombre}: solo hay ${stock} unidades en stock`); return
       }
     }
+    // validar límite de fiado en frontend antes de enviar al backend
+    if (form.tipo_pago === 'fiado' && form.cliente_id) {
+      const cliente = clientes.find(c => c.id === +form.cliente_id)
+      if (cliente?.limite_fiado && +cliente.limite_fiado > 0 && totalVenta > +cliente.limite_fiado) {
+        toast.error(`El total ($${totalVenta.toLocaleString('es-CO')}) supera el límite de fiado ($${(+cliente.limite_fiado).toLocaleString('es-CO')})`)
+        return
+      }
+    }
+
     crearVenta.mutate({
       cliente_id:     form.tipo_cliente === 'registrado' ? form.cliente_id    : null,
       cliente_nombre: form.tipo_cliente === 'manual'     ? form.cliente_nombre : null,
       productos:      form.productos,
+      es_fiado:       form.tipo_pago === 'fiado',
       _total:         totalVenta,
       _tipo_pago:     form.tipo_pago,
     })
