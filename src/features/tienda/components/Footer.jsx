@@ -1,10 +1,12 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
-import { MapPin, ShoppingBag, User, Phone } from 'lucide-react'
+import { MapPin, Phone } from 'lucide-react'
 
 export default function Footer() {
   const { usuario } = useAuth()
+  const location = useLocation()
   const esCliente = usuario && +usuario.rol_id !== 1
+  const enPerfil  = location.pathname === '/perfil'
 
   return (
     <footer className="mt-16 bg-light-card dark:bg-dark-card border-t border-gray-100 dark:border-dark-border">
@@ -29,23 +31,8 @@ export default function Footer() {
         <div className="space-y-3">
           <p className="text-xs font-semibold text-light-text dark:text-dark-text uppercase tracking-wider">Tienda</p>
           <ul className="space-y-2">
-            <li>
-              <Link to="/" className="text-xs text-gray-400 hover:text-primary transition-colors">
-                Inicio
-              </Link>
-            </li>
-            <li>
-              <Link to="/productos" className="text-xs text-gray-400 hover:text-primary transition-colors">
-                Productos
-              </Link>
-            </li>
-            {esCliente && (
-              <li>
-                <Link to="/perfil" className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-primary transition-colors">
-                  <ShoppingBag size={11} /> Mis Pedidos
-                </Link>
-              </li>
-            )}
+            <li><Link to="/"          className="text-xs text-gray-400 hover:text-primary transition-colors">Inicio</Link></li>
+            <li><Link to="/productos" className="text-xs text-gray-400 hover:text-primary transition-colors">Productos</Link></li>
           </ul>
         </div>
 
@@ -54,23 +41,13 @@ export default function Footer() {
           <p className="text-xs font-semibold text-light-text dark:text-dark-text uppercase tracking-wider">Mi Cuenta</p>
           <ul className="space-y-2">
             {usuario ? (
-              <li>
-                <Link to="/perfil" className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-primary transition-colors">
-                  <User size={11} /> Mi Panel
-                </Link>
-              </li>
+              !enPerfil && esCliente && (
+                <li><Link to="/perfil" className="text-xs text-gray-400 hover:text-primary transition-colors">Mi Panel</Link></li>
+              )
             ) : (
               <>
-                <li>
-                  <Link to="/login" className="text-xs text-gray-400 hover:text-primary transition-colors">
-                    Iniciar Sesión
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/register" className="text-xs text-gray-400 hover:text-primary transition-colors">
-                    Crear Cuenta
-                  </Link>
-                </li>
+                <li><Link to="/login"    className="text-xs text-gray-400 hover:text-primary transition-colors">Iniciar Sesión</Link></li>
+                <li><Link to="/register" className="text-xs text-gray-400 hover:text-primary transition-colors">Crear Cuenta</Link></li>
               </>
             )}
           </ul>
@@ -79,9 +56,8 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-gray-100 dark:border-dark-border">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Sisgem — Todos los derechos reservados</p>
-          <p className="text-xs text-gray-400">Medellín, Colombia</p>
+        <div className="max-w-6xl mx-auto px-4 py-4 text-center">
+          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Sisgem — Todos los derechos reservados · Medellín, Colombia</p>
         </div>
       </div>
 
