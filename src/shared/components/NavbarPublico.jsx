@@ -9,6 +9,8 @@ export default function NavbarPublico() {
   const [menuMovil, setMenuMovil] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/') }
+  const esAdmin   = usuario && +usuario.rol_id === 1
+  const esCliente = usuario && +usuario.rol_id !== 1
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -24,7 +26,22 @@ export default function NavbarPublico() {
         <div className="flex items-center gap-2 ml-auto shrink-0">
           {usuario ? (
             <div className="flex items-center gap-2">
-              {+usuario.rol_id === 1 && (
+
+              {esCliente && (
+                <Link to="/perfil"
+                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg
+                    hover:bg-gray-50 transition-colors group">
+                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center
+                    text-white text-xs font-bold shrink-0">
+                    {usuario.nombre?.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-xs font-medium text-light-text group-hover:text-primary transition-colors">
+                    Hola, {usuario.nombre}
+                  </span>
+                </Link>
+              )}
+
+              {esAdmin && (
                 <Link to="/admin"
                   className="hidden md:block px-3 py-1.5 text-xs rounded-lg
                     bg-light-text text-white hover:bg-gray-700
@@ -32,6 +49,7 @@ export default function NavbarPublico() {
                   Panel Admin
                 </Link>
               )}
+
               <button onClick={handleLogout}
                 className="p-1.5 rounded-lg border border-gray-200
                   hover:border-red-200 hover:text-red-400 transition-colors text-gray-400">
@@ -61,11 +79,22 @@ export default function NavbarPublico() {
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-2">
           {usuario ? (
             <>
-              {+usuario.rol_id === 1 && (
+              {esCliente && (
+                <Link to="/perfil" onClick={() => setMenuMovil(false)}
+                  className="flex items-center gap-2 py-1.5">
+                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+                    {usuario.nombre?.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-light-text">Hola, {usuario.nombre}</span>
+                </Link>
+              )}
+              {esAdmin && (
                 <Link to="/admin" onClick={() => setMenuMovil(false)}
                   className="block text-sm py-1.5 text-light-text font-medium">Panel Admin</Link>
               )}
-              <button onClick={handleLogout} className="block text-sm py-1.5 text-red-400 text-left w-full">Cerrar Sesión</button>
+              <button onClick={handleLogout} className="block text-sm py-1.5 text-red-400 text-left w-full">
+                Cerrar Sesión
+              </button>
             </>
           ) : (
             <>

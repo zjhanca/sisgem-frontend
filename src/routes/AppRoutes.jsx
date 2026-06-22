@@ -7,6 +7,7 @@ import Recuperar      from '@features/autch/pages/Recuperar'
 import ResetPassword  from '@features/autch/pages/ResetPassword'
 import Home         from '@features/tienda/pages/Home'
 import Catalogo     from '@features/tienda/pages/Catalogo'
+import PanelCliente from '@features/tienda/pages/PanelCliente'
 import Dashboard    from '@features/admin/dashboard/pages/Dashboard'
 import Ventas       from '@features/admin/ventas/pages/Ventas'
 import Productos    from '@features/admin/productos/pages/Productos'
@@ -27,6 +28,13 @@ function RutaAdmin({ children }) {
   return children
 }
 
+function RutaCliente({ children }) {
+  const { usuario, cargando } = useAuth()
+  if (cargando) return null
+  if (!usuario) return <Navigate to='/login' replace />
+  return children
+}
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -36,6 +44,7 @@ export default function AppRoutes() {
       <Route path='/register'  element={<Register />} />
       <Route path='/recuperar'      element={<Recuperar />} />
       <Route path='/reset-password' element={<ResetPassword />} />
+      <Route path='/perfil'    element={<RutaCliente><PanelCliente /></RutaCliente>} />
       <Route path='/admin' element={<RutaAdmin><AdminLayout /></RutaAdmin>}>
         <Route index             element={<Dashboard />} />
         <Route path='ventas'     element={<Ventas />} />
