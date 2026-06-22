@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
-import { MapPin, Phone } from 'lucide-react'
 
 export default function Footer() {
   const { usuario } = useAuth()
@@ -19,12 +18,6 @@ export default function Footer() {
           <p className="text-xs text-gray-400 leading-relaxed">
             Tu minimercado de confianza en Medellín. Productos frescos y de calidad cada día.
           </p>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <MapPin size={11} className="shrink-0" /> Medellín, Colombia
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <Phone size={11} className="shrink-0" /> +57 300 000 0000
-          </div>
         </div>
 
         {/* tienda */}
@@ -57,7 +50,7 @@ export default function Footer() {
 
       <div className="border-t border-gray-100 dark:border-dark-border">
         <div className="max-w-6xl mx-auto px-4 py-4 text-center">
-          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Sisgem — Todos los derechos reservados · Medellín, Colombia</p>
+          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Sisgem — Todos los derechos reservados</p>
         </div>
       </div>
 
