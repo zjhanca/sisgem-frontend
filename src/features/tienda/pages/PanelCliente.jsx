@@ -118,7 +118,7 @@ export default function PanelCliente() {
 
         {/* PERFIL */}
         {tab === 'perfil' && (
-          <div className="max-w-lg space-y-4">
+          <div className="space-y-4">
             {clienteData ? (
               <>
                 <div className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-6 space-y-4">
