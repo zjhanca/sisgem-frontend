@@ -13,9 +13,9 @@ export function usePanelCliente() {
   const navigate            = useNavigate()
   const qc                  = useQueryClient()
 
-  const [tab, setTab]               = useState('pedidos')
+  const [tab, setTab]               = useState('actividad')
   const [modalAbono, setModalAbono] = useState({ abierto: false, pedido: null })
-  const [modalDir, setModalDir]     = useState(false)
+
   const [modalPass, setModalPass]   = useState(false)
   const [formAbono, setFormAbono]   = useState({ monto: '', metodo: 'efectivo' })
   const [formDir, setFormDir]       = useState(dirVacia)

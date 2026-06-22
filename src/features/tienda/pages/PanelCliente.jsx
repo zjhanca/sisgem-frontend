@@ -1,21 +1,19 @@
 import { Link } from 'react-router-dom'
-import { ShoppingBag, User, LogOut, Plus, CreditCard, Clock, KeyRound, Eye, EyeOff } from 'lucide-react'
+import { ShoppingBag, User, LogOut, CreditCard, Clock, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { usePanelCliente } from '../hooks/usePanelCliente'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 
 const TABS = [
-  { id: 'actividad', label: 'Actividad',  icon: ShoppingBag },
-  { id: 'perfil',    label: 'Mi Perfil',  icon: User        },
+  { id: 'actividad', label: 'Actividad', icon: ShoppingBag },
+  { id: 'perfil',    label: 'Mi Perfil', icon: User        },
 ]
 
 export default function PanelCliente() {
   const {
     usuario, clienteData, pedidos, misAbonos, loadPedidos,
     tab, setTab,
-    modalAbono, setModalAbono, formAbono, setFormAbono,
     modalPass, setModalPass, formPass, setFormPass, cambiandoPass, handleCambiarPass,
-    crearAbono,
     handleLogout, getBadge,
   } = usePanelCliente()
 
@@ -26,10 +24,10 @@ export default function PanelCliente() {
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
 
-      {/* header igual al home */}
+      {/* header simétrico al navbar del home */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-primary">SISGEM</Link>
+          <Link to="/" className="text-xl font-bold text-primary">Sisgem</Link>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
@@ -65,14 +63,9 @@ export default function PanelCliente() {
         {tab === 'actividad' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            {/* columna pedidos */}
+            {/* pedidos */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between mb-1">
-                <h2 className="text-sm font-semibold text-light-text dark:text-dark-text">Pedidos</h2>
-                <Link to="/productos" className="btn-primary text-xs py-1 px-2.5">
-                  <Plus size={11} /> Nuevo
-                </Link>
-              </div>
+              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">Pedidos</h2>
               {loadPedidos && (
                 <div className="space-y-2">
                   {[1,2,3].map(i => (
@@ -102,19 +95,13 @@ export default function PanelCliente() {
                       </p>
                       {p.notas && <p className="text-xs italic text-gray-400">{p.notas}</p>}
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-primary font-bold text-sm">{formatPrecio(p.total)}</p>
-                      <button onClick={() => setModalAbono({ abierto: true, pedido: p })}
-                        className="text-xs text-primary hover:underline mt-1 block">
-                        Abonar
-                      </button>
-                    </div>
+                    <p className="text-primary font-bold text-sm shrink-0">{formatPrecio(p.total)}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* columna abonos */}
+            {/* abonos */}
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">Abonos</h2>
               {misAbonos.length === 0 && (
@@ -163,7 +150,7 @@ export default function PanelCliente() {
                       <p className="text-xs text-gray-400">{clienteData.email || '—'}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm pt-3 border-t border-gray-100 dark:border-dark-border">
+                  <div className="grid grid-cols-1 gap-3 text-sm pt-3 border-t border-gray-100 dark:border-dark-border">
                     <div><p className="campo-label">Teléfono</p><p className="font-medium">{clienteData.telefono || '—'}</p></div>
                     <div><p className="campo-label">Documento</p><p className="font-medium">{clienteData.tipo_documento}: {clienteData.numero_documento || '—'}</p></div>
                   </div>
@@ -191,48 +178,6 @@ export default function PanelCliente() {
           </div>
         )}
       </main>
-
-      {/* MODAL ABONO */}
-      {modalAbono.abierto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4">
-            <h3 className="font-semibold text-light-text dark:text-dark-text">
-              Registrar Abono — Pedido #{modalAbono.pedido?.id}
-            </h3>
-            <div className="text-sm p-3 rounded-lg bg-light-bg dark:bg-dark-bg flex justify-between">
-              <span className="text-gray-400">Total Pedido</span>
-              <span className="font-medium">{formatPrecio(modalAbono.pedido?.total)}</span>
-            </div>
-            <div>
-              <label className="campo-label">Monto *</label>
-              <input type="number" step="0.01" value={formAbono.monto}
-                onChange={e => setFormAbono(p => ({ ...p, monto: e.target.value }))}
-                className="campo-input" placeholder="0.00" />
-            </div>
-            <div>
-              <label className="campo-label">Método</label>
-              <select value={formAbono.metodo} onChange={e => setFormAbono(p => ({ ...p, metodo: e.target.value }))} className="campo-input">
-                <option value="efectivo">Efectivo</option>
-                <option value="transferencia">Transferencia</option>
-                <option value="nequi">Nequi</option>
-                <option value="daviplata">Daviplata</option>
-              </select>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setModalAbono({ abierto: false, pedido: null })}
-                className="flex-1 py-2 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-xl">
-                Cancelar
-              </button>
-              <button
-                disabled={crearAbono.isPending || !formAbono.monto}
-                onClick={() => crearAbono.mutate({ pedido_id: modalAbono.pedido.id, ...formAbono })}
-                className="flex-1 py-2 text-sm btn-primary justify-center disabled:opacity-50">
-                {crearAbono.isPending ? 'Registrando...' : 'Aceptar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* MODAL CAMBIAR CONTRASEÑA */}
       {modalPass && (
