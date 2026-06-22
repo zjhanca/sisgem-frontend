@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
-import { ShoppingBag, User, LogOut, CreditCard, Clock, KeyRound, Eye, EyeOff } from 'lucide-react'
+import { ShoppingBag, User, CreditCard, Clock, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { usePanelCliente } from '../hooks/usePanelCliente'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
+import NavbarPublico from '@shared/components/NavbarPublico'
+import Footer from '../components/Footer'
 
 const TABS = [
   { id: 'actividad', label: 'Actividad', icon: ShoppingBag },
@@ -14,7 +16,7 @@ export default function PanelCliente() {
     usuario, clienteData, pedidos, misAbonos, loadPedidos,
     tab, setTab,
     modalPass, setModalPass, formPass, setFormPass, cambiandoPass, handleCambiarPass,
-    handleLogout, getBadge,
+    getBadge,
   } = usePanelCliente()
 
   const [showActual, setShowActual]   = useState(false)
@@ -24,26 +26,7 @@ export default function PanelCliente() {
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
 
-      {/* header simétrico al navbar del home */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-primary">Sisgem</Link>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-                {usuario?.nombre?.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-xs font-medium text-light-text hidden sm:inline">
-                Hola, {usuario?.nombre}
-              </span>
-            </div>
-            <button onClick={handleLogout}
-              className="p-1.5 rounded-lg border border-gray-200 hover:border-red-200 hover:text-red-400 transition-colors text-gray-400">
-              <LogOut size={13} />
-            </button>
-          </div>
-        </div>
-      </div>
+      <NavbarPublico />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
 
@@ -59,7 +42,7 @@ export default function PanelCliente() {
           ))}
         </div>
 
-        {/* ACTIVIDAD: pedidos + abonos en 2 columnas */}
+        {/* ACTIVIDAD */}
         {tab === 'actividad' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -241,6 +224,8 @@ export default function PanelCliente() {
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
   )
 }
