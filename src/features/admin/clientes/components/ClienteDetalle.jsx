@@ -76,13 +76,19 @@ export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirMod
               ? <p className="text-xs text-center text-gray-400 py-3">Sin pedidos</p>
               : (
                 <div className="space-y-1 max-h-36 overflow-y-auto">
-                  {historial.map(p => (
-                    <div key={p.id} className="flex justify-between text-xs p-2 rounded bg-light-bg dark:bg-dark-bg">
-                      <span className="font-medium">#{p.id}</span>
-                      <span className="text-gray-400">{formatFecha(p.fecha_pedido)}</span>
-                      <span className="text-primary">{formatPrecio(p.total)}</span>
-                    </div>
-                  ))}
+                  {historial.map(p => {
+                    const est = p.estado?.toLowerCase() || ''
+                    const badgeClass = est.includes('anula') ? 'badge-anulado' : est.includes('paga') || est.includes('complet') ? 'badge-activo' : 'badge-pendiente'
+                    const badgeLabel = est.includes('anula') ? 'Anulado' : est.includes('paga') || est.includes('complet') ? 'Pagado' : 'Pendiente'
+                    return (
+                      <div key={p.id} className="flex items-center justify-between text-xs p-2 rounded bg-light-bg dark:bg-dark-bg gap-2">
+                        <span className="font-medium shrink-0">#{p.id}</span>
+                        <span className="text-gray-400 shrink-0">{formatFecha(p.fecha_pedido)}</span>
+                        <span className={badgeClass}>{badgeLabel}</span>
+                        <span className={`font-medium shrink-0 ${est.includes('anula') ? 'text-gray-400 line-through' : 'text-primary'}`}>{formatPrecio(p.total)}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               )
             }
