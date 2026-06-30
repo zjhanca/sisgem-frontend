@@ -13,17 +13,11 @@ import {
 
 const MENU = [
   {
-    id: 'configuracion',
-    label: 'Configuración',
-    items: [
-      { to: '/admin/roles', label: 'Roles', icon: Shield },
-    ]
-  },
-  {
     id: 'usuarios',
     label: 'Usuarios',
     items: [
       { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
+      { to: '/admin/roles',    label: 'Roles',    icon: Shield },
     ]
   },
   {
