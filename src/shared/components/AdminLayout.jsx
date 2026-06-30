@@ -16,8 +16,8 @@ const MENU = [
     id: 'usuarios',
     label: 'Usuarios',
     items: [
-      { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
       { to: '/admin/roles',    label: 'Roles',    icon: Shield },
+      { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
     ]
   },
   {
