@@ -1,5 +1,14 @@
+import { useState } from 'react'
 import Modal from '@shared/components/Modal'
-import { Loader2, CheckCircle2, Lock } from 'lucide-react'
+import { Loader2, CheckCircle2, Lock, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react'
+
+function Requisito({ ok, texto }) {
+  return (
+    <div className={`flex items-center gap-1 text-xs ${ok ? 'text-green-600' : 'text-gray-400'}`}>
+      {ok ? <CheckCircle size={10} /> : <XCircle size={10} />} {texto}
+    </div>
+  )
+}
 
 function CampoEstado({ verificando, error, valor, validado }) {
   if (verificando) return <span className="campo-hint flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Verificando...</span>
@@ -11,6 +20,14 @@ function CampoEstado({ verificando, error, valor, validado }) {
 export default function UsuarioForm({ modal, form, errores, verificando = {}, handleChange, handleSubmit, cerrarModal, guardando, roles }) {
   const docVerificado = !errores.numero_documento && form.numero_documento?.length >= 5 && !verificando.numero_documento
   const bloqueado = !docVerificado
+  const [verPass, setVerPass] = useState(false)
+  const [focusPass, setFocusPass] = useState(false)
+
+  const passReqs = {
+    largo:     (form.password || '').length >= 6,
+    mayuscula: /[A-Z]/.test(form.password || ''),
+    numero:    /[0-9]/.test(form.password || ''),
+  }
 
   return (
     <Modal abierto={modal.abierto} onCerrar={cerrarModal} bloquearCierre titulo={modal.item ? 'Editar Usuario' : 'Nuevo Usuario'}>
@@ -115,10 +132,25 @@ export default function UsuarioForm({ modal, form, errores, verificando = {}, ha
           {modal.item && (
             <div>
               <label className="campo-label">Nueva Contraseña <span className="text-gray-400 font-normal">(opcional)</span></label>
-              <input type="password" value={form.password} onChange={e => handleChange('password', e.target.value)}
-                disabled={bloqueado}
-                className={`campo-input ${errores.password ? 'border-red-400' : ''}`}
-                placeholder="Dejar vacío para no cambiar" />
+              <div className="relative">
+                <input type={verPass ? 'text' : 'password'} value={form.password || ''}
+                  onChange={e => handleChange('password', e.target.value)}
+                  onFocus={() => setFocusPass(true)} onBlur={() => setFocusPass(false)}
+                  disabled={bloqueado}
+                  className={`campo-input pr-8 ${errores.password ? 'border-red-400' : ''}`}
+                  placeholder="Dejar vacío para no cambiar" />
+                <button type="button" onClick={() => setVerPass(!verPass)}
+                  className="absolute right-2 top-3 text-gray-400 hover:text-primary">
+                  {verPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {(focusPass || form.password) && (
+                <div className="mt-1.5 space-y-1 p-2 bg-gray-50 rounded-lg">
+                  <Requisito ok={passReqs.largo}     texto="Mínimo 6 caracteres" />
+                  <Requisito ok={passReqs.mayuscula} texto="Una mayúscula" />
+                  <Requisito ok={passReqs.numero}    texto="Un número" />
+                </div>
+              )}
               {errores.password && <p className="campo-error">{errores.password}</p>}
             </div>
           )}

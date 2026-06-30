@@ -8,7 +8,7 @@ import {
   Package, Tag, Grid3X3, Users, Shield,
   Building2, ClipboardList, CreditCard, Menu, X,
   LogOut, ChevronDown, ChevronRight,
-  KeyRound, Eye, EyeOff
+  KeyRound, Eye, EyeOff, CheckCircle, XCircle
 } from 'lucide-react'
 
 const MENU = [
@@ -56,11 +56,26 @@ const estadoInicial = () => {
   return MENU.reduce((acc, g) => ({ ...acc, [g.id]: true }), {})
 }
 
+function Requisito({ ok, texto }) {
+  return (
+    <div className={`flex items-center gap-1 text-xs ${ok ? 'text-green-600' : 'text-gray-400'}`}>
+      {ok ? <CheckCircle size={10} /> : <XCircle size={10} />} {texto}
+    </div>
+  )
+}
+
 function ModalContrasena({ onCerrar }) {
   const [form, setForm] = useState({ actual: '', nueva: '', confirmar: '' })
   const [ver, setVer]   = useState({ actual: false, nueva: false, confirmar: false })
   const [cargando, setCargando] = useState(false)
   const [errores, setErrores]   = useState({})
+  const [focusNueva, setFocusNueva] = useState(false)
+
+  const passReqs = {
+    largo:     form.nueva.length >= 6,
+    mayuscula: /[A-Z]/.test(form.nueva),
+    numero:    /[0-9]/.test(form.nueva),
+  }
 
   const validar = () => {
     const e = {}
@@ -88,12 +103,6 @@ function ModalContrasena({ onCerrar }) {
     } finally { setCargando(false) }
   }
 
-  const campos = [
-    { key: 'actual',    label: 'Contraseña Actual *',  placeholder: 'Tu contraseña actual' },
-    { key: 'nueva',     label: 'Nueva Contraseña *',   placeholder: 'Mínimo 6 caracteres' },
-    { key: 'confirmar', label: 'Confirmar Nueva *',    placeholder: 'Repetir nueva contraseña' },
-  ]
-
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onCerrar}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
@@ -106,22 +115,59 @@ function ModalContrasena({ onCerrar }) {
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3">
-          {campos.map(({ key, label, placeholder }) => (
-            <div key={key}>
-              <label className="campo-label">{label}</label>
-              <div className="relative">
-                <input type={ver[key] ? 'text' : 'password'} value={form[key]}
-                  onChange={e => { setForm(p => ({ ...p, [key]: e.target.value })); setErrores(p => ({ ...p, [key]: '' })) }}
-                  className={`campo-input pr-8 ${errores[key] ? 'border-red-400' : ''}`}
-                  placeholder={placeholder} />
-                <button type="button" onClick={() => setVer(p => ({ ...p, [key]: !p[key] }))}
-                  className="absolute right-2 top-2.5 text-gray-400 hover:text-primary">
-                  {ver[key] ? <EyeOff size={13} /> : <Eye size={13} />}
-                </button>
-              </div>
-              {errores[key] && <p className="campo-error">{errores[key]}</p>}
+          <div>
+            <label className="campo-label">Contraseña Actual *</label>
+            <div className="relative">
+              <input type={ver.actual ? 'text' : 'password'} value={form.actual}
+                onChange={e => { setForm(p => ({ ...p, actual: e.target.value })); setErrores(p => ({ ...p, actual: '' })) }}
+                className={`campo-input pr-8 ${errores.actual ? 'border-red-400' : ''}`}
+                placeholder="Tu contraseña actual" />
+              <button type="button" onClick={() => setVer(p => ({ ...p, actual: !p.actual }))}
+                className="absolute right-2 top-3 text-gray-400 hover:text-primary">
+                {ver.actual ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
-          ))}
+            {errores.actual && <p className="campo-error">{errores.actual}</p>}
+          </div>
+
+          <div>
+            <label className="campo-label">Nueva Contraseña *</label>
+            <div className="relative">
+              <input type={ver.nueva ? 'text' : 'password'} value={form.nueva}
+                onChange={e => { setForm(p => ({ ...p, nueva: e.target.value })); setErrores(p => ({ ...p, nueva: '' })) }}
+                onFocus={() => setFocusNueva(true)} onBlur={() => setFocusNueva(false)}
+                className={`campo-input pr-8 ${errores.nueva ? 'border-red-400' : ''}`}
+                placeholder="Mínimo 6 caracteres" />
+              <button type="button" onClick={() => setVer(p => ({ ...p, nueva: !p.nueva }))}
+                className="absolute right-2 top-3 text-gray-400 hover:text-primary">
+                {ver.nueva ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {(focusNueva || form.nueva) && (
+              <div className="mt-1.5 space-y-1 p-2 bg-gray-50 rounded-lg">
+                <Requisito ok={passReqs.largo}     texto="Mínimo 6 caracteres" />
+                <Requisito ok={passReqs.mayuscula} texto="Una mayúscula" />
+                <Requisito ok={passReqs.numero}    texto="Un número" />
+              </div>
+            )}
+            {errores.nueva && <p className="campo-error">{errores.nueva}</p>}
+          </div>
+
+          <div>
+            <label className="campo-label">Confirmar Nueva *</label>
+            <div className="relative">
+              <input type={ver.confirmar ? 'text' : 'password'} value={form.confirmar}
+                onChange={e => { setForm(p => ({ ...p, confirmar: e.target.value })); setErrores(p => ({ ...p, confirmar: '' })) }}
+                className={`campo-input pr-8 ${errores.confirmar ? 'border-red-400' : ''}`}
+                placeholder="Repetir nueva contraseña" />
+              <button type="button" onClick={() => setVer(p => ({ ...p, confirmar: !p.confirmar }))}
+                className="absolute right-2 top-3 text-gray-400 hover:text-primary">
+                {ver.confirmar ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {errores.confirmar && <p className="campo-error">{errores.confirmar}</p>}
+          </div>
+
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
             <button type="button" onClick={onCerrar}
               className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg">Cancelar</button>
