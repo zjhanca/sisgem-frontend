@@ -25,14 +25,15 @@ export default function RolDetalle({ modalDetalle, setModalDetalle, abrirModal, 
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo="Detalle del Rol">
       {item && (
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-1">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div><p className="campo-label">Nombre</p><p className="font-medium">{item.nombre}</p></div>
-            <div><p className="campo-label">Estado</p>
+            <div>
+              <p className="campo-label">Estado</p>
               <span className={item.estado ? 'badge-activo' : 'badge-inactivo'}>{item.estado ? 'Activo' : 'Inactivo'}</span>
+              {item.descripcion && <p className="text-xs text-gray-500 mt-1">{item.descripcion}</p>}
             </div>
             <div><p className="campo-label">Usuarios Asignados</p><span className="badge-proceso">{item.total_usuarios}</span></div>
-            {item.descripcion && <div className="col-span-2"><p className="campo-label">Descripción</p><p className="text-xs text-gray-500">{item.descripcion}</p></div>}
           </div>
 
           <div className="pt-2 border-t border-gray-200 dark:border-dark-border">
