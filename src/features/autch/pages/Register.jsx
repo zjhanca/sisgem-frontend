@@ -142,8 +142,8 @@ export default function Register() {
                       className={'campo-input pr-8 ' + (errores.confirmar ? 'border-red-400' : '')}
                       placeholder="Repetir contraseña" />
                     <button type="button" onClick={() => setVerConf(!verConf)}
-                      className="absolute right-2 top-2.5 text-gray-400 hover:text-primary">
-                      {verConf ? <EyeOff size={13} /> : <Eye size={13} />}
+                      className="absolute right-2 top-3 text-gray-400 hover:text-primary">
+                      {verConf ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                   {errores.confirmar && <p className="campo-error">{errores.confirmar}</p>}
