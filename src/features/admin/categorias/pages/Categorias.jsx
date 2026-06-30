@@ -1,11 +1,10 @@
 ﻿import { useState } from 'react'
-import { Plus, Edit2, Eye, Trash2, Percent } from 'lucide-react'
+import { Plus, Edit2, Eye, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { useCategorias } from '../hooks/useCategorias'
 import CategoriaForm          from '../components/CategoriaForm'
 import CategoriaDetalle       from '../components/CategoriaDetalle'
 import CategoriaEliminar      from '../components/CategoriaEliminar'
-import CategoriaMargen        from '../components/CategoriaMargen'
 import CategoriaConfirmEstado from '../components/Categoriaconfirmestado'
 import { formatFecha } from '@shared/utils/validaciones'
 
@@ -33,7 +32,6 @@ export default function Categorias() {
     guardando, eliminando,
   } = useCategorias()
 
-  const [modalMargen, setModalMargen]     = useState({ abierto: false, item: null })
   const [confirmToggle, setConfirmToggle] = useState(null)
 
   const columnas = [
@@ -60,7 +58,6 @@ export default function Categorias() {
         acciones={fila => (<>
           <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
           <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
-          <button onClick={() => setModalMargen({ abierto: true, item: fila })} className="btn-ghost" title="Cambiar margen"><Percent size={14} /></button>
           <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400" title="Eliminar"><Trash2 size={14} /></button>
         </>)}
       />
@@ -72,8 +69,6 @@ export default function Categorias() {
         abrirModal={abrirModal} toggleEstado={toggleEstado} />
       <CategoriaEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
         eliminar={eliminar} eliminando={eliminando} />
-      <CategoriaMargen modalMargen={modalMargen} setModalMargen={setModalMargen}
-        actualizarMargen={actualizarMargen} />
       <CategoriaConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle}
         toggleEstado={toggleEstado} />
     </div>
