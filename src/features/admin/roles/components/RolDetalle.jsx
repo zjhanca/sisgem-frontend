@@ -26,14 +26,25 @@ export default function RolDetalle({ modalDetalle, setModalDetalle, abrirModal, 
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo="Detalle del Rol">
       {item && (
         <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-1">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><p className="campo-label">Nombre</p><p className="font-medium">{item.nombre}</p></div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            <div>
+              <p className="campo-label">Nombre</p>
+              <p className="font-medium">{item.nombre}</p>
+            </div>
             <div>
               <p className="campo-label">Estado</p>
               <span className={item.estado ? 'badge-activo' : 'badge-inactivo'}>{item.estado ? 'Activo' : 'Inactivo'}</span>
-              {item.descripcion && <p className="text-xs text-gray-500 mt-1">{item.descripcion}</p>}
             </div>
-            <div><p className="campo-label">Usuarios Asignados</p><span className="badge-proceso">{item.total_usuarios}</span></div>
+            <div>
+              <p className="campo-label">Usuarios Asignados</p>
+              <span className="badge-proceso">{item.total_usuarios}</span>
+            </div>
+            {item.descripcion && (
+              <div>
+                <p className="campo-label">Descripción</p>
+                <p className="text-xs text-gray-500">{item.descripcion}</p>
+              </div>
+            )}
           </div>
 
           <div className="pt-2 border-t border-gray-200 dark:border-dark-border">
@@ -47,16 +58,16 @@ export default function RolDetalle({ modalDetalle, setModalDetalle, abrirModal, 
             ) : permisos.length === 0 ? (
               <p className="text-xs text-center text-gray-400 py-3">Este rol no tiene permisos asignados</p>
             ) : (
-              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
                 {Object.entries(grupos).map(([modulo, perms]) => (
-                  <div key={modulo} className="rounded-lg border border-gray-200 dark:border-dark-border overflow-hidden">
+                  <div key={modulo} className="rounded-lg border border-gray-200 dark:border-dark-border overflow-hidden h-fit">
                     <div className="px-2.5 py-1.5 bg-gray-50 dark:bg-dark-bg">
                       <span className="text-xs font-semibold capitalize">{modulo}</span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 p-2">
-                      {perms.map(p => (
-                        <span key={p.id} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-                          {p.nombre.replace(/_/g, ' ')}
+                    <div className="flex flex-wrap gap-1 p-2">
+                      {[...new Set(perms.map(p => p.nombre))].map(nombre => (
+                        <span key={nombre} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
+                          {nombre.replace(/_/g, ' ')}
                         </span>
                       ))}
                     </div>
