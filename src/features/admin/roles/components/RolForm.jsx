@@ -42,11 +42,9 @@ export default function RolForm({
               <textarea value={form.descripcion} onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))}
                 rows={2} className="campo-input resize-none" placeholder="Descripción del rol..." />
             </div>
-            {!modal.item && (
-              <div className="p-3 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-600">
-                💡 Puedes asignar permisos en la pestaña "Permisos" o hacerlo después.
-              </div>
-            )}
+            <div className="p-3 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-600">
+              💡 Al continuar deberás seleccionar al menos un permiso para este rol.
+            </div>
           </div>
         )}
 
@@ -91,7 +89,7 @@ export default function RolForm({
 
         <div className="flex justify-end pt-3 mt-3 border-t border-gray-100">
           <button type="submit" disabled={guardando || !!errores.nombre} className="btn-primary disabled:opacity-50">
-            {guardando ? 'Guardando...' : 'Aceptar'}
+            {guardando ? 'Guardando...' : tab === 'info' ? 'Siguiente: Permisos →' : 'Aceptar'}
           </button>
         </div>
       </form>

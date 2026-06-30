@@ -86,6 +86,20 @@ export function useRoles() {
     e.preventDefault()
     if (!form.nombre.trim()) { setErrores({ nombre: 'El nombre es obligatorio' }); return }
     if (errores.nombre) return
+
+    // si todavía estamos en la pestaña de información, no guardar aún:
+    // llevar al usuario a la pestaña de permisos para que los seleccione
+    if (tab === 'info') {
+      setTab('permisos')
+      return
+    }
+
+    // en la pestaña de permisos: son obligatorios, no se puede guardar sin ninguno
+    if (permisosSeleccionados.length === 0) {
+      toast.error('Selecciona al menos un permiso para este rol')
+      return
+    }
+
     guardar.mutate(form)
   }
 
