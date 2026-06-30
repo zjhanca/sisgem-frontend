@@ -81,10 +81,14 @@ export function useProductos() {
   const abrirModal = (item = null) => {
     if (item) {
       // reconstruir array de imágenes desde el item
-      // soporta: item.imagenes (array), item.imagen_url (string), o ambos
+      // soporta: item.imagenes (array), item.imagenes (string JSON desde la BD), item.imagen_url (string)
+      let imgsRaw = item.imagenes
+      if (typeof imgsRaw === 'string') {
+        try { imgsRaw = JSON.parse(imgsRaw) } catch { imgsRaw = [] }
+      }
       let imagenes = []
-      if (Array.isArray(item.imagenes) && item.imagenes.length > 0) {
-        imagenes = item.imagenes
+      if (Array.isArray(imgsRaw) && imgsRaw.length > 0) {
+        imagenes = imgsRaw.filter(Boolean)
       } else if (item.imagen_url) {
         imagenes = [item.imagen_url]
       }
