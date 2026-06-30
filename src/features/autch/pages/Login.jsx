@@ -1,12 +1,14 @@
 ﻿import { Link } from 'react-router-dom'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { useLogin } from '../Hooks/useLogin'
+import PantallaCarga from '@shared/components/PantallaCarga'
 
 export default function Login() {
   const { form, verPass, setVerPass, cargando, errores, errorGeneral, handleChange, handleSubmit } = useLogin()
 
   return (
     <div className="min-h-screen flex">
+      {cargando && <PantallaCarga mensaje="Iniciando sesión..." />}
 
       {/* panel izquierdo — formulario */}
       <div className="w-full md:w-[420px] flex flex-col justify-center px-10 py-12 bg-white">

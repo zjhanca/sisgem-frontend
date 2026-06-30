@@ -115,12 +115,16 @@ export function useRegister() {
         login(data.token, data.usuario)
         toast.success('Bienvenido, ' + data.usuario.nombre + '!')
         navigate('/')
+        setTimeout(() => setCargando(false), 600)
+        return
       }
+      setCargando(false)
     } catch (err) {
       const msg = err.response?.data?.mensaje || 'Error al registrarse'
       if (msg.includes('correo')) setErrores(p => ({ ...p, email: 'Este correo ya está registrado' }))
       else toast.error(msg)
-    } finally { setCargando(false) }
+      setCargando(false)
+    }
   }
 
   return { form, errores, verificando, cargando, handleChange, handleSubmit }

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Eye, EyeOff, CheckCircle, XCircle, Loader2, CheckCircle2 } from 'lucide-react'
 import { useState } from 'react'
 import { useRegister } from '../Hooks/useRegister'
+import PantallaCarga from '@shared/components/PantallaCarga'
 
 function Requisito({ ok, texto }) {
   return (
@@ -32,6 +33,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex">
+      {cargando && <PantallaCarga mensaje="Creando tu cuenta..." />}
 
       {/* panel izquierdo — formulario */}
       <div className="w-full md:w-[520px] flex flex-col justify-center px-10 py-10 bg-white overflow-y-auto">

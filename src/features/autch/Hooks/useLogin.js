@@ -42,10 +42,12 @@ export function useLogin() {
       login(data.token, data.usuario)
       toast.success('Bienvenido, ' + data.usuario.nombre)
       navigate(data.usuario.rol_id === 1 ? '/admin' : '/')
+      // mantener la pantalla de carga visible un momento mientras navega,
+      // para que la transición no se sienta abrupta
+      setTimeout(() => setCargando(false), 600)
     } catch (err) {
       const msg = err.response?.data?.mensaje || 'Correo o contraseña incorrectos'
       setErrorGeneral(msg)
-    } finally {
       setCargando(false)
     }
   }
