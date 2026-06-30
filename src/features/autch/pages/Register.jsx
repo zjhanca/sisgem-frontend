@@ -121,8 +121,8 @@ export default function Register() {
                       className={'campo-input pr-8 ' + (errores.password ? 'border-red-400' : '')}
                       placeholder="Mínimo 6 caracteres" />
                     <button type="button" onClick={() => setVerPass(!verPass)}
-                      className="absolute right-2 top-2.5 text-gray-400 hover:text-primary">
-                      {verPass ? <EyeOff size={13} /> : <Eye size={13} />}
+                      className="absolute right-2 top-3 text-gray-400 hover:text-primary">
+                      {verPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                   {(focusPass || form.password) && (
