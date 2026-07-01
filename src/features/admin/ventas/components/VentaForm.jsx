@@ -11,7 +11,7 @@ export default function VentaForm({
 }) {
   const cerrar = () => {
     setModalNuevo(false)
-    setForm({ tipo_cliente:'registrado', cliente_id:'', cliente_nombre:'', productos:[], tipo_pago:'total' })
+    setForm({ tipo_cliente:'registrado', cliente_id:'', cliente_nombre:'', productos:[], tipo_pago:'total', metodo_pago:'efectivo' })
   }
   const dropdownRef = useRef(null)
 
@@ -148,6 +148,28 @@ export default function VentaForm({
               className="campo-input" placeholder="Nombre del cliente" />
           )}
         </div>
+
+        {form.tipo_pago !== 'fiado' && (
+          <div>
+            <label className="campo-label">Método de Pago</label>
+            <div className="flex gap-2">
+              {[
+                { val: 'efectivo',     label: 'Efectivo' },
+                { val: 'transferencia',label: 'Transferencia' },
+              ].map(m => (
+                <button key={m.val} type="button"
+                  onClick={() => setForm(f => ({ ...f, metodo_pago: m.val }))}
+                  className={`flex-1 py-2 text-xs rounded-lg border transition-all ${
+                    form.metodo_pago === m.val
+                      ? 'bg-primary text-white border-primary'
+                      : 'border-gray-200 text-gray-500 hover:border-primary/40'
+                  }`}>
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="p-3 rounded-xl border border-gray-200 space-y-2">
           <p className="text-xs font-semibold">Productos</p>

@@ -14,7 +14,7 @@ export function useVentas() {
   const [filtroHasta, setFiltroHasta]   = useState('')
   const [form, setForm] = useState({
     tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '',
-    productos: [], tipo_pago: 'total', // 'total' | 'fiado'
+    productos: [], tipo_pago: 'total', metodo_pago: 'efectivo', // 'total' | 'fiado'
   })
   const [prodBusqueda, setProdBusqueda]       = useState('')
   const [prodsFiltrados, setProdsFiltrados]   = useState([])
@@ -79,14 +79,14 @@ export function useVentas() {
       } else {
         // pago total: marcar pagado y registrar pago
         if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
-        await ventasService.registrarPago({ pedido_id, monto: data._total, metodo: 'efectivo' })
+        await ventasService.registrarPago({ pedido_id, monto: data._total, metodo: data._metodo_pago || 'efectivo' })
       }
       return res.data
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries(['pedidos']); qc.invalidateQueries(['productos']); qc.invalidateQueries(['pagos'])
       setModalNuevo(false)
-      setForm({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [], tipo_pago: 'total' })
+      setForm({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [], tipo_pago: 'total', metodo_pago: 'efectivo' })
       setProdBusqueda(''); setClienteBusqueda('')
       toast.success(vars._tipo_pago === 'fiado' ? 'Venta registrada como fiado' : 'Venta registrada y marcada como pagada')
     },
@@ -226,6 +226,7 @@ export function useVentas() {
       es_fiado:       form.tipo_pago === 'fiado',
       _total:         totalVenta,
       _tipo_pago:     form.tipo_pago,
+      _metodo_pago:   form.metodo_pago || 'efectivo',
     })
   }
 
