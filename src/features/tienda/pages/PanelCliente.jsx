@@ -12,18 +12,18 @@ const TABS = [
 ]
 
 export default function PanelCliente() {
+  const [showActual, setShowActual]   = useState(false)
+  const [showNueva, setShowNueva]     = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [focusNueva, setFocusNueva]   = useState(false)
+  const [errorActual, setErrorActual]  = useState('')
+
   const {
     usuario, clienteData, pedidos, misAbonos, loadPedidos,
     tab, setTab,
     modalPass, setModalPass, formPass, setFormPass, cambiandoPass, handleCambiarPass,
     getBadge,
   } = usePanelCliente(setErrorActual)
-
-  const [showActual, setShowActual]   = useState(false)
-  const [showNueva, setShowNueva]     = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [focusNueva, setFocusNueva]   = useState(false)
-  const [errorActual, setErrorActual]  = useState('')
 
   const passReqs = {
     largo:     (formPass.nueva || '').length >= 6,
