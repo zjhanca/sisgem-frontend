@@ -20,9 +20,8 @@ export default function DashboardConfirmDescarga({ confirmDescarga, setConfirmDe
     }
   }
 
-  const etiqueta = confirmDescarga?.tipo === 'mes'
-    ? 'el reporte mensual de ventas'
-    : 'el reporte semanal de ventas'
+  const etiquetas = { dia: 'el reporte diario de ventas', semana: 'el reporte semanal de ventas', mes: 'el reporte mensual de ventas' }
+  const etiqueta = etiquetas[confirmDescarga?.tipo] || 'el reporte de ventas'
 
   return (
     <Modal abierto={!!confirmDescarga} onCerrar={cerrar} bloquearCierre titulo="Descargar PDF" ancho="max-w-sm">

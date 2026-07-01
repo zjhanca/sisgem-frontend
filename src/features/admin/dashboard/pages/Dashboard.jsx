@@ -32,6 +32,9 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <h1 className="page-title">Dashboard</h1>
         <div className="flex gap-2">
+          <button onClick={() => setConfirmDescarga({ tipo: 'dia' })} className="btn-outline">
+            <Download size={14} /> Diario
+          </button>
           <button onClick={() => setConfirmDescarga({ tipo: 'semana' })} className="btn-outline">
             <Download size={14} /> Semanal
           </button>

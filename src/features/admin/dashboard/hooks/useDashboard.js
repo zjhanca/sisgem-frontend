@@ -8,7 +8,10 @@ export function useDashboard() {
   const { data, isLoading } = useQuery({ queryKey: ['dashboard'], queryFn: dashboardService.getStats, refetchInterval: 60000 })
   const { data: ventasMes = [] } = useQuery({ queryKey: ['ventas-mes'], queryFn: dashboardService.getVentasMes })
   const { data: bajoStock = [] } = useQuery({ queryKey: ['bajo-stock'], queryFn: dashboardService.getBajoStock, refetchInterval: 60000 })
-  const descargarReporte = tipo => descargarPDF('/reportes/ventas?periodo=' + tipo, 'reporte-' + tipo + '.pdf')
+  const descargarReporte = async tipo => {
+    const nombres = { dia: 'diario', semana: 'semanal', mes: 'mensual' }
+    await descargarPDF(`/reportes/ventas?periodo=${tipo}`, `reporte-${nombres[tipo] || tipo}.pdf`)
+  }
   const ventasGrafica = periodoVentas === 'semana' ? (data?.ventas_semana || []) : ventasMes
   const totalSemana = (data?.ventas_semana || []).reduce((s, d) => s + parseFloat(d.total || 0), 0)
   const totalMes    = ventasMes.reduce((s, d) => s + parseFloat(d.total || 0), 0)
