@@ -54,9 +54,9 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
         <div className="space-y-3 text-xs overflow-y-auto max-h-[75vh]">
           <div className="grid grid-cols-2 gap-3">
             <div><p className="campo-label">Cliente</p><p className="font-medium">{venta.cliente}</p></div>
-            <div><p className="campo-label">Tipo</p>
-              <span className="inline-block w-20 text-center">
-                <span className="badge bg-primary/20 text-green-700">Mostrador</span>
+            <div><p className="campo-label">Método de Pago</p>
+              <span className="capitalize font-medium">
+                {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
               </span>
             </div>
             <div><p className="campo-label">Estado</p>
