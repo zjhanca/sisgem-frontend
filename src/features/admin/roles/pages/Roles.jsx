@@ -45,12 +45,12 @@ export default function Roles() {
     { key: 'total_usuarios', label: 'Usuarios',    render: r => <span className="badge-proceso">{r.total_usuarios}</span> },
     { key: 'estado', label: 'Estado',
       render: r => esProtegido(r.id)
-        ? <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium w-24 justify-center bg-gray-100 border-gray-200 text-gray-400">
-            <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-gray-200 shrink-0">
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform ${r.estado ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+        ? <div className={`inline-flex items-center h-6 rounded-full px-1 w-24 relative opacity-50 cursor-not-allowed ${r.estado ? 'bg-primary' : 'bg-gray-300'}`}>
+            <span className={`absolute inline-block w-4 h-4 rounded-full bg-white shadow-sm ${r.estado ? 'left-1' : 'left-[calc(100%-1.25rem)]'}`} />
+            <span className={`w-full text-center text-xs font-semibold ${r.estado ? 'pl-5 text-white' : 'pr-5 text-white/80'}`}>
+              {r.estado ? 'Activo' : 'Inactivo'}
             </span>
-            {r.estado ? 'Activo' : 'Inactivo'}
-          </span>
+          </div>
         : <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
             onClick={() => setConfirmToggle({ id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
     },
