@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 
 const passVacio = { actual: '', nueva: '', confirmar: '' }
 
-export function usePanelCliente() {
+export function usePanelCliente(setErrorActual) {
   const { usuario, logout } = useAuth()
   const navigate            = useNavigate()
   const qc                  = useQueryClient()
@@ -60,10 +60,13 @@ export function usePanelCliente() {
       setModalPass(false)
       setFormPass(passVacio)
     } catch (err) {
-      // capturar el error sin dejar que el interceptor de axios cierre la sesión
       const msg = err.response?.data?.mensaje || 'Contraseña actual incorrecta'
-      toast.error(msg)
-      // no relanzar el error para evitar que el interceptor de 401 haga logout
+      if (msg.toLowerCase().includes('actual') || msg.toLowerCase().includes('incorrecta')) {
+        if (setErrorActual) setErrorActual(msg)
+        else toast.error(msg)
+      } else {
+        toast.error(msg)
+      }
     } finally {
       setCambiandoPass(false)
     }

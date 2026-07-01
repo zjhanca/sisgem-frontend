@@ -17,12 +17,13 @@ export default function PanelCliente() {
     tab, setTab,
     modalPass, setModalPass, formPass, setFormPass, cambiandoPass, handleCambiarPass,
     getBadge,
-  } = usePanelCliente()
+  } = usePanelCliente(setErrorActual)
 
   const [showActual, setShowActual]   = useState(false)
   const [showNueva, setShowNueva]     = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [focusNueva, setFocusNueva]   = useState(false)
+  const [errorActual, setErrorActual]  = useState('')
 
   const passReqs = {
     largo:     (formPass.nueva || '').length >= 6,
@@ -181,13 +182,15 @@ export default function PanelCliente() {
               <label className="campo-label">Contraseña actual *</label>
               <div className="relative">
                 <input type={showActual ? 'text' : 'password'} value={formPass.actual}
-                  onChange={e => setFormPass(p => ({ ...p, actual: e.target.value }))}
-                  className="campo-input pr-9" placeholder="Tu contraseña actual" />
+                  onChange={e => { setFormPass(p => ({ ...p, actual: e.target.value })); setErrorActual('') }}
+                  className={`campo-input pr-9 ${errorActual ? 'border-red-400' : ''}`}
+                  placeholder="Tu contraseña actual" />
                 <button type="button" onClick={() => setShowActual(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showActual ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
+              {errorActual && <p className="text-xs text-red-400 mt-1">{errorActual}</p>}
             </div>
             <div>
               <label className="campo-label">Nueva contraseña *</label>
@@ -231,7 +234,7 @@ export default function PanelCliente() {
               )}
             </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={() => { setModalPass(false); setFormPass({ actual: '', nueva: '', confirmar: '' }) }}
+              <button onClick={() => { setModalPass(false); setFormPass({ actual: '', nueva: '', confirmar: '' }); setErrorActual('') }}
                 className="flex-1 py-2 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-xl">
                 Cancelar
               </button>

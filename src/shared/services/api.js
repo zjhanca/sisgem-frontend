@@ -16,7 +16,7 @@ api.interceptors.response.use(
   res => res,
   err => {
     const url = err.config?.url || ''
-    const esLoginORecuperar = url.includes('/auth/login') || url.includes('/auth/recuperar') || url.includes('/auth/registro')
+    const esLoginORecuperar = url.includes('/auth/login') || url.includes('/auth/recuperar') || url.includes('/auth/registro') || url.includes('/auth/cambiar-password') || url.includes('/usuarios/me/contrasena')
 
     // solo redirigir si NO es una llamada de auth
     if (!esLoginORecuperar && (err.response?.status === 401 || err.response?.status === 403)) {
