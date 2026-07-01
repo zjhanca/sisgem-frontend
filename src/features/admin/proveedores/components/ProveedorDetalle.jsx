@@ -20,10 +20,6 @@ export default function ProveedorDetalle({ modalDetalle, setModalDetalle, abrirM
             <div><p className="campo-label">Dirección</p><p>{item.direccion || '—'}</p></div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => toggleEstado.mutate(item.id)}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${item.estado ? 'border-red-400/40 text-red-400 hover:bg-red-400/10' : 'border-primary/40 text-primary hover:bg-primary/10'}`}>
-              {item.estado ? 'Desactivar' : 'Activar'}
-            </button>
             <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
           </div>
         </div>
