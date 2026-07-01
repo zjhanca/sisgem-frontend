@@ -8,7 +8,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo.png', 'apple-touch-icon.png'],
+      injectRegister: 'auto',
+      includeAssets: ['favicon.ico', 'logo.png'],
       manifest: {
         name: 'SISGEM — Minimercado',
         short_name: 'Sisgem',
@@ -20,19 +21,15 @@ export default defineConfig({
         scope: '/',
         lang: 'es',
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: 'logo.png', sizes: '192x192', type: 'image/png' },
+          { src: 'logo.png', sizes: '512x512', type: 'image/png' },
         ],
       },
       workbox: {
-        // cachear assets estáticos y páginas
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-        // no cachear las APIs del backend
         navigateFallback: null,
         runtimeCaching: [
           {
-            // cachear llamadas al catálogo con network-first
             urlPattern: /\/api\/catalogo/,
             handler: 'NetworkFirst',
             options: {
