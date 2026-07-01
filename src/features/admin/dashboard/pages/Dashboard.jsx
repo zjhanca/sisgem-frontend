@@ -7,10 +7,11 @@ import DashboardVentas         from '../components/DashboardVentas'
 import DashboardTopProductos   from '../components/DashboardTopProductos'
 import DashboardVentasMes      from '../components/DashboardVentasMes'
 import DashboardConfirmDescarga from '../components/Dashboardconfirmdescarga'
+import DashboardBajoStock       from '../components/DashboardBajoStock'
 
 export default function Dashboard() {
   const {
-    data, isLoading, ventasMes, ventasGrafica,
+    data, isLoading, ventasMes, bajoStock, ventasGrafica,
     totalSemana, totalMes,
     periodoVentas, setPeriodoVentas,
     descargarReporte,
@@ -65,11 +66,14 @@ export default function Dashboard() {
         />
       </div>
 
-      <DashboardVentas
-        ventasGrafica={ventasGrafica}
-        periodoVentas={periodoVentas}
-        setPeriodoVentas={setPeriodoVentas}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <DashboardVentas
+          ventasGrafica={ventasGrafica}
+          periodoVentas={periodoVentas}
+          setPeriodoVentas={setPeriodoVentas}
+        />
+        <DashboardBajoStock productos={bajoStock} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <DashboardTopProductos productos={data.productos_top} />
