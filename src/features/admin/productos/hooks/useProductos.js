@@ -129,6 +129,7 @@ export function useProductos() {
   }
 
   const exportarCSV = () => {
+    const sep = ';'
     const encabezados = ['ID', 'Nombre', 'Código Barras', 'Categoría', 'Marca', 'Precio', 'Stock', 'Estado']
     const filas = productos.map(p => [
       p.id,
@@ -140,7 +141,7 @@ export function useProductos() {
       p.stock || 0,
       p.estado ? 'Activo' : 'Inactivo',
     ])
-    const csv = [encabezados.join(','), ...filas.map(f => f.join(','))].join('\n')
+    const csv = ['sep=' + sep, encabezados.join(sep), ...filas.map(f => f.join(sep))].join('\n')
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
