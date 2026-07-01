@@ -12,13 +12,17 @@ import ProductoConfirmDescarga from '../components/Productoconfirmdescarga'
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (
     <button type="button" onClick={e => { e.stopPropagation(); onClick() }}
-      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer w-24 justify-center ${
-        activo ? 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/20' : 'bg-gray-100 border-gray-200 text-gray-400 hover:bg-gray-200'
+      className={`inline-flex items-center h-6 rounded-full px-1 transition-colors duration-200 cursor-pointer w-24 relative ${
+        activo ? 'bg-primary' : 'bg-gray-300'
       }`}>
-      <span className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors shrink-0 ${activo ? 'bg-primary' : 'bg-gray-300'}`}>
-        <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform ${activo ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+      <span className={`absolute inline-block w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${
+        activo ? 'left-1' : 'left-[calc(100%-1.25rem)]'
+      }`} />
+      <span className={`w-full text-center text-xs font-semibold transition-all duration-200 ${
+        activo ? 'pl-5 text-white' : 'pr-5 text-white/80'
+      }`}>
+        {activo ? labelActivo : labelInactivo}
       </span>
-      {activo ? labelActivo : labelInactivo}
     </button>
   )
 }
