@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ShoppingBag, User, CreditCard, Clock, KeyRound, Eye, EyeOff } from 'lucide-react'
+import { ShoppingBag, User, CreditCard, Clock, KeyRound, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { usePanelCliente } from '../hooks/usePanelCliente'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
@@ -22,6 +22,13 @@ export default function PanelCliente() {
   const [showActual, setShowActual]   = useState(false)
   const [showNueva, setShowNueva]     = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [focusNueva, setFocusNueva]   = useState(false)
+
+  const passReqs = {
+    largo:     (formPass.nueva || '').length >= 6,
+    mayuscula: /[A-Z]/.test(formPass.nueva || ''),
+    numero:    /[0-9]/.test(formPass.nueva || ''),
+  }
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
@@ -187,12 +194,26 @@ export default function PanelCliente() {
               <div className="relative">
                 <input type={showNueva ? 'text' : 'password'} value={formPass.nueva}
                   onChange={e => setFormPass(p => ({ ...p, nueva: e.target.value }))}
+                  onFocus={() => setFocusNueva(true)} onBlur={() => setFocusNueva(false)}
                   className="campo-input pr-9" placeholder="Mínimo 6 caracteres" />
                 <button type="button" onClick={() => setShowNueva(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showNueva ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
+              {(focusNueva || formPass.nueva) && (
+                <div className="mt-1.5 space-y-1 p-2 bg-gray-50 rounded-lg">
+                  {[
+                    { ok: passReqs.largo,     texto: 'Mínimo 6 caracteres' },
+                    { ok: passReqs.mayuscula, texto: 'Una mayúscula' },
+                    { ok: passReqs.numero,    texto: 'Un número' },
+                  ].map(({ ok, texto }) => (
+                    <div key={texto} className={`flex items-center gap-1 text-xs ${ok ? 'text-green-600' : 'text-gray-400'}`}>
+                      {ok ? <CheckCircle size={10} /> : <XCircle size={10} />} {texto}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className="campo-label">Confirmar nueva contraseña *</label>

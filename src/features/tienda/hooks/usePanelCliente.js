@@ -47,6 +47,12 @@ export function usePanelCliente() {
     if (formPass.nueva.length < 6) {
       toast.error('La contraseña debe tener al menos 6 caracteres'); return
     }
+    if (!/[A-Z]/.test(formPass.nueva)) {
+      toast.error('La nueva contraseña debe tener al menos una mayúscula'); return
+    }
+    if (!/[0-9]/.test(formPass.nueva)) {
+      toast.error('La nueva contraseña debe tener al menos un número'); return
+    }
     setCambiandoPass(true)
     try {
       await tiendaService.cambiarPassword({ actual: formPass.actual, nueva: formPass.nueva })
@@ -54,7 +60,10 @@ export function usePanelCliente() {
       setModalPass(false)
       setFormPass(passVacio)
     } catch (err) {
-      toast.error(err.response?.data?.mensaje || 'Contraseña actual incorrecta')
+      // capturar el error sin dejar que el interceptor de axios cierre la sesión
+      const msg = err.response?.data?.mensaje || 'Contraseña actual incorrecta'
+      toast.error(msg)
+      // no relanzar el error para evitar que el interceptor de 401 haga logout
     } finally {
       setCambiandoPass(false)
     }
