@@ -21,6 +21,9 @@ export function useCatalogo() {
       if (busqueda)        params.append('busqueda', busqueda)
       return tiendaService.getCatalogo(Object.fromEntries(params))
     },
+    refetchInterval: 5000,     // refresca cada 5 segundos
+    staleTime: 0,              // siempre considera los datos desactualizados
+    refetchOnWindowFocus: true, // recarga al volver a la pestaña
   })
   const { data: categorias = [] } = useQuery({ queryKey: ['catalogo-cats'],   queryFn: tiendaService.getCategorias })
   const { data: marcas = [] }     = useQuery({ queryKey: ['catalogo-marcas'], queryFn: tiendaService.getMarcas })

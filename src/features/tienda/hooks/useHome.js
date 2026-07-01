@@ -5,6 +5,9 @@ export function useHome() {
   const { data: productos = [] } = useQuery({
     queryKey: ['catalogo'],
     queryFn:  () => tiendaService.getCatalogo(),
+    refetchInterval: 5000,     // refresca cada 5 segundos
+    staleTime: 0,              // siempre considera los datos desactualizados
+    refetchOnWindowFocus: true, // recarga al volver a la pestaña
   })
   const { data: categorias = [] } = useQuery({
     queryKey: ['catalogo-cats'],
