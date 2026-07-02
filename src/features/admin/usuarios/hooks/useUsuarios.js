@@ -54,7 +54,10 @@ export function useUsuarios() {
   const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: usuariosService.getAll })
   const { data: roles = [] }    = useQuery({ queryKey: ['roles'],    queryFn: usuariosService.getRoles })
  
+  const rolesCliente = roles.filter(r => r.nombre?.toLowerCase().includes('cliente')).map(r => r.id)
+
   const usuariosFiltrados = usuarios.filter(u => {
+    if (rolesCliente.includes(u.rol_id)) return false // ocultar clientes
     if (filtroRol    && u.rol_id !== +filtroRol)  return false
     if (filtroEstado === 'activo'   && !u.estado) return false
     if (filtroEstado === 'inactivo' &&  u.estado) return false

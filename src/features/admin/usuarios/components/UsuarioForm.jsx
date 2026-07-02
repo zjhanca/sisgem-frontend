@@ -100,7 +100,7 @@ export default function UsuarioForm({ modal, form, errores, verificando = {}, ha
                 disabled={bloqueado}
                 className={`campo-input ${errores.rol_id ? 'border-red-400' : ''}`}>
                 <option value="">Seleccionar rol...</option>
-                {roles.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+                {roles.filter(r => !r.nombre?.toLowerCase().includes('cliente')).map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
               </select>
               {errores.rol_id && <p className="campo-error">{errores.rol_id}</p>}
             </div>
