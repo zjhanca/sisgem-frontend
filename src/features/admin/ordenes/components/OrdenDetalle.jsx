@@ -63,6 +63,22 @@ export default function OrdenDetalle({
 
   const productos = detalle?.productos || []
 
+  // convertir el data:...;base64,... a un Blob y abrirlo con createObjectURL:
+  // Chrome bloquea la navegación directa a URLs "data:" en pestañas nuevas
+  // abiertas por clic normal (aunque sí lo permite con clic derecho → abrir en otra pestaña)
+  const verFactura = () => {
+    if (!detalle?.factura_url) return
+    const [meta, base64] = detalle.factura_url.split(',')
+    const mime = meta.match(/data:(.*);base64/)?.[1] || 'application/octet-stream'
+    const binario = atob(base64)
+    const bytes = new Uint8Array(binario.length)
+    for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i)
+    const blob = new Blob([bytes], { type: mime })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  }
+
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
       titulo={`Orden #${orden?.id}`} ancho="max-w-lg">
@@ -111,10 +127,9 @@ export default function OrdenDetalle({
               <Download size={12} /> Descargar
             </button>
             {detalle?.factura_url && (
-              <a href={detalle.factura_url} target="_blank" rel="noopener noreferrer"
-                className="btn-outline text-xs">
+              <button onClick={verFactura} className="btn-outline text-xs">
                 <FileText size={12} /> Ver factura
-              </a>
+              </button>
             )}
             {!esAnulada && !esCompletada && (
               <button onClick={() => { cerrar(); abrirEditar(orden) }} className="btn-outline text-xs">
