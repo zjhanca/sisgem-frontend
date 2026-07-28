@@ -57,6 +57,7 @@ export default function OrdenForm({
           <div>
             <label className="campo-label">Fecha de Compra *</label>
             <input type="date" value={form.fecha_compra}
+              max={new Date().toISOString().split('T')[0]}
               onChange={e => setForm(p => ({ ...p, fecha_compra: e.target.value }))}
               className="campo-input text-xs" />
           </div>

@@ -31,9 +31,14 @@ export default function ProveedorForm({ modal, form, errores, verificando = {}, 
             <div>
               <label className="campo-label">Tipo Documento</label>
               <select value={form.tipo_documento} onChange={e => handleChange('tipo_documento', e.target.value)} className="campo-input">
-                <option value="NIT">NIT</option>
-                <option value="CC">Cédula</option>
-                <option value="CE">Cédula Extranjería</option>
+                {form.tipo_persona === 'juridica' ? (
+                  <option value="NIT">NIT</option>
+                ) : (
+                  <>
+                    <option value="CC">Cédula</option>
+                    <option value="CE">Cédula Extranjería</option>
+                  </>
+                )}
               </select>
             </div>
             <div className="col-span-2">
@@ -64,11 +69,11 @@ export default function ProveedorForm({ modal, form, errores, verificando = {}, 
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="campo-label">Razón Social *</label>
+              <label className="campo-label">{form.tipo_persona === 'juridica' ? 'Razón Social *' : 'Nombre Completo *'}</label>
               <input value={form.nombre} onChange={e => handleChange('nombre', e.target.value)}
                 disabled={bloqueado}
                 className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`}
-                placeholder="Nombre o razón social" />
+                placeholder={form.tipo_persona === 'juridica' ? 'Nombre o razón social' : 'Nombre completo'} />
               {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
             </div>
             <div>

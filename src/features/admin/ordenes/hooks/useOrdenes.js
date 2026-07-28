@@ -182,6 +182,7 @@ export function useOrdenes() {
     e.preventDefault()
     if (!form.proveedor_id)     { toast.error('Selecciona un proveedor'); return }
     if (!form.fecha_compra)     { toast.error('Ingresa la fecha de compra'); return }
+    if (form.fecha_compra > new Date().toISOString().split('T')[0]) { toast.error('La fecha de compra no puede ser futura'); return }
     if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
     crear.mutate(form)
   }
@@ -189,6 +190,7 @@ export function useOrdenes() {
   const handleEditar = e => {
     e.preventDefault()
     if (!formEditar.fecha_compra) { toast.error('Ingresa la fecha de compra'); return }
+    if (formEditar.fecha_compra > new Date().toISOString().split('T')[0]) { toast.error('La fecha de compra no puede ser futura'); return }
     editar.mutate({ id: modalEditar.orden.id, data: formEditar })
   }
 

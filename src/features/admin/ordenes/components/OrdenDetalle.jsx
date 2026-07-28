@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Modal from '@shared/components/Modal'
-import { Download, Edit2, Loader2, Package, ChevronDown, TrendingUp } from 'lucide-react'
+import { Download, Edit2, Loader2, Package, ChevronDown, TrendingUp, FileText } from 'lucide-react'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { ordenesService } from '../services/ordenesService'
@@ -110,6 +110,12 @@ export default function OrdenDetalle({
               className="btn-outline text-xs">
               <Download size={12} /> Descargar
             </button>
+            {detalle?.factura_url && (
+              <a href={detalle.factura_url} target="_blank" rel="noopener noreferrer"
+                className="btn-outline text-xs">
+                <FileText size={12} /> Ver factura
+              </a>
+            )}
             {!esAnulada && !esCompletada && (
               <button onClick={() => { cerrar(); abrirEditar(orden) }} className="btn-outline text-xs">
                 <Edit2 size={12} /> Editar

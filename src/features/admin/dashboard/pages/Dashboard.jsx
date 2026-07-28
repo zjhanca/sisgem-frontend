@@ -41,6 +41,9 @@ export default function Dashboard() {
           <button onClick={() => setConfirmDescarga({ tipo: 'mes' })} className="btn-outline">
             <Download size={14} /> Mensual
           </button>
+          <button onClick={() => setConfirmDescarga({ tipo: 'rango' })} className="btn-outline">
+            <Calendar size={14} /> Rango
+          </button>
         </div>
       </div>
 

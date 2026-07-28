@@ -3,6 +3,7 @@ import { Edit2 } from 'lucide-react'
  
 export default function UsuarioDetalle({ modalDetalle, setModalDetalle, abrirModal }) {
   const item = modalDetalle.item
+  const esAdmin = item?.rol?.toLowerCase().includes('admin')
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo="Detalle del Usuario">
@@ -17,7 +18,9 @@ export default function UsuarioDetalle({ modalDetalle, setModalDetalle, abrirMod
             <div className="col-span-2"><p className="campo-label">Correo</p><p>{item.email}</p></div>
           </div>
           <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
+            {!esAdmin && (
+              <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
+            )}
           </div>
         </div>
       )}

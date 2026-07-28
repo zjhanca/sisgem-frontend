@@ -58,18 +58,6 @@ export default function Register() {
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Datos personales</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="campo-label">Nombre *</label>
-                <input value={form.nombre} onChange={e => handleChange('nombre', e.target.value)}
-                  className={'campo-input ' + (errores.nombre ? 'border-red-400' : '')} placeholder="Tu nombre" />
-                {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
-              </div>
-              <div>
-                <label className="campo-label">Apellido *</label>
-                <input value={form.apellido} onChange={e => handleChange('apellido', e.target.value)}
-                  className={'campo-input ' + (errores.apellido ? 'border-red-400' : '')} placeholder="Tu apellido" />
-                {errores.apellido && <p className="campo-error">{errores.apellido}</p>}
-              </div>
-              <div>
                 <label className="campo-label">Tipo documento</label>
                 <select value={form.tipo_documento} onChange={e => handleChange('tipo_documento', e.target.value)} className="campo-input">
                   <option value="CC">Cédula (CC)</option>
@@ -88,6 +76,18 @@ export default function Register() {
                 </div>
                 <CampoEstado verificando={verificando.numero_documento} error={errores.numero_documento}
                   valor={form.numero_documento} valido={!errores.numero_documento && form.numero_documento?.length >= 5} />
+              </div>
+              <div>
+                <label className="campo-label">Nombre *</label>
+                <input value={form.nombre} onChange={e => handleChange('nombre', e.target.value)}
+                  className={'campo-input ' + (errores.nombre ? 'border-red-400' : '')} placeholder="Tu nombre" />
+                {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
+              </div>
+              <div>
+                <label className="campo-label">Apellido *</label>
+                <input value={form.apellido} onChange={e => handleChange('apellido', e.target.value)}
+                  className={'campo-input ' + (errores.apellido ? 'border-red-400' : '')} placeholder="Tu apellido" />
+                {errores.apellido && <p className="campo-error">{errores.apellido}</p>}
               </div>
               <div className="col-span-2">
                 <label className="campo-label">Teléfono (10 dígitos)</label>

@@ -9,7 +9,7 @@ export default function ProveedorDetalle({ modalDetalle, setModalDetalle, abrirM
       {item && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><p className="campo-label">Razón Social</p><p className="font-medium">{item.nombre}</p></div>
+            <div><p className="campo-label">{item.tipo_persona === 'juridica' ? 'Razón Social' : 'Nombre'}</p><p className="font-medium">{item.nombre}</p></div>
             <div><p className="campo-label">Estado</p>
               <span className={item.estado ? 'badge-activo' : 'badge-inactivo'}>{item.estado ? 'Activo' : 'Inactivo'}</span></div>
             <div><p className="campo-label">Tipo Persona</p><p className="capitalize">{item.tipo_persona}</p></div>

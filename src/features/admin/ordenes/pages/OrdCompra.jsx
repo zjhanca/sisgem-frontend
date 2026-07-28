@@ -159,6 +159,7 @@ export default function OrdCompra() {
               <div>
                 <label className="campo-label">Fecha de Compra *</label>
                 <input type="date" value={formEditar.fecha_compra || ''}
+                  max={new Date().toISOString().split('T')[0]}
                   onChange={e => setFormEditar(p => ({ ...p, fecha_compra: e.target.value }))}
                   className="campo-input text-xs" />
               </div>

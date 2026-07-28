@@ -7,12 +7,14 @@ import UsuarioDetalle       from '../components/UsuarioDetalle'
 import UsuarioEliminar      from '../components/UsuarioEliminar'
 import UsuarioConfirmEstado from '../components/Usuarioconfirmestado'
 
-function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
+function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo', disabled = false }) {
   return (
-    <button type="button" onClick={e => { e.stopPropagation(); onClick() }}
-      className={`inline-flex items-center h-6 rounded-full px-1 transition-colors duration-200 cursor-pointer w-24 relative ${
+    <button type="button" disabled={disabled}
+      onClick={e => { e.stopPropagation(); if (!disabled) onClick() }}
+      title={disabled ? 'No se puede desactivar al administrador' : undefined}
+      className={`inline-flex items-center h-6 rounded-full px-1 transition-colors duration-200 w-24 relative ${
         activo ? 'bg-primary' : 'bg-gray-300'
-      }`}>
+      } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}>
       <span className={`absolute inline-block w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${
         activo ? 'left-1' : 'left-[calc(100%-1.25rem)]'
       }`} />
@@ -24,6 +26,8 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
     </button>
   )
 }
+
+const esAdmin = usuario => usuario?.rol?.toLowerCase().includes('admin')
 
 export default function Usuarios() {
   const {
@@ -45,6 +49,7 @@ export default function Usuarios() {
     { key: 'rol',    label: 'Rol' },
     { key: 'estado', label: 'Estado',
       render: r => <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
+        disabled={esAdmin(r)}
         onClick={() => setConfirmToggle({ id: r.id, nombre: `${r.nombre} ${r.apellido}`, estadoActual: r.estado })} />
     },
   ]
@@ -76,11 +81,14 @@ export default function Usuarios() {
           <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle">
             <Eye size={14} />
           </button>
-          <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar">
+          <button onClick={() => abrirModal(fila)} disabled={esAdmin(fila)}
+            className={`btn-ghost ${esAdmin(fila) ? 'opacity-30 cursor-not-allowed' : ''}`}
+            title={esAdmin(fila) ? 'No se puede editar al administrador' : 'Editar'}>
             <Edit2 size={14} />
           </button>
-          <button onClick={() => setModalEliminar({ abierto: true, item: fila })}
-            className="btn-ghost hover:text-red-400" title="Eliminar">
+          <button onClick={() => setModalEliminar({ abierto: true, item: fila })} disabled={esAdmin(fila)}
+            className={`btn-ghost ${esAdmin(fila) ? 'opacity-30 cursor-not-allowed' : 'hover:text-red-400'}`}
+            title={esAdmin(fila) ? 'No se puede eliminar al administrador' : 'Eliminar'}>
             <Trash2 size={14} />
           </button>
         </>)}

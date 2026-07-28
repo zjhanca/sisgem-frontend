@@ -103,6 +103,10 @@ export function useProveedores() {
   const handleChange = (campo, valor) => {
     if (campo === 'telefono' && valor && !/^\d*$/.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
+    if (campo === 'tipo_persona') {
+      // jurídica solo puede tener NIT; natural solo CC o CE
+      nuevo.tipo_documento = valor === 'juridica' ? 'NIT' : 'CC'
+    }
     setForm(nuevo)
     const err = validarCampo(campo, valor)
     setErrores(prev => ({ ...prev, [campo]: err }))
