@@ -10,7 +10,7 @@ import PagoConfirmDescarga from '../components/Pagoconfirmdescarga'
 
 function BadgeEstado({ color, label }) {
   return (
-    <span className={`inline-flex items-center justify-center h-6 w-24 rounded-full text-white text-xs font-semibold ${color}`}>
+    <span className={`inline-flex items-center justify-center h-6 min-w-24 px-3 rounded-full text-white text-xs font-semibold ${color}`}>
       {label}
     </span>
   )
@@ -45,7 +45,7 @@ export default function Pagos() {
     { key: 'saldo_pendiente', label: 'Pendiente/Estado',
       render: r => r.completo
         ? <BadgeEstado color="bg-primary" label="Completo" />
-        : <span className="text-primary font-medium">{formatPrecio(r.saldo_pendiente)}</span>
+        : <BadgeEstado color="bg-amber-500" label={formatPrecio(r.saldo_pendiente)} />
     },
     { key: 'ultima_fecha', label: 'Último movimiento', render: r => formatFechaHora(r.ultima_fecha) || '—' },
   ]
