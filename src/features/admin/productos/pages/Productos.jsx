@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react'
-import { Plus, Edit2, Eye, Trash2, Download, FileSpreadsheet } from 'lucide-react'
+import { Plus, Edit2, Eye, Trash2, Download } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { formatPrecio } from '@shared/utils/validaciones'
 import { useProductos } from '../hooks/useProductos'
@@ -41,7 +41,7 @@ export default function Productos() {
     form, errores, modal, modalDetalle, modalEliminar,
     setForm, setModalDetalle, setModalEliminar,
     abrirModal, cerrarModal, handleChange, handleSubmit,
-    toggleEstado, eliminar, guardando, eliminando, verificandoCodigo, exportarCSV, descargarReporte,
+    toggleEstado, eliminar, guardando, eliminando, verificandoCodigo, descargarReporte,
   } = useProductos()
 
   const [confirmToggle, setConfirmToggle] = useState(null)
@@ -74,9 +74,6 @@ export default function Productos() {
         <div className="flex gap-2">
           <button onClick={() => setConfirmDescarga(true)} className="btn-outline">
             <Download size={14} /> Reporte
-          </button>
-          <button onClick={exportarCSV} className="btn-outline">
-            <FileSpreadsheet size={14} /> CSV
           </button>
           <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo </button>
         </div>

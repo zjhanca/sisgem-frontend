@@ -129,29 +129,6 @@ export function useProductos() {
     guardar.mutate(form)
   }
 
-  const exportarCSV = () => {
-    const sep = ';'
-    const encabezados = ['ID', 'Nombre', 'Código Barras', 'Categoría', 'Marca', 'Precio', 'Stock', 'Estado']
-    const filas = productos.map(p => [
-      p.id,
-      `"${(p.nombre || '').replace(/"/g, '""')}"`,
-      p.codigo_barras || '',
-      `"${(p.categoria || '').replace(/"/g, '""')}"`,
-      `"${(p.marca || '').replace(/"/g, '""')}"`,
-      p.precio || 0,
-      p.stock || 0,
-      p.estado ? 'Activo' : 'Inactivo',
-    ])
-    const csv = ['sep=' + sep, encabezados.join(sep), ...filas.map(f => f.join(sep))].join('\n')
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `productos-${new Date().toISOString().slice(0,10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   // descarga el reporte de productos en PDF o Excel (sin período, es un
   // listado completo del catálogo actual)
   const descargarReporte = async ({ formato = 'pdf' } = {}) => {
@@ -169,6 +146,6 @@ export function useProductos() {
     abrirModal, cerrarModal, handleChange, handleSubmit,
     toggleEstado, eliminar,
     guardando: guardar.isPending, eliminando: eliminar.isPending,
-    verificandoCodigo, exportarCSV, descargarReporte,
+    verificandoCodigo, descargarReporte,
   }
 }
