@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { proveedoresService } from '../services/proveedoresService'
+import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
 const formVacio = {
@@ -126,6 +127,15 @@ export function useProveedores() {
     guardar.mutate(form)
   }
 
+  // descarga el reporte de proveedores en PDF o Excel (listado completo)
+  const descargarReporte = async ({ formato = 'pdf' } = {}) => {
+    const ext = formato === 'excel' ? 'xlsx' : 'pdf'
+    const url = `/reportes/proveedores?formato=${formato}`
+    const nombreArchivo = `reporte-proveedores.${ext}`
+    if (formato === 'excel') await descargarExcel(url, nombreArchivo)
+    else await descargarPDF(url, nombreArchivo)
+  }
+
   return {
     proveedores, form, errores, verificando,
     modal, modalDetalle, modalEliminar,
@@ -133,5 +143,6 @@ export function useProveedores() {
     abrirModal, cerrarModal, handleChange, handleSubmit,
     toggleEstado, eliminar,
     guardando: guardar.isPending, eliminando: eliminar.isPending,
+    descargarReporte,
   }
 }

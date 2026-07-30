@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { productosService } from '../services/productosService'
+import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
 const formVacio = {
@@ -151,6 +152,16 @@ export function useProductos() {
     URL.revokeObjectURL(url)
   }
 
+  // descarga el reporte de productos en PDF o Excel (sin período, es un
+  // listado completo del catálogo actual)
+  const descargarReporte = async ({ formato = 'pdf' } = {}) => {
+    const ext = formato === 'excel' ? 'xlsx' : 'pdf'
+    const url = `/reportes/productos?formato=${formato}`
+    const nombreArchivo = `reporte-productos.${ext}`
+    if (formato === 'excel') await descargarExcel(url, nombreArchivo)
+    else await descargarPDF(url, nombreArchivo)
+  }
+
   return {
     productos, categorias, proveedores, marcas,
     form, errores, modal, modalDetalle, modalEliminar,
@@ -158,6 +169,6 @@ export function useProductos() {
     abrirModal, cerrarModal, handleChange, handleSubmit,
     toggleEstado, eliminar,
     guardando: guardar.isPending, eliminando: eliminar.isPending,
-    verificandoCodigo, exportarCSV,
+    verificandoCodigo, exportarCSV, descargarReporte,
   }
 }

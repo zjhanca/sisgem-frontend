@@ -32,7 +32,7 @@ export default function Proveedores() {
     modal, modalDetalle, modalEliminar,
     setModalDetalle, setModalEliminar,
     abrirModal, cerrarModal, handleChange, handleSubmit,
-    toggleEstado, eliminar, guardando, eliminando, verificando,
+    toggleEstado, eliminar, guardando, eliminando, verificando, descargarReporte,
   } = useProveedores()
 
   const [confirmToggle, setConfirmToggle] = useState(null)
@@ -78,7 +78,7 @@ export default function Proveedores() {
       <ProveedorEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
         eliminar={eliminar} eliminando={eliminando} />
       <ProveedorConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle} toggleEstado={toggleEstado} />
-      <ProveedorConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} />
+      <ProveedorConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} descargarReporte={descargarReporte} />
     </div>
   )
 }

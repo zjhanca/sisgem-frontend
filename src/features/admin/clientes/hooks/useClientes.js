@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { clientesService } from '../services/clientesService'
+import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
  
 const formVacio = {
@@ -136,6 +137,15 @@ export function useClientes() {
     if (filtroEstado === 'inactivo' &&  c.estado) return false
     return true
   })
+
+  // descarga el reporte de clientes en PDF o Excel (listado completo)
+  const descargarReporte = async ({ formato = 'pdf' } = {}) => {
+    const ext = formato === 'excel' ? 'xlsx' : 'pdf'
+    const url = `/reportes/clientes?formato=${formato}`
+    const nombreArchivo = `reporte-clientes.${ext}`
+    if (formato === 'excel') await descargarExcel(url, nombreArchivo)
+    else await descargarPDF(url, nombreArchivo)
+  }
  
   return {
     clientes: clientesFiltrados, historial,
@@ -146,6 +156,6 @@ export function useClientes() {
     abrirModal, cerrarModal, handleChange, handleSubmit,
     toggleEstado, eliminar, eliminando: eliminar.isPending,
     modalEliminar, setModalEliminar,
-    guardando: guardar.isPending,
+    guardando: guardar.isPending, descargarReporte,
   }
 }

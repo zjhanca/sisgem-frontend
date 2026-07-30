@@ -41,7 +41,7 @@ export default function Productos() {
     form, errores, modal, modalDetalle, modalEliminar,
     setForm, setModalDetalle, setModalEliminar,
     abrirModal, cerrarModal, handleChange, handleSubmit,
-    toggleEstado, eliminar, guardando, eliminando, verificandoCodigo, exportarCSV,
+    toggleEstado, eliminar, guardando, eliminando, verificandoCodigo, exportarCSV, descargarReporte,
   } = useProductos()
 
   const [confirmToggle, setConfirmToggle] = useState(null)
@@ -96,7 +96,7 @@ export default function Productos() {
       <ProductoDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} abrirModal={abrirModal} />
       <ProductoEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar} eliminar={eliminar} eliminando={eliminando} />
       <ProductoConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle} toggleEstado={toggleEstado} />
-      <ProductoConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} />
+      <ProductoConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} descargarReporte={descargarReporte} />
     </div>
   )
 }

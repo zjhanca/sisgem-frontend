@@ -32,7 +32,7 @@ export default function Clientes() {
     modal, modalDetalle, filtroEstado, setFiltroEstado,
     setModalDetalle, abrirModal, cerrarModal,
     handleChange, handleSubmit, toggleEstado, guardando, verificando,
-    eliminar, eliminando, modalEliminar, setModalEliminar,
+    eliminar, eliminando, modalEliminar, setModalEliminar, descargarReporte,
   } = useClientes()
 
   const [confirmToggle, setConfirmToggle] = useState(null)
@@ -107,7 +107,7 @@ export default function Clientes() {
         eliminar={eliminar} eliminando={eliminando} />
       <ClienteConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle}
         toggleEstado={toggleEstado} />
-      <ClienteConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} />
+      <ClienteConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} descargarReporte={descargarReporte} />
     </div>
   )
 }
