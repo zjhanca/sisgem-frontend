@@ -126,7 +126,8 @@ export default function MarcaForm({ modal, form, setForm, errores, handleChange,
         <div>
           <label className="campo-label">Descripción</label>
           <textarea value={form.descripcion} onChange={e => handleChange('descripcion', e.target.value)}
-            rows={2} className="campo-input resize-none" placeholder="Descripción opcional..." />
+            rows={2} className="campo-input resize-none" placeholder="Descripción opcional..." maxLength={300} />
+          <p className="campo-hint text-right">{(form.descripcion || '').length}/300</p>
         </div>
 
         <div>
