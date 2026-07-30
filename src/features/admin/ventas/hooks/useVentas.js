@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ventasService } from '../services/ventasService'
+import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
 export function useVentas() {
@@ -268,6 +269,25 @@ export function useVentas() {
     return true
   })
 
+  // descarga el reporte de ventas eligiendo periodo (dia/semana/mes) o un
+  // rango personalizado (desde/hasta), en PDF o Excel — mismo patrón que
+  // usa el Dashboard, apuntando al mismo endpoint /reportes/ventas
+  const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
+    const nombres = { dia: 'diario', semana: 'semanal', mes: 'mensual', rango: 'personalizado' }
+    const ext = formato === 'excel' ? 'xlsx' : 'pdf'
+    const params = new URLSearchParams({ formato })
+    if (tipo === 'rango') {
+      if (desde) params.set('desde', desde)
+      if (hasta) params.set('hasta', hasta)
+    } else {
+      params.set('periodo', tipo)
+    }
+    const url = `/reportes/ventas?${params.toString()}`
+    const nombreArchivo = `reporte-ventas-${nombres[tipo] || tipo}.${ext}`
+    if (formato === 'excel') await descargarExcel(url, nombreArchivo)
+    else await descargarPDF(url, nombreArchivo)
+  }
+
   return {
     ventasFiltradas, clientes, productos, estados, form, setForm,
     clientesFiltrados, prodBusqueda, prodsFiltrados, clienteBusqueda,
@@ -278,6 +298,7 @@ export function useVentas() {
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
     totalVenta, handleCrear, anular, getBadge,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
+    descargarReporte,
     creando: crearVenta.isPending, anulando: anular.isPending,
   }
 }

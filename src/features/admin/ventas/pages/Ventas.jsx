@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Eye, Download, Ban, Search, CreditCard } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
+import ReporteDescargaModal from '@shared/components/ReporteDescargaModal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { useVentas } from '../hooks/useVentas'
 import { usePagos } from '@features/admin/pagos/hooks/usePagos'
@@ -42,6 +43,7 @@ export default function Ventas() {
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
     totalVenta, handleCrear, anular, getBadge, estados, cruzaLote,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
+    descargarReporte,
     creando, anulando,
   } = useVentas()
 
@@ -55,7 +57,8 @@ export default function Ventas() {
     creando: creandoPago,
   } = usePagos()
 
-  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'reporte' } | { tipo: 'comprobante', id }
+  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'comprobante', id }
+  const [modalReporte, setModalReporte] = useState(false)
 
   const estadosVenta = estados.filter(e => {
     const n = e.nombre?.toLowerCase()
@@ -103,7 +106,7 @@ export default function Ventas() {
       <div className="page-header">
         <h1 className="page-title">Ventas</h1>
         <div className="flex gap-2">
-          <button onClick={() => setConfirmDescarga({ tipo: 'reporte' })} className="btn-outline">
+          <button onClick={() => setModalReporte(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
@@ -179,6 +182,8 @@ export default function Ventas() {
       <VentaDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} setModalAnular={setModalAnular} getBadge={getBadge} />
       <VentaAnular modalAnular={modalAnular} setModalAnular={setModalAnular} anular={anular} anulando={anulando} />
       <VentaConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
+      <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
+        descargarReporte={descargarReporte} nombreEntidad="ventas" />
       <PagoForm modalNuevo={modalPago} setModalNuevo={setModalPago}
         form={formPago} setForm={setFormPago} errores={erroresPago} pedidos={pedidos}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}

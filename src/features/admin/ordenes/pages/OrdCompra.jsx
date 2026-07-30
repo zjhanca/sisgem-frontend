@@ -2,6 +2,7 @@
 import { Plus, Eye, Download, Ban, AlertTriangle, Edit2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
+import ReporteDescargaModal from '@shared/components/ReporteDescargaModal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { useOrdenes } from '../hooks/useOrdenes'
 import OrdenForm           from '../components/OrdenForm'
@@ -38,7 +39,7 @@ export default function OrdCompra() {
     buscarProveedor, buscarProducto, buscarPorCodigo, agregarItem, quitarItem,
     setProvSeleccionado, setProvBusqueda, setProdBusqueda, setProdsFiltrados,
     totalOrden, handleCrear, handleEditar, abrirEditar,
-    cambiarEstado, anular,
+    cambiarEstado, anular, descargarReporte,
     ESTADOS_ORDEN, getEstadoId, getKeyEstado,
     creando, editando, anulando,
   } = useOrdenes()
@@ -51,7 +52,8 @@ export default function OrdCompra() {
   } = useProductos()
 
   const [modalCrearProd, setModalCrearProd] = useState(false)
-  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'reporte' } | { tipo: 'orden', id }
+  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'orden', id }
+  const [modalReporte, setModalReporte] = useState(false)
 
   const columnas = [
     { key: 'proveedor',    label: 'Proveedor' },
@@ -80,7 +82,7 @@ export default function OrdCompra() {
       <div className="page-header">
         <h1 className="page-title">Órdenes de Compra</h1>
         <div className="flex gap-2">
-          <button onClick={() => setConfirmDescarga({ tipo: 'reporte' })} className="btn-outline">
+          <button onClick={() => setModalReporte(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
@@ -214,6 +216,8 @@ export default function OrdCompra() {
       </Modal>
 
       <OrdenConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
+      <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
+        descargarReporte={descargarReporte} nombreEntidad="órdenes de compra" />
 
       {modalCrearProd && (
         <ProductoForm

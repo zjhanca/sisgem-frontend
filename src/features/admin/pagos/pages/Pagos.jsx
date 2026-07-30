@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react'
 import { Plus, Eye, Download, Ban, Search, CreditCard } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
+import ReporteDescargaModal from '@shared/components/ReporteDescargaModal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { usePagos } from '../hooks/usePagos'
 import PagoForm            from '../components/PagoForm'
@@ -34,11 +35,12 @@ export default function Pagos() {
     puedeAnularPago, getLimiteAnulacionVenta,
     getEstadoPago, tipoPagoActual,
     pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
-    abrirConPedido,
+    abrirConPedido, descargarReporte,
     creando, anulando,
   } = usePagos()
 
-  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'reporte' } | { tipo: 'pago', id }
+  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'pago', id }
+  const [modalReporte, setModalReporte] = useState(false)
 
   const hayFiltros = filtroEstado || filtroDesde || filtroHasta || filtroBusqueda
 
@@ -58,7 +60,7 @@ export default function Pagos() {
       <div className="page-header">
         <h1 className="page-title">Pagos</h1>
         <div className="flex gap-2">
-          <button onClick={() => setConfirmDescarga({ tipo: 'reporte' })} className="btn-outline">
+          <button onClick={() => setModalReporte(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
@@ -122,6 +124,8 @@ export default function Pagos() {
       <PagoAnular modalAnular={modalAnular} setModalAnular={setModalAnular}
         anular={anular} anulando={anulando} />
       <PagoConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
+      <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
+        descargarReporte={descargarReporte} nombreEntidad="pagos" />
     </div>
   )
 }

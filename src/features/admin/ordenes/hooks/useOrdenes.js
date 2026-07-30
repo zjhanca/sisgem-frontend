@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ordenesService } from '../services/ordenesService'
 import { useAuth } from '@shared/contexts/AuthContext'
+import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
 // estados reales del backend: pendiente(10), activo(11), anulado(12)
@@ -202,6 +203,24 @@ export function useOrdenes() {
 
   const ordenesVencidas = ordenesConEstado.filter(o => o._vencida).length
 
+  // descarga el reporte de ordenes de compra eligiendo periodo (dia/semana/mes)
+  // o un rango personalizado (desde/hasta), en PDF o Excel
+  const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
+    const nombres = { dia: 'diario', semana: 'semanal', mes: 'mensual', rango: 'personalizado' }
+    const ext = formato === 'excel' ? 'xlsx' : 'pdf'
+    const params = new URLSearchParams({ formato })
+    if (tipo === 'rango') {
+      if (desde) params.set('desde', desde)
+      if (hasta) params.set('hasta', hasta)
+    } else {
+      params.set('periodo', tipo)
+    }
+    const url = `/reportes/ordenes?${params.toString()}`
+    const nombreArchivo = `reporte-ordenes-${nombres[tipo] || tipo}.${ext}`
+    if (formato === 'excel') await descargarExcel(url, nombreArchivo)
+    else await descargarPDF(url, nombreArchivo)
+  }
+
   return {
     ordenesFiltradas, proveedores, productos, estadosBD, ordenesVencidas,
     modalNuevo, modalDetalle, modalEditar, modalAnular,
@@ -214,7 +233,7 @@ export function useOrdenes() {
     buscarProveedor, buscarProducto, buscarPorCodigo, agregarItem, quitarItem,
     setProvSeleccionado, setProvBusqueda, setProdBusqueda, setProdsFiltrados,
     totalOrden, handleCrear, handleEditar, abrirEditar,
-    cambiarEstado, anular,
+    cambiarEstado, anular, descargarReporte,
     ESTADOS_ORDEN, getEstadoId, getKeyEstado,
     creando: crear.isPending, editando: editar.isPending, anulando: anular.isPending,
   }
