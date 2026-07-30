@@ -35,7 +35,7 @@ export default function ProveedorForm({ modal, form, errores, verificando = {}, 
                   <option value="NIT">NIT</option>
                 ) : (
                   <>
-                    <option value="CC">Cédula</option>
+                    <option value="CC">Cédula Ciudadanía </option>
                     <option value="CE">Cédula Extranjería</option>
                   </>
                 )}
