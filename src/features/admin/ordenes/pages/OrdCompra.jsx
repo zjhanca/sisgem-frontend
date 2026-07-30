@@ -12,6 +12,19 @@ import { useProductos } from '../../productos/hooks/useProductos'
 
 const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
 
+function BadgeEstado({ color, label, onClick, title }) {
+  const base = 'inline-flex items-center justify-center h-6 w-24 rounded-full text-white text-xs font-semibold'
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} title={title}
+        className={`${base} ${color} hover:opacity-80 transition-opacity cursor-pointer`}>
+        {label}
+      </button>
+    )
+  }
+  return <span className={`${base} ${color}`}>{label}</span>
+}
+
 export default function OrdCompra() {
   const {
     ordenesFiltradas, proveedores, productos, ordenesVencidas,
@@ -49,21 +62,14 @@ export default function OrdCompra() {
       render: r => {
         const esAnulada    = r.estado?.toLowerCase().includes('anula')
         const esCompletada = r.estado?.toLowerCase().includes('complet')
-        if (esAnulada)    return <span className="inline-block w-20 text-center"><span className="badge-anulado">Anulado</span></span>
-        if (esCompletada) return <span className="inline-block w-20 text-center"><span className="badge-activo">Completado</span></span>
+        if (esAnulada)    return <BadgeEstado color="bg-gray-300" label="Anulado" />
+        if (esCompletada) return <BadgeEstado color="bg-primary" label="Completado" />
         return (
-          <span className="inline-block w-20 text-center">
-            <button type="button"
-              onClick={e => {
-                e.stopPropagation()
-                const id = getEstadoId('activo') || getEstadoId('complet')
-                if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
-              }}
-              title="Clic para marcar como Completado"
-              className="badge-pendiente hover:opacity-80 transition-opacity cursor-pointer">
-              Pendiente
-            </button>
-          </span>
+          <BadgeEstado color="bg-amber-500" label="Pendiente" title="Clic para marcar como Completado"
+            onClick={() => {
+              const id = getEstadoId('activo') || getEstadoId('complet')
+              if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
+            }} />
         )
       }
     },

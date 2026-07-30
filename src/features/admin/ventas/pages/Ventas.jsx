@@ -13,11 +13,19 @@ import PagoForm             from '@features/admin/pagos/components/PagoForm'
 const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''
 
 const getBadgeEstado = nombre => {
-  if (!nombre) return { clase: 'badge-pendiente', label: 'Pendiente' }
+  if (!nombre) return { color: 'bg-amber-500', label: 'Pendiente' }
   const l = nombre.toLowerCase()
-  if (l.includes('anula'))                          return { clase: 'badge-anulado',  label: 'Anulado' }
-  if (l.includes('complet') || l.includes('paga'))  return { clase: 'badge-activo',   label: 'Completado' }
-  return { clase: 'badge-pendiente', label: 'Pendiente' }
+  if (l.includes('anula'))                          return { color: 'bg-gray-300', label: 'Anulado' }
+  if (l.includes('complet') || l.includes('paga'))  return { color: 'bg-primary',  label: 'Completado' }
+  return { color: 'bg-amber-500', label: 'Pendiente' }
+}
+
+function BadgeEstado({ color, label }) {
+  return (
+    <span className={`inline-flex items-center justify-center h-6 w-24 rounded-full text-white text-xs font-semibold ${color}`}>
+      {label}
+    </span>
+  )
 }
 
 export default function Ventas() {
@@ -56,11 +64,11 @@ export default function Ventas() {
     { key: 'total', label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado_id', label: 'Estado',
       render: r => {
-        const { clase, label } = getBadgeEstado(r.estado)
+        const { color, label } = getBadgeEstado(r.estado)
         const esFiadoPendiente = r.permite_fiado && r.estado?.toLowerCase().includes('pendiente')
         return (
           <div className="flex items-center gap-1.5">
-            <span className={clase}>{label}</span>
+            <BadgeEstado color={color} label={label} />
             {esFiadoPendiente && (
               <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 font-medium">
                 Fiado
