@@ -2,7 +2,7 @@
 import { Plus, Eye, Download, Ban, AlertTriangle, Edit2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
-import ReporteDescargaModal from '@shared/components/ReporteDescargaModal'
+import ReporteDescargaModal from '../components/ReporteDescargaModal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { useOrdenes } from '../hooks/useOrdenes'
 import OrdenForm           from '../components/OrdenForm'

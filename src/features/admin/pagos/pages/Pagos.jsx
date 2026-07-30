@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react'
 import { Plus, Eye, Download, Ban, Search, CreditCard } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
-import ReporteDescargaModal from '@shared/components/ReporteDescargaModal'
+import ReporteDescargaModal from '../components/ReporteDescargaModal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { usePagos } from '../hooks/usePagos'
 import PagoForm            from '../components/PagoForm'
