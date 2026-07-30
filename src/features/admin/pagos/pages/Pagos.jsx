@@ -16,6 +16,9 @@ function BadgeEstado({ color, label }) {
   )
 }
 
+// tope máximo para los filtros de fecha: no se puede filtrar hacia el futuro
+const maxFechaHoy = () => new Date().toISOString().slice(0, 16)
+
 export default function Pagos() {
   const {
     pagosAgrupadosFiltrados, pedidos, form, errores,
@@ -84,9 +87,9 @@ export default function Pagos() {
             <option value="abono">Con saldo</option>
             <option value="anulado">Anulados</option>
           </select>
-          <input type="datetime-local" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)}
+          <input type="datetime-local" value={filtroDesde} max={maxFechaHoy()} onChange={e => setFiltroDesde(e.target.value)}
             className="campo-input w-44 text-xs" title="Desde" />
-          <input type="datetime-local" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)}
+          <input type="datetime-local" value={filtroHasta} max={maxFechaHoy()} onChange={e => setFiltroHasta(e.target.value)}
             className="campo-input w-44 text-xs" title="Hasta" />
           {hayFiltros && (
             <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta(''); setFiltroBusqueda('') }}
