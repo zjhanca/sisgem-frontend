@@ -82,7 +82,8 @@ export default function CategoriaForm({ modal, form, errores, handleChange, hand
         <div>
           <label className="campo-label">Descripción</label>
           <textarea value={form.descripcion} onChange={e => handleChange('descripcion', e.target.value)}
-            rows={2} className="campo-input resize-none" placeholder="Descripción de la categoría" maxLength={500} />
+            rows={2} className="campo-input resize-none" placeholder="Descripción de la categoría" maxLength={200} />
+          <p className="campo-hint text-right">{(form.descripcion || '').length}/200</p>
         </div>
 
         <div className="flex justify-end pt-2 border-t border-gray-100">
