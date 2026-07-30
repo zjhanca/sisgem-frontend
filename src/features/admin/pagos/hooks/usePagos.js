@@ -211,17 +211,15 @@ export function usePagos() {
   const verHistorial = pedido_id => setModalDetalle({ abierto: true, pedido_id })
   const grupoDetalle = pagosAgrupados.find(g => g.pedido_id === modalDetalle.pedido_id) || null
 
-  // descarga el reporte de pagos eligiendo periodo (dia/semana/mes) o un
-  // rango personalizado (desde/hasta), en PDF o Excel
+  // descarga el reporte de pagos: "normal" trae todo sin filtro de fecha,
+  // "rango" (personalizado) filtra por desde/hasta — en PDF o Excel
   const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
-    const nombres = { dia: 'diario', semana: 'semanal', mes: 'mensual', rango: 'personalizado' }
+    const nombres = { normal: 'general', rango: 'personalizado' }
     const ext = formato === 'excel' ? 'xlsx' : 'pdf'
     const params = new URLSearchParams({ formato })
     if (tipo === 'rango') {
       if (desde) params.set('desde', desde)
       if (hasta) params.set('hasta', hasta)
-    } else {
-      params.set('periodo', tipo)
     }
     const url = `/reportes/pagos?${params.toString()}`
     const nombreArchivo = `reporte-pagos-${nombres[tipo] || tipo}.${ext}`

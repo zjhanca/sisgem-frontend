@@ -203,17 +203,15 @@ export function useOrdenes() {
 
   const ordenesVencidas = ordenesConEstado.filter(o => o._vencida).length
 
-  // descarga el reporte de ordenes de compra eligiendo periodo (dia/semana/mes)
-  // o un rango personalizado (desde/hasta), en PDF o Excel
+  // descarga el reporte de ordenes: "normal" trae todo sin filtro de fecha,
+  // "rango" (personalizado) filtra por desde/hasta — en PDF o Excel
   const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
-    const nombres = { dia: 'diario', semana: 'semanal', mes: 'mensual', rango: 'personalizado' }
+    const nombres = { normal: 'general', rango: 'personalizado' }
     const ext = formato === 'excel' ? 'xlsx' : 'pdf'
     const params = new URLSearchParams({ formato })
     if (tipo === 'rango') {
       if (desde) params.set('desde', desde)
       if (hasta) params.set('hasta', hasta)
-    } else {
-      params.set('periodo', tipo)
     }
     const url = `/reportes/ordenes?${params.toString()}`
     const nombreArchivo = `reporte-ordenes-${nombres[tipo] || tipo}.${ext}`

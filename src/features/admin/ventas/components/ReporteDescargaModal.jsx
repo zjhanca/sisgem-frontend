@@ -3,9 +3,7 @@ import Modal from '@shared/components/Modal'
 import { Download, Loader2, FileText, FileSpreadsheet } from 'lucide-react'
 
 const PERIODOS = [
-  { key: 'dia',    label: 'Día' },
-  { key: 'semana', label: 'Semana' },
-  { key: 'mes',    label: 'Mes' },
+  { key: 'normal', label: 'Normal' },
   { key: 'rango',  label: 'Personalizado' },
 ]
 
@@ -17,7 +15,7 @@ const PERIODOS = [
  * usa el Dashboard, para reutilizar los mismos endpoints del backend.
  */
 export default function ReporteDescargaModal({ abierto, setAbierto, descargarReporte, nombreEntidad = 'reporte' }) {
-  const [periodo, setPeriodo]         = useState('dia')
+  const [periodo, setPeriodo]         = useState('normal')
   const [formato, setFormato]         = useState('pdf')
   const [desde, setDesde]             = useState('')
   const [hasta, setHasta]             = useState('')
@@ -29,7 +27,7 @@ export default function ReporteDescargaModal({ abierto, setAbierto, descargarRep
   const cerrar = () => {
     if (descargando) return
     setAbierto(false)
-    setPeriodo('dia'); setFormato('pdf'); setDesde(''); setHasta('')
+    setPeriodo('normal'); setFormato('pdf'); setDesde(''); setHasta('')
   }
 
   const confirmar = async () => {
@@ -49,7 +47,7 @@ export default function ReporteDescargaModal({ abierto, setAbierto, descargarRep
       <div className="space-y-4">
         <div>
           <p className="campo-label mb-1.5">Periodo</p>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
             {PERIODOS.map(p => (
               <button key={p.key} type="button" onClick={() => setPeriodo(p.key)}
                 className={`px-2 py-1.5 text-xs rounded-lg border transition-colors ${

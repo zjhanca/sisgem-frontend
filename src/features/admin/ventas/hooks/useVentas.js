@@ -269,18 +269,15 @@ export function useVentas() {
     return true
   })
 
-  // descarga el reporte de ventas eligiendo periodo (dia/semana/mes) o un
-  // rango personalizado (desde/hasta), en PDF o Excel — mismo patrón que
-  // usa el Dashboard, apuntando al mismo endpoint /reportes/ventas
+  // descarga el reporte de ventas: "normal" trae todo sin filtro de fecha,
+  // "rango" (personalizado) filtra por desde/hasta — en PDF o Excel
   const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
-    const nombres = { dia: 'diario', semana: 'semanal', mes: 'mensual', rango: 'personalizado' }
+    const nombres = { normal: 'general', rango: 'personalizado' }
     const ext = formato === 'excel' ? 'xlsx' : 'pdf'
     const params = new URLSearchParams({ formato })
     if (tipo === 'rango') {
       if (desde) params.set('desde', desde)
       if (hasta) params.set('hasta', hasta)
-    } else {
-      params.set('periodo', tipo)
     }
     const url = `/reportes/ventas?${params.toString()}`
     const nombreArchivo = `reporte-ventas-${nombres[tipo] || tipo}.${ext}`
