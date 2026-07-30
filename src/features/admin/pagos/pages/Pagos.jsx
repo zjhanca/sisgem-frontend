@@ -8,6 +8,14 @@ import PagoDetalle         from '../components/PagoDetalle'
 import PagoAnular          from '../components/PagoAnular'
 import PagoConfirmDescarga from '../components/Pagoconfirmdescarga'
 
+function BadgeEstado({ color, label }) {
+  return (
+    <span className={`inline-flex items-center justify-center h-6 w-24 rounded-full text-white text-xs font-semibold ${color}`}>
+      {label}
+    </span>
+  )
+}
+
 export default function Pagos() {
   const {
     pagosAgrupadosFiltrados, pedidos, form, errores,
@@ -36,7 +44,7 @@ export default function Pagos() {
     { key: 'total_pagado', label: 'Pagado', render: r => <span className="text-green-600 font-medium">{formatPrecio(r.total_pagado)}</span> },
     { key: 'saldo_pendiente', label: 'Pendiente/Estado',
       render: r => r.completo
-        ? <span className="badge-activo">Completo</span>
+        ? <BadgeEstado color="bg-primary" label="Completo" />
         : <span className="text-primary font-medium">{formatPrecio(r.saldo_pendiente)}</span>
     },
     { key: 'ultima_fecha', label: 'Último movimiento', render: r => formatFechaHora(r.ultima_fecha) || '—' },
