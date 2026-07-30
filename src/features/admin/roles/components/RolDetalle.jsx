@@ -9,6 +9,8 @@ const agruparPermisos = permisos => permisos.reduce((acc, p) => {
   return acc
 }, {})
 
+const capitalizar = str => str.charAt(0).toUpperCase() + str.slice(1)
+
 export default function RolDetalle({ modalDetalle, setModalDetalle, abrirModal, esProtegido }) {
   const item = modalDetalle.item
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
@@ -67,7 +69,7 @@ export default function RolDetalle({ modalDetalle, setModalDetalle, abrirModal, 
                     <div className="flex flex-wrap gap-1 p-2">
                       {[...new Set(perms.map(p => p.nombre))].map(nombre => (
                         <span key={nombre} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-                          {nombre.replace(/_/g, ' ')}
+                          {capitalizar(nombre.replace(/_/g, ' '))}
                         </span>
                       ))}
                     </div>

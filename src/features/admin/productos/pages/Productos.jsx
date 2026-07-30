@@ -27,6 +27,14 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
   )
 }
 
+function BadgeSinStock() {
+  return (
+    <span className="inline-flex items-center justify-center h-6 w-24 rounded-full bg-gray-300 text-white text-xs font-semibold">
+      Sin stock
+    </span>
+  )
+}
+
 export default function Productos() {
   const {
     productos, categorias, proveedores, marcas,
@@ -53,7 +61,7 @@ export default function Productos() {
     { key: 'stock',         label: 'Stock',     render: r => <span className={r.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{r.stock}</span> },
     { key: 'estado', label: 'Estado',
       render: r => r.stock <= 0
-        ? <span className="badge-anulado">Sin stock</span>
+        ? <BadgeSinStock />
         : <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
             onClick={() => setConfirmToggle({ id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
     },

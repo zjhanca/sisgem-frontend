@@ -1,6 +1,8 @@
 import Modal from '@shared/components/Modal'
 import { Edit2, Shield } from 'lucide-react'
 
+const capitalizar = str => str.charAt(0).toUpperCase() + str.slice(1)
+
 export default function RolForm({
   modal, form, setForm, errores, tab, setTab,
   permisosSeleccionados, gruposPermisos, todosPermisos,
@@ -76,7 +78,7 @@ export default function RolForm({
                       {perms.map(p => (
                         <label key={p.id} className="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer bg-white hover:bg-primary/5 transition-colors">
                           <input type="checkbox" checked={permisosSeleccionados.includes(p.id)} onChange={() => togglePermiso(p.id)} className="accent-primary shrink-0" />
-                          <span>{p.nombre.replace(/_/g, ' ')}</span>
+                          <span>{capitalizar(p.nombre.replace(/_/g, ' '))}</span>
                         </label>
                       ))}
                     </div>
