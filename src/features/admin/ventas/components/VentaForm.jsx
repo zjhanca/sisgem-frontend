@@ -1,7 +1,10 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import Modal from '@shared/components/Modal'
 import { Search, Scan, Trash2, CreditCard, Clock, Layers } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
+
+// letras (con acentos y ñ) y espacios únicamente
+const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/
 
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
@@ -14,10 +17,11 @@ export default function VentaForm({
     setForm({ tipo_cliente:'registrado', cliente_id:'', cliente_nombre:'', productos:[], tipo_pago:'total', metodo_pago:'efectivo' })
   }
   const dropdownRef = useRef(null)
+  const [clienteDropdown, setClienteDropdown] = useState(false)
 
   useEffect(() => {
     const handler = e => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setClienteBusqueda('')
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) { setClienteBusqueda(''); setClienteDropdown(false) }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -26,6 +30,7 @@ export default function VentaForm({
   const seleccionarCliente = c => {
     setForm(f => ({ ...f, cliente_id: c.id, tipo_pago: 'total' }))
     setClienteBusqueda('')
+    setClienteDropdown(false)
   }
 
   const clienteSeleccionado = clientes.find(c => c.id === +form.cliente_id)
@@ -89,8 +94,9 @@ export default function VentaForm({
                   <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
                   <input value={clienteBusqueda}
                     onChange={e => { setClienteBusqueda(e.target.value); setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' })) }}
-                    className="campo-input pl-8 text-xs" placeholder="Buscar cliente por nombre..." />
-                  {clienteBusqueda && clientesFiltrados.length > 0 && (
+                    onFocus={() => setClienteDropdown(true)}
+                    className="campo-input pl-8 text-xs" placeholder="Buscar o seleccionar cliente..." />
+                  {clienteDropdown && clientesFiltrados.length > 0 && (
                     <div className="absolute top-full left-0 right-0 z-30 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                       {clientesFiltrados.map(c => (
                         <button key={c.id} type="button"
@@ -144,7 +150,8 @@ export default function VentaForm({
               )}
             </div>
           ) : (
-            <input value={form.cliente_nombre} onChange={e => setForm(f => ({ ...f, cliente_nombre: e.target.value }))}
+            <input value={form.cliente_nombre}
+              onChange={e => { if (SOLO_LETRAS.test(e.target.value)) setForm(f => ({ ...f, cliente_nombre: e.target.value })) }}
               className="campo-input" placeholder="Nombre del cliente" />
           )}
         </div>

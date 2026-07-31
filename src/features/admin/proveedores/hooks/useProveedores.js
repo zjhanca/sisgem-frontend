@@ -113,6 +113,17 @@ export function useProveedores() {
     if (campo === 'tipo_persona') {
       // jurídica solo puede tener NIT; natural solo CC o CE
       nuevo.tipo_documento = valor === 'juridica' ? 'NIT' : 'CC'
+      // al cambiar el tipo de persona, los campos de abajo (razón social/nombre,
+      // contacto, teléfono, correo) ya no aplican de la misma forma — se limpian
+      // para evitar mezclar datos entre un tipo y otro
+      nuevo.nombre = ''
+      nuevo.contacto = ''
+      nuevo.telefono = ''
+      nuevo.email = ''
+      setErrores(prev => ({ ...prev, nombre: '', contacto: '', telefono: '', email: '' }))
+      setVerificando({})
+      clearTimeout(timerDoc.current)
+      clearTimeout(timerEmail.current)
     }
     setForm(nuevo)
     const err = validarCampo(campo, valor, nuevo.tipo_persona)
