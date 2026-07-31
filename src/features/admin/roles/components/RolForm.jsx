@@ -42,7 +42,8 @@ export default function RolForm({
             <div>
               <label className="campo-label">Descripción</label>
               <textarea value={form.descripcion} onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))}
-                rows={2} className="campo-input resize-none" placeholder="Descripción del rol..." />
+                rows={2} className="campo-input resize-none" placeholder="Descripción del rol..." maxLength={150} />
+              <p className="campo-hint text-right">{(form.descripcion || '').length}/150</p>
             </div>
             <div className="p-3 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-600">
               💡 Al continuar deberás seleccionar al menos un permiso para este rol.

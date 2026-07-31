@@ -120,9 +120,7 @@ export default function PagoForm({
             <label className="campo-label">Método de Pago</label>
             <select value={form.metodo} onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))} className="campo-input">
               <option value="efectivo">Efectivo</option>
-              <option value="transferencia">Transferencia</option>
-              <option value="tarjeta">Tarjeta</option>
-            </select>
+              <option value="transferencia">Transferencia</option>            </select>
           </div>
         </div>
 

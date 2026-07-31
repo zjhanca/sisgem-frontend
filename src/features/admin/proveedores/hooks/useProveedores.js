@@ -10,11 +10,15 @@ const formVacio = {
   telefono: '', email: '', direccion: ''
 }
 
-const validarCampo = (campo, valor) => {
+// letras (con acentos y ñ) y espacios únicamente
+const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/
+
+const validarCampo = (campo, valor, tipoPersona) => {
   switch (campo) {
     case 'nombre':
-      if (!valor.trim()) return 'La razón social es obligatoria'
+      if (!valor.trim()) return tipoPersona === 'natural' ? 'El nombre completo es obligatorio' : 'La razón social es obligatoria'
       if (valor.trim().length < 2) return 'Mínimo 2 caracteres'
+      if (tipoPersona === 'natural' && !SOLO_LETRAS.test(valor)) return 'Solo se permiten letras'
       return ''
     case 'documento':
       if (!valor.trim()) return 'El documento es obligatorio'
@@ -103,13 +107,15 @@ export function useProveedores() {
 
   const handleChange = (campo, valor) => {
     if (campo === 'telefono' && valor && !/^\d*$/.test(valor)) return
+    if (campo === 'contacto' && valor && !SOLO_LETRAS.test(valor)) return
+    if (campo === 'nombre' && valor && form.tipo_persona === 'natural' && !SOLO_LETRAS.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
     if (campo === 'tipo_persona') {
       // jurídica solo puede tener NIT; natural solo CC o CE
       nuevo.tipo_documento = valor === 'juridica' ? 'NIT' : 'CC'
     }
     setForm(nuevo)
-    const err = validarCampo(campo, valor)
+    const err = validarCampo(campo, valor, nuevo.tipo_persona)
     setErrores(prev => ({ ...prev, [campo]: err }))
     if (campo === 'documento' && !err) verificarDoc(valor, modal.item?.id)
     if (campo === 'email'     && !err) verificarEmail(valor, modal.item?.id)
@@ -119,7 +125,7 @@ export function useProveedores() {
     e.preventDefault()
     const campos = ['nombre', 'documento', 'email', 'telefono']
     const nuevosErrores = {}
-    campos.forEach(c => { nuevosErrores[c] = validarCampo(c, form[c]) })
+    campos.forEach(c => { nuevosErrores[c] = validarCampo(c, form[c], form.tipo_persona) })
     setErrores(nuevosErrores)
     if (Object.values(nuevosErrores).some(Boolean)) return
     if (errores.documento || errores.email) return

@@ -7,11 +7,20 @@ const formVacio = {
   nombre: '', apellido: '', email: '',
   telefono: '', rol_id: '', tipo_documento: 'CC', numero_documento: ''
 }
+
+// letras (con acentos y ñ) y espacios únicamente
+const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/
  
 const validarCampo = (campo, valor, esEdicion) => {
   switch (campo) {
-    case 'nombre':   return !valor.trim() ? 'El nombre es obligatorio' : ''
-    case 'apellido': return !valor.trim() ? 'El apellido es obligatorio' : ''
+    case 'nombre':
+      if (!valor.trim()) return 'El nombre es obligatorio'
+      if (!SOLO_LETRAS.test(valor)) return 'Solo se permiten letras'
+      return ''
+    case 'apellido':
+      if (!valor.trim()) return 'El apellido es obligatorio'
+      if (!SOLO_LETRAS.test(valor)) return 'Solo se permiten letras'
+      return ''
     case 'email':
       if (!valor.trim()) return 'El correo es obligatorio'
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) return 'Correo inválido'
@@ -123,6 +132,7 @@ export function useUsuarios() {
  
   const handleChange = (campo, valor) => {
     if ((campo === 'telefono' || campo === 'numero_documento') && valor && !/^\d*$/.test(valor)) return
+    if ((campo === 'nombre' || campo === 'apellido') && valor && !SOLO_LETRAS.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
     const err = validarCampo(campo, valor, !!modal.item)

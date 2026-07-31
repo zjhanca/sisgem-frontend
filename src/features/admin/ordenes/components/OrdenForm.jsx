@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Modal from '@shared/components/Modal'
 import { Search, Scan, Trash2, Upload } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
@@ -12,6 +13,8 @@ export default function OrdenForm({
   setProvBusqueda, setProdBusqueda, setProdsFiltrados, totalOrden, handleCrear, creando,
   handleFacturaChange, facturaPreview, onCrearProducto,
 }) {
+  const [provDropdown, setProvDropdown] = useState(false)
+
   const cerrar = () => {
     setModalNuevo(false)
     setForm({ proveedor_id: '', productos: [], fecha_compra: '', metodo_pago: 'Efectivo', estado: 'pendiente', notas: '' })
@@ -37,16 +40,23 @@ export default function OrdenForm({
             <div className="relative">
               <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
               <input value={provBusqueda} onChange={e => buscarProveedor(e.target.value)}
-                className="campo-input pl-8 text-xs" placeholder="Buscar proveedor por nombre..." />
-              {provBusqueda && provsFiltrados.length > 0 && (
+                onFocus={() => { setProvDropdown(true); buscarProveedor(provBusqueda) }}
+                onBlur={() => setTimeout(() => setProvDropdown(false), 150)}
+                className="campo-input pl-8 text-xs" placeholder="Buscar o seleccionar proveedor..." />
+              {provDropdown && provsFiltrados.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-20 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                   {provsFiltrados.map(p => (
                     <button key={p.id} type="button"
-                      onMouseDown={e => { e.preventDefault(); setForm(f => ({ ...f, proveedor_id: p.id })); setProvSeleccionado(p); setProvBusqueda('') }}
+                      onMouseDown={e => { e.preventDefault(); setForm(f => ({ ...f, proveedor_id: p.id })); setProvSeleccionado(p); setProvBusqueda(''); setProvDropdown(false) }}
                       className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 text-light-text">
                       {p.nombre}
                     </button>
                   ))}
+                </div>
+              )}
+              {provDropdown && provBusqueda && provsFiltrados.length === 0 && (
+                <div className="absolute top-full left-0 right-0 z-20 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 p-3 text-xs text-gray-400 text-center">
+                  Sin coincidencias
                 </div>
               )}
             </div>

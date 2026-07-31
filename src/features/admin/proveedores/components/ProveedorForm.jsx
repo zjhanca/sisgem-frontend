@@ -89,7 +89,7 @@ export default function ProveedorForm({ modal, form, errores, verificando = {}, 
                 placeholder="Ej: 3001234567" inputMode="numeric" maxLength={10} />
               {errores.telefono && <p className="campo-error">{errores.telefono}</p>}
             </div>
-            <div>
+            <div className="col-span-2">
               <label className="campo-label">Correo</label>
               <div className="relative">
                 <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)}

@@ -146,8 +146,8 @@ export function useOrdenes() {
 
   const buscarProveedor = texto => {
     setProvBusqueda(texto); setForm(p => ({ ...p, proveedor_id: '' })); setProvSeleccionado(null)
-    if (!texto) { setProvsFiltrados([]); return }
-    setProvsFiltrados(proveedores.filter(p => p.nombre.toLowerCase().includes(texto.toLowerCase())).slice(0, 6))
+    const t = texto.toLowerCase()
+    setProvsFiltrados(proveedores.filter(p => !t || p.nombre.toLowerCase().includes(t)))
   }
   const buscarProducto = texto => {
     setProdBusqueda(texto)

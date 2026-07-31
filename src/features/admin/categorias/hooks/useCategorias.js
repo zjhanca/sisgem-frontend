@@ -5,11 +5,15 @@ import toast from 'react-hot-toast'
 
 const formVacio = { nombre: '', descripcion: '', margen: '', icono: '' }
 
+// letras (con acentos y ñ) y espacios únicamente
+const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/
+
 const validar = form => {
   const e = {}
-  if (!form.nombre.trim())                  e.nombre = 'El nombre es obligatorio'
-  else if (form.nombre.trim().length < 2)   e.nombre = 'Mínimo 2 caracteres'
-  else if (form.nombre.trim().length > 100) e.nombre = 'Máximo 100 caracteres'
+  if (!form.nombre.trim())                     e.nombre = 'El nombre es obligatorio'
+  else if (form.nombre.trim().length < 2)      e.nombre = 'Mínimo 2 caracteres'
+  else if (form.nombre.trim().length > 100)    e.nombre = 'Máximo 100 caracteres'
+  else if (!SOLO_LETRAS.test(form.nombre))     e.nombre = 'Solo se permiten letras'
   if (form.margen === '' || form.margen === null || form.margen === undefined || isNaN(+form.margen))
     e.margen = 'El margen es obligatorio'
   else if (+form.margen < 0) e.margen = 'El margen no puede ser negativo'
@@ -78,6 +82,7 @@ export function useCategorias() {
   }
 
   const handleChange = (campo, valor) => {
+    if (campo === 'nombre' && valor && !SOLO_LETRAS.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
     const e = validar(nuevo)

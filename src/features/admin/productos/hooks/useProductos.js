@@ -11,6 +11,9 @@ const formVacio = {
   imagenes: [],
 }
 
+// pone en mayúscula la primera letra de cada palabra (ej. "salsa tomate" -> "Salsa Tomate")
+const capitalizarPalabras = str => str.replace(/(^|\s)\S/g, letra => letra.toUpperCase())
+
 const validar = form => {
   const e = {}
   if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio'
@@ -114,6 +117,7 @@ export function useProductos() {
   const cerrarModal = () => { setModal({ abierto: false, item: null }); setErrores({}) }
 
   const handleChange = (campo, valor) => {
+    if (campo === 'nombre') valor = capitalizarPalabras(valor)
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
     const e = validar(nuevo)

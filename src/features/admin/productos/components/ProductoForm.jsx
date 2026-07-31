@@ -173,7 +173,8 @@ export default function ProductoForm({ modal, form, setForm, errores, handleChan
           <div className="col-span-2">
             <label className="campo-label">Descripción</label>
             <textarea value={form.descripcion} onChange={e => handleChange('descripcion', e.target.value)}
-              rows={2} className="campo-input resize-none" />
+              rows={2} className="campo-input resize-none" maxLength={300} />
+            <p className="campo-hint text-right">{(form.descripcion || '').length}/300</p>
           </div>
 
           <div className="col-span-2">

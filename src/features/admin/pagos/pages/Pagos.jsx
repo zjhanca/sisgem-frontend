@@ -46,7 +46,7 @@ export default function Pagos() {
 
   const columnas = [
     { key: 'cliente',   label: 'Cliente', render: r => r.cliente || '—' },
-    { key: 'total_pagado', label: 'Pagado', render: r => <span className="text-green-600 font-medium">{formatPrecio(r.total_pagado)}</span> },
+    { key: 'total_pagado', label: 'Pagado', render: r => <span className="text-light-text font-medium">{formatPrecio(r.total_pagado)}</span> },
     { key: 'saldo_pendiente', label: 'Pendiente/Estado',
       render: r => r.completo
         ? <BadgeEstado color="bg-primary" label="Completo" />

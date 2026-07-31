@@ -11,7 +11,7 @@ import OrdenConfirmDescarga from '../components/Ordenconfirmdescarga'
 import ProductoForm from '../../productos/components/ProductoForm'
 import { useProductos } from '../../productos/hooks/useProductos'
 
-const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Crédito']
+const METODOS_PAGO = ['Efectivo', 'Transferencia']
 
 function BadgeEstado({ color, label, onClick, title }) {
   const base = 'inline-flex items-center justify-center h-6 w-24 rounded-full text-white text-xs font-semibold'
