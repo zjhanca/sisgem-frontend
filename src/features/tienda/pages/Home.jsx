@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useHome }          from '../hooks/useHome'
 import NavbarPublico        from '@shared/components/NavbarPublico'
 import Carrusel             from '../components/Carrusel'
@@ -6,12 +5,10 @@ import CategoryCarousel     from '../components/CategoryCarousel'
 import FeaturedProducts     from '../components/FeaturedProducts'
 import PromotionalBanners   from '../components/PromotionalBanners'
 import BrandCarousel        from '../components/BrandCarousel'
-import ProductoModal        from '../components/ProductoModal'
 import Footer               from '../components/Footer'
 
 export default function Home() {
   const { productos, categorias, marcas } = useHome()
-  const [productoSel, setProductoSel] = useState(null)
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
@@ -19,13 +16,11 @@ export default function Home() {
       <Carrusel />
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
         <CategoryCarousel categorias={categorias} />
-        <FeaturedProducts productos={productos} onVerProducto={setProductoSel} />
+        <FeaturedProducts productos={productos} />
         <PromotionalBanners />
         <BrandCarousel marcas={marcas} />
       </main>
       <Footer />
-
-      <ProductoModal producto={productoSel} onCerrar={() => setProductoSel(null)} />
     </div>
   )
 }

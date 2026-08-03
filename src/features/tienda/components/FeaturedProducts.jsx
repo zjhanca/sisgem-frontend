@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Package } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
-function ProductCard({ prod, onClick }) {
+function ProductCard({ prod }) {
+  const navigate = useNavigate()
   const imagenes = (() => {
     let imgs = prod.imagenes
     if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs) } catch { imgs = [] } }
@@ -18,7 +20,7 @@ function ProductCard({ prod, onClick }) {
   const next = e => { e.stopPropagation(); setImgIdx(i => (i + 1) % imagenes.length) }
 
   return (
-    <div onClick={() => onClick?.(prod)}
+    <div onClick={() => navigate(`/producto/${prod.id}`)}
       className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
       hover:border-primary/30 hover:shadow-md transition-all group flex flex-col overflow-hidden cursor-pointer">
 
@@ -76,7 +78,7 @@ function ProductCard({ prod, onClick }) {
   )
 }
 
-export default function FeaturedProducts({ productos, onVerProducto }) {
+export default function FeaturedProducts({ productos }) {
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
@@ -84,7 +86,7 @@ export default function FeaturedProducts({ productos, onVerProducto }) {
         
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        {productos.slice(0, 10).map(prod => <ProductCard key={prod.id} prod={prod} onClick={onVerProducto} />)}
+        {productos.slice(0, 10).map(prod => <ProductCard key={prod.id} prod={prod} />)}
       </div>
     </section>
   )

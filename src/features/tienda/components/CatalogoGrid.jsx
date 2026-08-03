@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { Home } from 'lucide-react'
 import CatalogoCard from './CatalogoCard'
  
-export default function CatalogoGrid({ productos, isLoading, onVerProducto, limpiarFiltros }) {
+export default function CatalogoGrid({ productos, isLoading, limpiarFiltros }) {
  
   // skeleton
   if (isLoading) {
@@ -45,7 +45,7 @@ export default function CatalogoGrid({ productos, isLoading, onVerProducto, limp
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {productos.map(prod => (
-        <CatalogoCard key={prod.id} prod={prod} onClick={onVerProducto} />
+        <CatalogoCard key={prod.id} prod={prod} />
       ))}
     </div>
   )

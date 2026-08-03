@@ -1,9 +1,12 @@
+import { useNavigate } from 'react-router-dom'
 import { Package } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
  
-export default function CatalogoCard({ prod, onClick }) {
+export default function CatalogoCard({ prod }) {
+  const navigate = useNavigate()
+
   return (
-    <div onClick={() => onClick?.(prod)}
+    <div onClick={() => navigate(`/producto/${prod.id}`)}
       className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
       hover:border-primary/40 hover:shadow-md transition-all group flex flex-col cursor-pointer">
  
