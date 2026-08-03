@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
-import AdminLayout  from '@shared/components/AdminLayout'
+import AdminLayout   from '@shared/components/AdminLayout'
+import ScrollToTop   from '@shared/components/ScrollToTop'
 import Login        from '@features/autch/pages/Login'
 import Register     from '@features/autch/pages/Register'
 import Recuperar      from '@features/autch/pages/Recuperar'
@@ -38,29 +39,32 @@ function RutaCliente({ children }) {
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      <Route path='/'           element={<Home />} />
-      <Route path='/productos'  element={<Catalogo />} />
-      <Route path='/producto/:id' element={<ProductoDetalle />} />
-      <Route path='/login'     element={<Login />} />
-      <Route path='/register'  element={<Register />} />
-      <Route path='/recuperar'      element={<Recuperar />} />
-      <Route path='/reset-password' element={<ResetPassword />} />
-      <Route path='/perfil'    element={<RutaCliente><PanelCliente /></RutaCliente>} />
-      <Route path='/admin' element={<RutaAdmin><AdminLayout /></RutaAdmin>}>
-        <Route index             element={<Dashboard />} />
-        <Route path='ventas'     element={<Ventas />} />
-        <Route path='productos'  element={<Productos />} />
-        <Route path='clientes'   element={<Clientes />} />
-        <Route path='pagos'      element={<Pagos />} />
-        <Route path='ordenes'    element={<OrdCompra />} />
-        <Route path='marcas'     element={<Marcas />} />
-        <Route path='categorias' element={<Categorias />} />
-        <Route path='proveedores'element={<Proveedores />} />
-        <Route path='usuarios'   element={<Usuarios />} />
-        <Route path='roles'      element={<Roles />} />
-      </Route>
-      <Route path='*' element={<Navigate to='/' replace />} />
-    </Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route path='/'           element={<Home />} />
+        <Route path='/productos'  element={<Catalogo />} />
+        <Route path='/producto/:id' element={<ProductoDetalle />} />
+        <Route path='/login'     element={<Login />} />
+        <Route path='/register'  element={<Register />} />
+        <Route path='/recuperar'      element={<Recuperar />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
+        <Route path='/perfil'    element={<RutaCliente><PanelCliente /></RutaCliente>} />
+        <Route path='/admin' element={<RutaAdmin><AdminLayout /></RutaAdmin>}>
+          <Route index             element={<Dashboard />} />
+          <Route path='ventas'     element={<Ventas />} />
+          <Route path='productos'  element={<Productos />} />
+          <Route path='clientes'   element={<Clientes />} />
+          <Route path='pagos'      element={<Pagos />} />
+          <Route path='ordenes'    element={<OrdCompra />} />
+          <Route path='marcas'     element={<Marcas />} />
+          <Route path='categorias' element={<Categorias />} />
+          <Route path='proveedores'element={<Proveedores />} />
+          <Route path='usuarios'   element={<Usuarios />} />
+          <Route path='roles'      element={<Roles />} />
+        </Route>
+        <Route path='*' element={<Navigate to='/' replace />} />
+      </Routes>
+    </>
   )
 }

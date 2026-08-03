@@ -24,11 +24,11 @@ function ProductCard({ prod }) {
       className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
       hover:border-primary/30 hover:shadow-md transition-all group flex flex-col overflow-hidden cursor-pointer">
 
-      <div className="relative h-40 bg-gray-50 dark:bg-dark-bg overflow-hidden">
+      <div className="relative h-40 bg-gray-50 dark:bg-dark-bg overflow-hidden p-3">
         {imagenes.length > 0 ? (
           <>
             <img src={imagenes[imgIdx]} alt={prod.nombre}
-              className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+              className="w-full h-full object-contain group-hover:scale-103 transition-transform duration-500"
               onError={e => e.target.style.display='none'} />
             {imagenes.length > 1 && (<>
               <button onClick={prev}

@@ -94,19 +94,19 @@ export default function ProductoDetalle() {
               <div className="hidden sm:flex flex-col gap-2 shrink-0">
                 {imagenes.map((img, i) => (
                   <button key={i} onClick={() => setImgIdx(i)}
-                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 bg-white dark:bg-dark-bg p-1 transition-colors ${
                       i === imgIdx ? 'border-primary' : 'border-gray-200 dark:border-dark-border hover:border-primary/40'
                     }`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" onError={e => e.target.style.display='none'} />
+                    <img src={img} alt="" className="w-full h-full object-contain" onError={e => e.target.style.display='none'} />
                   </button>
                 ))}
               </div>
             )}
 
-            <div className="relative flex-1 aspect-square rounded-2xl overflow-hidden bg-light-card dark:bg-dark-card border border-gray-100 dark:border-dark-border">
+            <div className="relative flex-1 aspect-square rounded-2xl overflow-hidden bg-light-card dark:bg-dark-card border border-gray-100 dark:border-dark-border p-6">
               {imagenes.length > 0 ? (
                 <>
-                  <img src={imagenes[imgIdx]} alt={producto.nombre} className="w-full h-full object-cover"
+                  <img src={imagenes[imgIdx]} alt={producto.nombre} className="w-full h-full object-contain"
                     onError={e => e.target.style.display='none'} />
                   {imagenes.length > 1 && (<>
                     <button onClick={prev}
@@ -121,7 +121,7 @@ export default function ProductoDetalle() {
                     </button>
                     <div className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                       {imagenes.map((_, i) => (
-                        <span key={i} className={`rounded-full transition-all ${i === imgIdx ? 'w-4 h-1.5 bg-primary' : 'w-1.5 h-1.5 bg-white/70'}`} />
+                        <span key={i} className={`rounded-full transition-all ${i === imgIdx ? 'w-4 h-1.5 bg-primary' : 'w-1.5 h-1.5 bg-gray-300 dark:bg-dark-border'}`} />
                       ))}
                     </div>
                   </>)}

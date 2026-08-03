@@ -10,11 +10,11 @@ export default function CatalogoCard({ prod }) {
       className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
       hover:border-primary/40 hover:shadow-md transition-all group flex flex-col cursor-pointer">
  
-      <div className="relative h-36 rounded-t-xl overflow-hidden bg-gray-50 dark:bg-dark-bg">
+      <div className="relative h-36 rounded-t-xl overflow-hidden bg-gray-50 dark:bg-dark-bg p-2">
         {prod.imagen_url
           ? <img
               src={prod.imagen_url} alt={prod.nombre}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
               onError={e => e.target.style.display='none'}
             />
           : <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-dark-border">
