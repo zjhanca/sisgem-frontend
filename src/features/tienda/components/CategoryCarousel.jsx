@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export default function CategoryCarousel({ categorias }) {
   if (!categorias.length) return null
 
@@ -6,9 +8,10 @@ export default function CategoryCarousel({ categorias }) {
       <h2 className="text-sm font-semibold text-light-text mb-4">Categorías</h2>
       <div className="flex gap-5 overflow-x-auto pb-1 scrollbar-hide">
         {categorias.map(cat => (
-          <div key={cat.id} className="shrink-0 flex flex-col items-center gap-2 w-20">
+          <Link key={cat.id} to={`/productos?categoria=${cat.id}`}
+            className="shrink-0 flex flex-col items-center gap-2 w-20 group">
             <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center
-              shadow-md shadow-primary/20 overflow-hidden">
+              shadow-md shadow-primary/20 overflow-hidden transition-transform group-hover:scale-105">
               {cat.icono
                 ? <img src={cat.icono} alt={cat.nombre}
                     className="w-12 h-12 object-contain"
@@ -23,11 +26,11 @@ export default function CategoryCarousel({ categorias }) {
               }
             </div>
             {cat.icono && (
-              <span className="text-xs text-center text-light-text leading-tight w-20 font-medium">
+              <span className="text-xs text-center text-light-text leading-tight w-20 font-medium group-hover:text-primary transition-colors">
                 {cat.nombre}
               </span>
             )}
-          </div>
+          </Link>
         ))}
       </div>
     </section>

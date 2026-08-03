@@ -1,8 +1,10 @@
-﻿import NavbarPublico    from '@shared/components/NavbarPublico'
+﻿import { useState } from 'react'
+import NavbarPublico    from '@shared/components/NavbarPublico'
 import Footer           from '../components/Footer'
 import CatalogoHeader   from '../components/CatalogoHeader'
 import CatalogoFiltros  from '../components/CatalogoFiltros'
 import CatalogoGrid     from '../components/CatalogoGrid'
+import ProductoModal     from '../components/ProductoModal'
 import { useCatalogo }  from '../hooks/useCatalogo'
 
 export default function Catalogo() {
@@ -12,6 +14,8 @@ export default function Catalogo() {
     categoriaFiltro, marcaFiltro, hayFiltros,
     limpiarFiltros, setCategoria, setMarca,
   } = useCatalogo()
+
+  const [productoSel, setProductoSel] = useState(null)
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex flex-col">
@@ -68,12 +72,14 @@ export default function Catalogo() {
         <CatalogoGrid
           productos={productos}
           isLoading={isLoading}
-          agregarAlCarrito={() => {}}
+          onVerProducto={setProductoSel}
           limpiarFiltros={limpiarFiltros}
         />
       </div>
 
       <Footer />
+
+      <ProductoModal producto={productoSel} onCerrar={() => setProductoSel(null)} />
     </div>
   )
 }

@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Package } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
-function ProductCard({ prod }) {
+function ProductCard({ prod, onClick }) {
   const imagenes = (() => {
     let imgs = prod.imagenes
     if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs) } catch { imgs = [] } }
@@ -18,8 +18,9 @@ function ProductCard({ prod }) {
   const next = e => { e.stopPropagation(); setImgIdx(i => (i + 1) % imagenes.length) }
 
   return (
-    <div className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
-      hover:border-primary/30 hover:shadow-md transition-all group flex flex-col overflow-hidden">
+    <div onClick={() => onClick?.(prod)}
+      className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
+      hover:border-primary/30 hover:shadow-md transition-all group flex flex-col overflow-hidden cursor-pointer">
 
       <div className="relative h-40 bg-gray-50 dark:bg-dark-bg overflow-hidden">
         {imagenes.length > 0 ? (
@@ -46,7 +47,9 @@ function ProductCard({ prod }) {
             </>)}
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl opacity-10">🛒</div>
+          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-dark-border">
+            <Package size={32} />
+          </div>
         )}
 
         {prod.stock === 0 && (
@@ -73,7 +76,7 @@ function ProductCard({ prod }) {
   )
 }
 
-export default function FeaturedProducts({ productos }) {
+export default function FeaturedProducts({ productos, onVerProducto }) {
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
@@ -81,7 +84,7 @@ export default function FeaturedProducts({ productos }) {
         
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        {productos.slice(0, 10).map(prod => <ProductCard key={prod.id} prod={prod} />)}
+        {productos.slice(0, 10).map(prod => <ProductCard key={prod.id} prod={prod} onClick={onVerProducto} />)}
       </div>
     </section>
   )

@@ -1,9 +1,11 @@
+import { Package } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
  
-export default function CatalogoCard({ prod }) {
+export default function CatalogoCard({ prod, onClick }) {
   return (
-    <div className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
-      hover:border-primary/40 hover:shadow-md transition-all group flex flex-col">
+    <div onClick={() => onClick?.(prod)}
+      className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border
+      hover:border-primary/40 hover:shadow-md transition-all group flex flex-col cursor-pointer">
  
       <div className="relative h-36 rounded-t-xl overflow-hidden bg-gray-50 dark:bg-dark-bg">
         {prod.imagen_url
@@ -12,7 +14,9 @@ export default function CatalogoCard({ prod }) {
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               onError={e => e.target.style.display='none'}
             />
-          : <div className="w-full h-full flex items-center justify-center text-4xl">🛒</div>
+          : <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-dark-border">
+              <Package size={32} />
+            </div>
         }
         {prod.stock === 0 && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-t-xl">

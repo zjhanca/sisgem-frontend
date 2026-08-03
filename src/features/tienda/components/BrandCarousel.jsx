@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function BrandCarousel({ marcas }) {
@@ -25,23 +26,24 @@ export default function BrandCarousel({ marcas }) {
           </button>
         )}
 
-        <div className="flex-1 flex justify-around items-center">
+        <div className="flex-1 grid grid-cols-5 gap-3">
           {visibles.map(m => (
-            <div key={m.id} className="w-20 h-20 rounded-full overflow-hidden
-              bg-light-card dark:bg-dark-card border border-gray-100 dark:border-dark-border shadow-sm">
+            <Link key={m.id} to={`/productos?marca=${m.id}`}
+              className="h-20 rounded-xl overflow-hidden bg-white dark:bg-dark-card
+                border border-gray-100 dark:border-dark-border shadow-sm
+                flex items-center justify-center p-3
+                hover:border-primary/40 hover:shadow-md transition-all">
               {m.logo ? (
                 <img src={m.logo} alt={m.nombre}
-                  className="w-full h-full object-cover"
+                  className="max-w-full max-h-full object-contain"
                   onError={e => {
                     e.target.style.display='none'
-                    e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-primary/10 font-bold text-primary text-2xl">${m.nombre?.charAt(0).toUpperCase()}</div>`
+                    e.target.parentElement.innerHTML = `<span class="text-xs font-semibold text-primary text-center px-1">${m.nombre}</span>`
                   }} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-primary/10 font-bold text-primary text-2xl">
-                  {m.nombre?.charAt(0).toUpperCase()}
-                </div>
+                <span className="text-xs font-semibold text-primary text-center px-1">{m.nombre}</span>
               )}
-            </div>
+            </Link>
           ))}
         </div>
 
