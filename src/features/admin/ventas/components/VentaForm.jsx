@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Trash2, CreditCard, Clock, Layers } from 'lucide-react'
+import { Search, Scan, Trash2, CreditCard, Clock, Layers, AlertTriangle } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 // letras (con acentos y ñ) y espacios únicamente
@@ -10,11 +10,12 @@ export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
   clientes, clientesFiltrados, clienteBusqueda, setClienteBusqueda,
   prodBusqueda, prodsFiltrados, buscarProducto, buscarPorCodigo,
-  agregarProducto, quitarProducto, cambiarCantidad, totalVenta, handleCrear, creando
+  agregarProducto, quitarProducto, cambiarCantidad, totalVenta, handleCrear, creando,
+  clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
 }) {
   const cerrar = () => {
     setModalNuevo(false)
-    setForm({ tipo_cliente:'registrado', cliente_id:'', cliente_nombre:'', productos:[], tipo_pago:'total', metodo_pago:'efectivo' })
+    setForm({ tipo_cliente:'registrado', cliente_id:'', cliente_nombre:'', productos:[], tipo_pago:'total', metodo_pago:'efectivo', metodo_pago_inmediato:'efectivo' })
   }
   const dropdownRef = useRef(null)
   const [clienteDropdown, setClienteDropdown] = useState(false)
@@ -33,11 +34,9 @@ export default function VentaForm({
     setClienteDropdown(false)
   }
 
-  const clienteSeleccionado = clientes.find(c => c.id === +form.cliente_id)
   const permitefiado = clienteSeleccionado?.permite_fiado
-  const limiteFiado = clienteSeleccionado?.limite_fiado ? +clienteSeleccionado.limite_fiado : null
-  const fiadoExcedido = form.tipo_pago === 'fiado' && limiteFiado != null && totalVenta > limiteFiado
-  const fiadoPorcentaje = form.tipo_pago === 'fiado' && limiteFiado ? Math.min(100, (totalVenta / limiteFiado) * 100) : 0
+  // cupoFiadoDisponible: null = sin límite configurado (fiado ilimitado)
+  const sinCupo = permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
 
   // cantidad total por producto (suma de todas sus líneas, si está dividido por lote)
   const totalPorProducto = {}
@@ -114,26 +113,59 @@ export default function VentaForm({
                 </div>
               )}
 
-              {clienteSeleccionado && form.tipo_pago === 'fiado' && limiteFiado != null && (
+              {clienteSeleccionado && form.tipo_pago === 'fiado' && cupoFiadoDisponible != null && (
                 <div className="mt-1.5 space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">Límite fiado</span>
-                    <span className={fiadoExcedido ? 'text-red-400 font-semibold' : 'text-amber-600 font-semibold'}>
-                      {fiadoExcedido
-                        ? `Excede por $${(totalVenta - limiteFiado).toLocaleString('es-CO')}`
-                        : `$${totalVenta.toLocaleString('es-CO')} / $${limiteFiado.toLocaleString('es-CO')}`}
+                    <span className="text-gray-400">Cupo fiado disponible</span>
+                    <span className={excedeCupoFiado ? 'text-amber-600 font-semibold' : 'text-primary font-semibold'}>
+                      ${totalVenta.toLocaleString('es-CO')} / ${cupoFiadoDisponible.toLocaleString('es-CO')}
                     </span>
                   </div>
                   <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${fiadoExcedido ? 'bg-red-400' : fiadoPorcentaje > 80 ? 'bg-amber-400' : 'bg-primary'}`}
-                      style={{ width: `${Math.min(100, fiadoPorcentaje)}%` }} />
+                    <div className={`h-full rounded-full transition-all ${excedeCupoFiado ? 'bg-amber-400' : 'bg-primary'}`}
+                      style={{ width: `${cupoFiadoDisponible > 0 ? Math.min(100, (totalVenta / cupoFiadoDisponible) * 100) : 100}%` }} />
                   </div>
                 </div>
               )}
+
+              {/* aviso de pago mixto cuando la venta excede el cupo disponible */}
+              {clienteSeleccionado && form.tipo_pago === 'fiado' && excedeCupoFiado && !sinCupo && (
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      Este cliente solo tiene <strong>${cupoFiadoDisponible.toLocaleString('es-CO')}</strong> de cupo fiado disponible.
+                      Se fiarán <strong>${montoFiado.toLocaleString('es-CO')}</strong> y debes cobrar
+                      <strong> ${montoInmediato.toLocaleString('es-CO')}</strong> ahora.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    {[{ val: 'efectivo', label: 'Efectivo' }, { val: 'transferencia', label: 'Transferencia' }].map(m => (
+                      <button key={m.val} type="button"
+                        onClick={() => setForm(f => ({ ...f, metodo_pago_inmediato: m.val }))}
+                        className={`flex-1 py-1.5 text-xs rounded-lg border transition-all ${
+                          form.metodo_pago_inmediato === m.val
+                            ? 'bg-amber-500 text-white border-amber-500'
+                            : 'border-amber-200 text-amber-600 hover:border-amber-400'
+                        }`}>
+                        {m.label} (${montoInmediato.toLocaleString('es-CO')})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {clienteSeleccionado && sinCupo && form.tipo_pago === 'fiado' && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+                  <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-600">Este cliente no tiene cupo de fiado disponible actualmente. Elige "Pago Total".</p>
+                </div>
+              )}
+
               {clienteSeleccionado && (
                 <div className="flex gap-2 pt-1">
                   {[{ val:'total', label:'Pago Total', icon:CreditCard, active:'bg-primary text-white border-primary' },
-                    { val:'fiado', label:'Fiado', icon:Clock, active:'bg-amber-500 text-white border-amber-500', disabled:!permitefiado }
+                    { val:'fiado', label:'Fiado', icon:Clock, active:'bg-amber-500 text-white border-amber-500', disabled:!permitefiado || sinCupo }
                   ].map(t => (
                     <button key={t.val} type="button"
                       disabled={t.disabled}
@@ -276,9 +308,9 @@ export default function VentaForm({
 
         <div className="flex justify-end pt-2 border-t border-gray-100">
           <button type="submit"
-            disabled={creando || Object.values(totalPorProducto).length === 0 || form.productos.some(p => !p.cantidad || +p.cantidad < 1)}
+            disabled={creando || Object.values(totalPorProducto).length === 0 || form.productos.some(p => !p.cantidad || +p.cantidad < 1) || sinCupo}
             className={`btn-primary disabled:opacity-50 ${form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''}`}>
-            {creando ? 'Registrando...' : form.tipo_pago === 'fiado' ? 'Registrar Fiado' : 'Aceptar'}
+            {creando ? 'Registrando...' : form.tipo_pago === 'fiado' ? (excedeCupoFiado ? 'Registrar Fiado Parcial' : 'Registrar Fiado') : 'Aceptar'}
           </button>
         </div>
       </form>

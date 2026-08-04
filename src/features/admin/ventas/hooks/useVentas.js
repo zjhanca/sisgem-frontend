@@ -16,6 +16,7 @@ export function useVentas() {
   const [form, setForm] = useState({
     tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '',
     productos: [], tipo_pago: 'total', metodo_pago: 'efectivo', // 'total' | 'fiado'
+    metodo_pago_inmediato: 'efectivo', // método para la porción que se cobra ya en un fiado mixto
   })
   const [prodBusqueda, setProdBusqueda]       = useState('')
   const [prodsFiltrados, setProdsFiltrados]   = useState([])
@@ -75,8 +76,13 @@ export function useVentas() {
       const pedido_id = res.data.pedido_id
 
       if (data._tipo_pago === 'fiado') {
-        // fiado: dejar en pendiente, no registrar pago
+        // fiado (puro o mixto): la venta queda pendiente
         if (estadoPendiente) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPendiente.id })
+        // si es un fiado mixto (excede el cupo disponible), la porción que se cobra
+        // de inmediato se registra como abono — el saldo restante queda fiado
+        if (data._monto_inmediato > 0) {
+          await ventasService.registrarPago({ pedido_id, monto: data._monto_inmediato, metodo: data._metodo_pago_inmediato || 'efectivo' })
+        }
       } else {
         // pago total: marcar pagado y registrar pago
         if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
@@ -85,11 +91,15 @@ export function useVentas() {
       return res.data
     },
     onSuccess: (_, vars) => {
-      qc.invalidateQueries(['pedidos']); qc.invalidateQueries(['productos']); qc.invalidateQueries(['pagos'])
+      qc.invalidateQueries(['pedidos']); qc.invalidateQueries(['productos']); qc.invalidateQueries(['pagos']); qc.invalidateQueries(['clientes'])
       setModalNuevo(false)
-      setForm({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [], tipo_pago: 'total', metodo_pago: 'efectivo' })
+      setForm({ tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '', productos: [], tipo_pago: 'total', metodo_pago: 'efectivo', metodo_pago_inmediato: 'efectivo' })
       setProdBusqueda(''); setClienteBusqueda('')
-      toast.success(vars._tipo_pago === 'fiado' ? 'Venta registrada como fiado' : 'Venta registrada y marcada como pagada')
+      toast.success(
+        vars._tipo_pago === 'fiado'
+          ? (vars._monto_inmediato > 0 ? 'Venta registrada — fiado parcial y abono inmediato' : 'Venta registrada como fiado')
+          : 'Venta registrada y marcada como pagada'
+      )
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
@@ -138,16 +148,28 @@ export function useVentas() {
 
     if (nuevaCantidadTotal > stock) { toast.error(`Stock insuficiente — solo hay ${stock} unidades`); return }
 
-    const lineasNuevas = construirLineas(prod, nuevaCantidadTotal)
-    setForm(f => ({
-      ...f,
-      productos: [...f.productos.filter(p => p.producto_id !== prod.id), ...lineasNuevas],
-    }))
+    setForm(f => {
+      // si el producto ya estaba en el carrito, reconstruir sus líneas EN SU
+      // MISMA POSICIÓN (no al final) para no alterar el orden de la lista
+      const idxExistente = f.productos.findIndex(p => p.producto_id === prod.id)
+      const lineasNuevas = construirLineas(prod, nuevaCantidadTotal)
+      const sinProducto = f.productos.filter(p => p.producto_id !== prod.id)
+
+      if (idxExistente === -1) {
+        // producto nuevo: se agrega al final, como antes
+        return { ...f, productos: [...sinProducto, ...lineasNuevas] }
+      }
+      const antes = sinProducto.slice(0, idxExistente)
+      const despues = sinProducto.slice(idxExistente)
+      return { ...f, productos: [...antes, ...lineasNuevas, ...despues] }
+    })
     setProdBusqueda(''); setProdsFiltrados([])
   }
 
   // cambia la cantidad TOTAL deseada para un producto (suma de sus líneas);
-  // reconstruye las líneas correspondientes, dividiendo en dos precios si corresponde
+  // reconstruye las líneas correspondientes, dividiendo en dos precios si
+  // corresponde, manteniendo la posición original del producto en la lista
+  // (antes se agregaba al final del arreglo y "saltaba" hacia abajo)
   const cambiarCantidadProducto = (producto_id, nuevaCantidadTotal) => {
     const prod = productos.find(p => p.id === producto_id)
     if (!prod) return
@@ -164,11 +186,18 @@ export function useVentas() {
     const cant = Math.min(num, stock)
     if (+nuevaCantidadTotal > stock) toast.error(`Stock insuficiente — máximo ${stock} unidades`)
 
-    const lineasNuevas = construirLineas(prod, cant)
-    setForm(f => ({
-      ...f,
-      productos: [...f.productos.filter(p => p.producto_id !== producto_id), ...lineasNuevas],
-    }))
+    setForm(f => {
+      const idxExistente = f.productos.findIndex(p => p.producto_id === producto_id)
+      const lineasNuevas = construirLineas(prod, cant)
+      const sinProducto = f.productos.filter(p => p.producto_id !== producto_id)
+
+      if (idxExistente === -1) {
+        return { ...f, productos: [...sinProducto, ...lineasNuevas] }
+      }
+      const antes = sinProducto.slice(0, idxExistente)
+      const despues = sinProducto.slice(idxExistente)
+      return { ...f, productos: [...antes, ...lineasNuevas, ...despues] }
+    })
   }
 
   // mantiene compatibilidad con el índice usado en el formulario: identifica
@@ -193,6 +222,19 @@ export function useVentas() {
 
   const totalVenta = form.productos.reduce((s, p) => s + p.precio_unitario * (+p.cantidad || 0), 0)
 
+  // cliente seleccionado y su cupo de fiado REAL disponible (backend ya descuenta
+  // lo que el cliente tiene pendiente en otras ventas no anuladas). null = sin límite
+  const clienteSeleccionado = clientes.find(c => c.id === +form.cliente_id)
+  const cupoFiadoDisponible = clienteSeleccionado?.cupo_fiado_disponible != null
+    ? +clienteSeleccionado.cupo_fiado_disponible
+    : null
+
+  // si el total de la venta excede el cupo disponible, el excedente se cobra de
+  // inmediato (pago mixto): montoFiado queda como deuda, montoInmediato se paga ya
+  const excedeCupoFiado = form.tipo_pago === 'fiado' && cupoFiadoDisponible != null && totalVenta > cupoFiadoDisponible
+  const montoFiado     = excedeCupoFiado ? cupoFiadoDisponible : totalVenta
+  const montoInmediato = excedeCupoFiado ? totalVenta - cupoFiadoDisponible : 0
+
   const handleCrear = e => {
     e.preventDefault()
     if (form.tipo_cliente === 'registrado' && !form.cliente_id) { toast.error('Selecciona un cliente'); return }
@@ -211,13 +253,11 @@ export function useVentas() {
         toast.error(`${nombre}: solo hay ${stock} unidades en stock`); return
       }
     }
-    // validar límite de fiado en frontend antes de enviar al backend
-    if (form.tipo_pago === 'fiado' && form.cliente_id) {
-      const cliente = clientes.find(c => c.id === +form.cliente_id)
-      if (cliente?.limite_fiado && +cliente.limite_fiado > 0 && totalVenta > +cliente.limite_fiado) {
-        toast.error(`El total ($${totalVenta.toLocaleString('es-CO')}) supera el límite de fiado ($${(+cliente.limite_fiado).toLocaleString('es-CO')})`)
-        return
-      }
+    // validar que el cliente tenga cupo de fiado disponible (el mixto ya cubre el
+    // caso de "supera el cupo" — solo bloquea si literalmente no queda nada)
+    if (form.tipo_pago === 'fiado' && form.cliente_id && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0) {
+      toast.error('Este cliente no tiene cupo de fiado disponible actualmente')
+      return
     }
 
     crearVenta.mutate({
@@ -225,9 +265,12 @@ export function useVentas() {
       cliente_nombre: form.tipo_cliente === 'manual'     ? form.cliente_nombre : null,
       productos:      form.productos,
       es_fiado:       form.tipo_pago === 'fiado',
-      _total:         totalVenta,
-      _tipo_pago:     form.tipo_pago,
-      _metodo_pago:   form.metodo_pago || 'efectivo',
+      monto_fiado:    form.tipo_pago === 'fiado' ? montoFiado : 0,
+      _total:            totalVenta,
+      _tipo_pago:        form.tipo_pago,
+      _metodo_pago:      form.metodo_pago || 'efectivo',
+      _monto_inmediato:  montoInmediato,
+      _metodo_pago_inmediato: form.metodo_pago_inmediato || 'efectivo',
     })
   }
 
@@ -296,6 +339,7 @@ export function useVentas() {
     totalVenta, handleCrear, anular, getBadge,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     descargarReporte,
+    clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
     creando: crearVenta.isPending, anulando: anular.isPending,
   }
 }

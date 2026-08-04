@@ -44,6 +44,7 @@ export default function Ventas() {
     totalVenta, handleCrear, anular, getBadge, estados, cruzaLote,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     descargarReporte,
+    clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
     creando, anulando,
   } = useVentas()
 
@@ -178,7 +179,9 @@ export default function Ventas() {
         prodBusqueda={prodBusqueda} prodsFiltrados={prodsFiltrados}
         buscarProducto={buscarProducto} buscarPorCodigo={buscarPorCodigo}
         agregarProducto={agregarProducto} quitarProducto={quitarProducto} cambiarCantidad={cambiarCantidad}
-        totalVenta={totalVenta} handleCrear={handleCrear} creando={creando} cruzaLote={cruzaLote} />
+        totalVenta={totalVenta} handleCrear={handleCrear} creando={creando} cruzaLote={cruzaLote}
+        clienteSeleccionado={clienteSeleccionado} cupoFiadoDisponible={cupoFiadoDisponible}
+        excedeCupoFiado={excedeCupoFiado} montoFiado={montoFiado} montoInmediato={montoInmediato} />
       <VentaDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} setModalAnular={setModalAnular} getBadge={getBadge} />
       <VentaAnular modalAnular={modalAnular} setModalAnular={setModalAnular} anular={anular} anulando={anulando} />
       <VentaConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
