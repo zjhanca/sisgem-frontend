@@ -52,7 +52,7 @@ export default function Ventas() {
     abrirConPedido,
     pedidos, pedidoSeleccionado, form: formPago, setForm: setFormPago, errores: erroresPago,
     totalPedido, totalPagado, montoPendiente, pagoCompleto, esFiado,
-    handleSubmit: handleSubmitPago, tipoPagoActual,
+    handleSubmit: handleSubmitPago, handleMontoChange, handlePedidoChange, tipoPagoActual,
     pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
     modalNuevo: modalPago, setModalNuevo: setModalPago,
     creando: creandoPago,
@@ -190,7 +190,8 @@ export default function Ventas() {
       <PagoForm modalNuevo={modalPago} setModalNuevo={setModalPago}
         form={formPago} setForm={setFormPago} errores={erroresPago} pedidos={pedidos} pedidoSeleccionado={pedidoSeleccionado}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}
-        pagoCompleto={pagoCompleto} handleSubmit={handleSubmitPago} creando={creandoPago}
+        pagoCompleto={pagoCompleto} handleSubmit={handleSubmitPago}
+        handleMontoChange={handleMontoChange} handlePedidoChange={handlePedidoChange} creando={creandoPago}
         tipoPagoActual={tipoPagoActual} esFiado={esFiado}
         pedidoBusqueda={pedidoBusqueda} setPedidoBusqueda={setPedidoBusqueda}
         pedidoDropdown={pedidoDropdown} setPedidoDropdown={setPedidoDropdown} />
