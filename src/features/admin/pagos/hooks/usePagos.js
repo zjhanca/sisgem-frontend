@@ -67,6 +67,9 @@ export function usePagos() {
           total_pedido: +pago.total_pedido || 0,
           fecha_pedido: pago.fecha_pedido || null,
           fecha_limite_anulacion: pago.fecha_limite_anulacion || null,
+          // si la VENTA (no el pago) fue anulada, ya no debe considerarse
+          // pagable, sin importar cuanto se alcanzo a abonar antes
+          venta_anulada: esAnulado(pago.estado_venta),
           pagos: [],
           total_pagado: 0,
           ultima_fecha: null,
@@ -87,9 +90,11 @@ export function usePagos() {
 
     return Array.from(grupos.values()).map(g => {
       const saldoPendiente = Math.max(0, g.total_pedido - g.total_pagado)
-      const completo = g.total_pedido > 0 && saldoPendiente === 0
+      // una venta anulada nunca se marca como pendiente de pago, aunque no
+      // se haya completado: no admite mas pagos ni muestra saldo por cobrar
+      const completo = g.venta_anulada || (g.total_pedido > 0 && saldoPendiente === 0)
       const pagosOrdenados = [...g.pagos].sort((a, b) => new Date(getFechaPago(b)) - new Date(getFechaPago(a)))
-      return { ...g, pagos: pagosOrdenados, saldo_pendiente: saldoPendiente, completo }
+      return { ...g, pagos: pagosOrdenados, saldo_pendiente: g.venta_anulada ? 0 : saldoPendiente, completo }
     }).sort((a, b) => new Date(b.ultima_fecha) - new Date(a.ultima_fecha))
   }, [pagos])
 
