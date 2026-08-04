@@ -5,6 +5,7 @@ import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
 const formVacio = { pedido_id: '', monto: '', metodo: 'efectivo' }
+const MONTO_MINIMO_ABONO = 6000
 
 function esPagado(n)  { return n && (n.toLowerCase().includes('paga') || n.toLowerCase().includes('activ') || n.toLowerCase().includes('complet')) }
 function esAbono(n)   { return n && n.toLowerCase().includes('abono') }
@@ -30,7 +31,8 @@ export function usePagos() {
   const getFechaPago = p => p.fecha_pago || p.fecha || p.created_at || null
 
   // solo pedidos con saldo pendiente (fiados o abonos parciales) — excluir completados y anulados,
-  // se usa para el selector del formulario "Nuevo Pago"
+  // se usa ÚNICAMENTE para el listado del selector de búsqueda en "Nuevo Pago" (no para
+  // buscar por id, que siempre debe mirar la lista completa — ver pedidoSel más abajo)
   const pagadoPorPedidoCalc = (pedidosList, pagosList) =>
     pedidosList.reduce((acc, p) => {
       const activos = pagosList.filter(pg => pg.pedido_id === p.id && !esAnulado(pg.estado))
@@ -113,16 +115,21 @@ export function usePagos() {
     return new Date() <= limite
   }
 
-  const pedidoSel      = pedidos.find(p => p.id === +form.pedido_id)
-  const esFiado        = !!pedidoSel?.permite_fiado
-  const totalPedido    = pedidoSel?.total || 0
-  const totalPagado    = pagadoPorPedido[+form.pedido_id] || 0
-  const montoPendiente = Math.max(0, totalPedido - totalPagado)
-  const pagoCompleto   = totalPedido > 0 && montoPendiente === 0
+  // IMPORTANTE: buscar por id siempre en la lista COMPLETA (todosLosPedidos), no en
+  // la filtrada `pedidos` — de lo contrario, si el pedido ya no aparece en la lista
+  // filtrada (por timing o por cualquier motivo), totalPedido/montoPendiente caen a
+  // $0 y el formulario de pago se ve roto aunque el pedido sí exista y sea válido.
+  const pedidoSel       = todosLosPedidos.find(p => p.id === +form.pedido_id)
+  const esFiado         = !!pedidoSel?.permite_fiado
+  const totalPedido     = pedidoSel?.total || 0
+  const totalPagado     = pagadoPorPedido[+form.pedido_id] || 0
+  const montoPendiente  = Math.max(0, totalPedido - totalPagado)
+  const pagoCompleto    = totalPedido > 0 && montoPendiente === 0
 
   // abrir modal de pago con pedido preseleccionado (desde ventas o desde la fila agrupada)
   const abrirConPedido = pedido_id => {
     setForm({ ...formVacio, pedido_id })
+    setPedidoBusqueda(''); setPedidoDropdown(false)
     setModalNuevo(true)
   }
 
@@ -145,9 +152,10 @@ export function usePagos() {
   // ===========================================================
   // Validación BLOQUEANTE en tiempo real: el input de monto
   // directamente no permite escribir/aceptar un valor mayor al
-  // saldo pendiente. No hay toast ni notificación flotante;
-  // si el usuario intenta superar el límite, el valor se capa
-  // automáticamente al máximo permitido.
+  // saldo pendiente (se capa automáticamente). Además, exige un
+  // abono MÍNIMO de $6.000 — salvo que el monto ingresado cubra
+  // exactamente el saldo pendiente restante (para no impedir
+  // saldar una deuda cuyo remanente sea menor a $6.000).
   // ===========================================================
   const handleMontoChange = val => {
     if (val === '') { setForm(f => ({ ...f, monto: '' })); setErrores(prev => ({ ...prev, monto: undefined })); return }
@@ -162,7 +170,14 @@ export function usePagos() {
     }
 
     setForm(f => ({ ...f, monto: String(num) }))
-    setErrores(prev => ({ ...prev, monto: undefined }))
+
+    // validación en tiempo real del mínimo de abono
+    const cubreElPendiente = montoPendiente > 0 && num >= montoPendiente
+    if (num > 0 && num < MONTO_MINIMO_ABONO && !cubreElPendiente) {
+      setErrores(prev => ({ ...prev, monto: `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}` }))
+    } else {
+      setErrores(prev => ({ ...prev, monto: undefined }))
+    }
   }
 
   const handlePedidoChange = pedido_id => {
@@ -173,7 +188,14 @@ export function usePagos() {
   const validar = () => {
     const e = {}
     if (!form.pedido_id) e.pedido_id = 'Selecciona un pedido'
-    if (!form.monto || +form.monto <= 0) e.monto = 'Monto inválido'
+    if (!form.monto || +form.monto <= 0) {
+      e.monto = 'Monto inválido'
+    } else {
+      const cubreElPendiente = montoPendiente > 0 && +form.monto >= montoPendiente
+      if (+form.monto < MONTO_MINIMO_ABONO && !cubreElPendiente) {
+        e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
+      }
+    }
     if (pagoCompleto) e.monto = 'El pedido ya está completamente pagado'
     return e
   }
@@ -228,7 +250,7 @@ export function usePagos() {
   }
 
   return {
-    pagosAgrupadosFiltrados, pedidos, form, errores,
+    pagosAgrupadosFiltrados, pedidos, pedidoSeleccionado: pedidoSel, form, errores,
     modalNuevo, modalDetalle, modalAnular, grupoDetalle, verHistorial,
     setModalNuevo, setModalDetalle, setModalAnular,
     setForm, filtroEstado, setFiltroEstado,

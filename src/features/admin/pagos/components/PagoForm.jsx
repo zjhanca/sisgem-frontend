@@ -4,13 +4,16 @@ import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function PagoForm({
   modalNuevo, setModalNuevo, form, setForm, errores,
-  pedidos, totalPedido, totalPagado, montoPendiente, pagoCompleto,
+  pedidos, pedidoSeleccionado, totalPedido, totalPagado, montoPendiente, pagoCompleto,
   handleSubmit, handleMontoChange, handlePedidoChange, creando, tipoPagoActual, esFiado,
   pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
 }) {
   const cerrar = () => { setModalNuevo(false); setPedidoBusqueda(''); setPedidoDropdown(false) }
 
-  const pedidoSeleccionado = pedidos.find(p => p.id === +form.pedido_id)
+  // `pedidos` es la lista filtrada (solo pendientes) — se usa únicamente para las
+  // opciones del buscador. El pedido ya seleccionado viene precalculado desde el
+  // hook (buscado en la lista COMPLETA), así que siempre se muestra correctamente
+  // incluso si por algún motivo no está en `pedidos`.
   const pedidosFiltrados = pedidos.filter(p => {
     if (!pedidoBusqueda) return true
     const t = pedidoBusqueda.toLowerCase()

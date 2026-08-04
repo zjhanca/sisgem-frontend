@@ -22,7 +22,7 @@ const maxFechaHoy = () => new Date().toISOString().slice(0, 16)
 
 export default function Pagos() {
   const {
-    pagosAgrupadosFiltrados, pedidos, form, errores,
+    pagosAgrupadosFiltrados, pedidos, pedidoSeleccionado, form, errores,
     modalNuevo, modalDetalle, modalAnular, grupoDetalle, verHistorial,
     setModalNuevo, setModalDetalle, setModalAnular,
     setForm, filtroEstado, setFiltroEstado,
@@ -110,7 +110,7 @@ export default function Pagos() {
       />
 
       <PagoForm modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
-        form={form} setForm={setForm} errores={errores} pedidos={pedidos}
+        form={form} setForm={setForm} errores={errores} pedidos={pedidos} pedidoSeleccionado={pedidoSeleccionado}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}
         pagoCompleto={pagoCompleto} handleSubmit={handleSubmit}
         handleMontoChange={handleMontoChange} handlePedidoChange={handlePedidoChange}

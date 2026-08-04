@@ -50,7 +50,7 @@ export default function Ventas() {
 
   const {
     abrirConPedido,
-    pedidos, form: formPago, setForm: setFormPago, errores: erroresPago,
+    pedidos, pedidoSeleccionado, form: formPago, setForm: setFormPago, errores: erroresPago,
     totalPedido, totalPagado, montoPendiente, pagoCompleto, esFiado,
     handleSubmit: handleSubmitPago, tipoPagoActual,
     pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
@@ -188,7 +188,7 @@ export default function Ventas() {
       <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
         descargarReporte={descargarReporte} nombreEntidad="ventas" />
       <PagoForm modalNuevo={modalPago} setModalNuevo={setModalPago}
-        form={formPago} setForm={setFormPago} errores={erroresPago} pedidos={pedidos}
+        form={formPago} setForm={setFormPago} errores={erroresPago} pedidos={pedidos} pedidoSeleccionado={pedidoSeleccionado}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}
         pagoCompleto={pagoCompleto} handleSubmit={handleSubmitPago} creando={creandoPago}
         tipoPagoActual={tipoPagoActual} esFiado={esFiado}
