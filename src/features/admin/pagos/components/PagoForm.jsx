@@ -107,10 +107,10 @@ export default function PagoForm({
                 </span>
               )}
             </div>
-            <input type="number" step="0.01" min="0.01"
-              value={form.monto} onChange={e => handleMontoChange(e.target.value)}
+            <input type="text" inputMode="numeric"
+              value={form.monto} onChange={e => handleMontoChange(e.target.value.replace(/\D/g, ''))}
               className={`campo-input ${errores.monto ? 'border-red-400 focus:ring-red-400/30' : ''}`}
-              placeholder="0.00" disabled={pagoCompleto} />
+              placeholder="0" disabled={pagoCompleto} />
             {errores.monto && <p className="campo-error">{errores.monto}</p>}
             {!pagoCompleto && montoPendiente > 0 && (
               <button type="button" onClick={() => handleMontoChange(String(montoPendiente))}
