@@ -33,37 +33,14 @@ export function useVentas() {
 
   const getStock = producto_id => productos.find(p => p.id === producto_id)?.stock ?? Infinity
 
-  const construirLineas = (prod, cantidadTotal) => {
-    const stockLoteActivo = prod.stock_lote_activo != null ? +prod.stock_lote_activo : null
-    const siguienteLote   = prod.siguiente_lote || null
-
-    if (stockLoteActivo == null || cantidadTotal <= stockLoteActivo || !siguienteLote) {
-      return [{
-        producto_id: prod.id, lote_id: 'activo', cantidad: cantidadTotal,
-        precio_unitario: parseFloat(prod.precio), nombre: prod.nombre, stock: prod.stock,
-        stock_lote_activo: stockLoteActivo,
-      }]
-    }
-
-    const cantLinea1 = stockLoteActivo
-    const cantLinea2 = cantidadTotal - stockLoteActivo
-    const lineas = []
-    if (cantLinea1 > 0) {
-      lineas.push({
-        producto_id: prod.id, lote_id: 'activo', cantidad: cantLinea1,
-        precio_unitario: parseFloat(prod.precio), nombre: prod.nombre, stock: prod.stock,
-        stock_lote_activo: stockLoteActivo,
-      })
-    }
-    lineas.push({
-      producto_id: prod.id, lote_id: siguienteLote.id, cantidad: cantLinea2,
-      precio_unitario: siguienteLote.precio_venta_proyectado,
-      nombre: prod.nombre, stock: prod.stock,
-      stock_lote_activo: stockLoteActivo,
-      es_lote_siguiente: true,
-    })
-    return lineas
-  }
+  // Una sola línea por producto — sin lógica de lotes en el carrito
+  const construirLinea = (prod, cantidad) => ({
+    producto_id:     prod.id,
+    cantidad,
+    precio_unitario: parseFloat(prod.precio),
+    nombre:          prod.nombre,
+    stock:           prod.stock,
+  })
 
   const crearVenta = useMutation({
     mutationFn: async data => {
@@ -74,7 +51,7 @@ export function useVentas() {
         if (data._monto_inmediato > 0) {
           await ventasService.registrarPago({
             pedido_id,
-            monto: data._monto_inmediato,
+            monto:  data._monto_inmediato,
             metodo: data._metodo_pago_inmediato || 'efectivo',
           })
         }
@@ -150,81 +127,59 @@ export function useVentas() {
     } catch { toast.error('Producto no encontrado') }
   }
 
-  const cantidadEnCarrito = (prods, producto_id) =>
-    prods.filter(p => p.producto_id === producto_id).reduce((s, p) => s + (+p.cantidad || 0), 0)
-
   const agregarProducto = prod => {
     const stock = prod.stock ?? getStock(prod.id)
-    const yaEnCarrito = cantidadEnCarrito(form.productos, prod.id)
-    const nuevaCantidadTotal = yaEnCarrito + 1
+    const existente = form.productos.find(p => p.producto_id === prod.id)
+    const cantidadActual = existente ? (+existente.cantidad || 0) : 0
+    const nuevaCantidad = cantidadActual + 1
 
-    if (nuevaCantidadTotal > stock) {
+    if (nuevaCantidad > stock) {
       toast.error(`Stock insuficiente — solo hay ${stock} unidades`)
       return
     }
 
     setForm(f => {
-      const idxExistente = f.productos.findIndex(p => p.producto_id === prod.id)
-      const lineasNuevas = construirLineas(prod, nuevaCantidadTotal)
-      const sinProducto  = f.productos.filter(p => p.producto_id !== prod.id)
-
-      if (idxExistente === -1) return { ...f, productos: [...sinProducto, ...lineasNuevas] }
-      const antes   = sinProducto.slice(0, idxExistente)
-      const despues = sinProducto.slice(idxExistente)
-      return { ...f, productos: [...antes, ...lineasNuevas, ...despues] }
+      const idx = f.productos.findIndex(p => p.producto_id === prod.id)
+      if (idx === -1) {
+        // producto nuevo — agregar al final
+        return { ...f, productos: [...f.productos, construirLinea(prod, 1)] }
+      }
+      // producto existente — actualizar cantidad en su posición
+      const nuevos = [...f.productos]
+      nuevos[idx] = { ...nuevos[idx], cantidad: nuevaCantidad }
+      return { ...f, productos: nuevos }
     })
     setProdBusqueda(''); setProdsFiltrados([])
   }
 
-  const cambiarCantidadProducto = (producto_id, nuevaCantidadTotal) => {
-    const prod = productos.find(p => p.id === producto_id)
-    if (!prod) return
-    const stock = prod.stock ?? Infinity
-
-    if (nuevaCantidadTotal === '' || nuevaCantidadTotal === 0) {
-      setForm(f => ({ ...f, productos: f.productos.map(p =>
-        p.producto_id === producto_id ? { ...p, cantidad: '' } : p
-      )}))
+  const cambiarCantidad = (idx, nuevaCantidad) => {
+    if (nuevaCantidad === '') {
+      setForm(f => ({
+        ...f,
+        productos: f.productos.map((p, i) => i === idx ? { ...p, cantidad: '' } : p)
+      }))
       return
     }
-
-    const num  = Math.max(1, +nuevaCantidadTotal || 1)
-    const cant = Math.min(num, stock)
-    if (+nuevaCantidadTotal > stock) toast.error(`Stock insuficiente — máximo ${stock} unidades`)
-
-    setForm(f => {
-      const idxExistente = f.productos.findIndex(p => p.producto_id === producto_id)
-      const lineasNuevas = construirLineas(prod, cant)
-      const sinProducto  = f.productos.filter(p => p.producto_id !== producto_id)
-
-      if (idxExistente === -1) return { ...f, productos: [...sinProducto, ...lineasNuevas] }
-      const antes   = sinProducto.slice(0, idxExistente)
-      const despues = sinProducto.slice(idxExistente)
-      return { ...f, productos: [...antes, ...lineasNuevas, ...despues] }
-    })
-  }
-
-  const cambiarCantidad = (idx, nuevaCantidad) => {
     const linea = form.productos[idx]
     if (!linea) return
-    if (nuevaCantidad === '') {
-      setForm(f => ({ ...f, productos: f.productos.map((p, i) => i === idx ? { ...p, cantidad: '' } : p) }))
-      return
-    }
-    const otrasLineas = cantidadEnCarrito(form.productos, linea.producto_id) - (+linea.cantidad || 0)
-    cambiarCantidadProducto(linea.producto_id, otrasLineas + Math.max(1, +nuevaCantidad || 1))
+    const stock = linea.stock ?? getStock(linea.producto_id)
+    const num = Math.max(1, +nuevaCantidad || 1)
+    const cant = Math.min(num, stock)
+    if (+nuevaCantidad > stock) toast.error(`Stock insuficiente — máximo ${stock} unidades`)
+    setForm(f => ({
+      ...f,
+      productos: f.productos.map((p, i) => i === idx ? { ...p, cantidad: cant } : p)
+    }))
   }
 
   const quitarProducto = idx => {
-    const linea = form.productos[idx]
-    if (!linea) return
-    setForm(f => ({ ...f, productos: f.productos.filter(p => p.producto_id !== linea.producto_id) }))
+    setForm(f => ({ ...f, productos: f.productos.filter((_, i) => i !== idx) }))
   }
 
   const totalVenta = form.productos.reduce((s, p) => s + p.precio_unitario * (+p.cantidad || 0), 0)
 
-  const clienteSeleccionado    = clientes.find(c => c.id === +form.cliente_id)
-  const cupoFiadoDisponible    = clienteSeleccionado?.cupo_fiado_disponible != null
+  const clienteSeleccionado = clientes.find(c => c.id === +form.cliente_id)
+  const cupoFiadoDisponible = clienteSeleccionado?.cupo_fiado_disponible != null
     ? +clienteSeleccionado.cupo_fiado_disponible
     : null
   const excedeCupoFiado = form.tipo_pago === 'fiado' && cupoFiadoDisponible != null && totalVenta > cupoFiadoDisponible
@@ -236,21 +191,14 @@ export function useVentas() {
     if (form.tipo_cliente === 'registrado' && !form.cliente_id) {
       toast.error('Selecciona un cliente'); return
     }
-    // cliente anónimo: nombre es opcional
     if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
     for (const p of form.productos) {
       if (!p.cantidad || +p.cantidad < 1) {
         toast.error(`${p.nombre}: la cantidad debe ser al menos 1`); return
       }
-    }
-    const totalesPorProducto = {}
-    for (const p of form.productos)
-      totalesPorProducto[p.producto_id] = (totalesPorProducto[p.producto_id] || 0) + (+p.cantidad || 0)
-    for (const producto_id of Object.keys(totalesPorProducto)) {
-      const stock = getStock(+producto_id)
-      if (totalesPorProducto[producto_id] > stock) {
-        const nombre = form.productos.find(p => p.producto_id === +producto_id)?.nombre
-        toast.error(`${nombre}: solo hay ${stock} unidades en stock`); return
+      const stock = p.stock ?? getStock(p.producto_id)
+      if (+p.cantidad > stock) {
+        toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return
       }
     }
     if (form.tipo_pago === 'fiado' && form.cliente_id && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0) {
