@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
-import { Edit2, ChevronLeft, ChevronRight, Layers } from 'lucide-react'
+import { Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirModal }) {
@@ -24,20 +24,13 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
   const prev = () => setImgIdx(i => (i - 1 + imagenes.length) % imagenes.length)
   const next = () => setImgIdx(i => (i + 1) % imagenes.length)
 
-  const loteActivo = item?.stock_lote_activo != null ? {
-    stock: item.stock_lote_activo,
-    costo: item.costo_lote_activo,
-    precio_venta: item.precio,
-  } : null
-  const loteEnCola = item?.siguiente_lote || null
-
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
       titulo="Detalle del Producto" ancho="max-w-lg">
       {item && (
         <div className="space-y-3">
 
-          {/* imagen + datos básicos en dos columnas */}
+          {/* imagen + datos básicos */}
           <div className="flex gap-3">
             {imagenes.length > 0 ? (
               <div className="relative shrink-0 w-32 h-32 rounded-xl overflow-hidden bg-gray-100">
@@ -67,9 +60,9 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
             )}
 
             <div className="flex-1 min-w-0 grid grid-cols-3 gap-x-2 gap-y-2 text-sm content-start">
-              <div>
+              <div className="col-span-3">
                 <p className="campo-label">Nombre</p>
-                <p className="font-medium truncate col-span-3">{item.nombre}</p>
+                <p className="font-medium truncate">{item.nombre}</p>
               </div>
               <div>
                 <p className="campo-label">Precio venta</p>
@@ -78,6 +71,10 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
               <div>
                 <p className="campo-label">Stock</p>
                 <p className={item.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{item.stock} uds</p>
+              </div>
+              <div>
+                <p className="campo-label">Margen</p>
+                <p className="font-medium">{item.margen != null ? `${item.margen}%` : '—'}</p>
               </div>
               <div>
                 <p className="campo-label">Categoría</p>
@@ -94,61 +91,10 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
             </div>
           </div>
 
-          {/* lotes de costo */}
-          {(loteActivo || loteEnCola) && (
-            <div className="pt-2 border-t border-gray-100 space-y-2">
-              <p className="text-xs font-semibold text-light-text flex items-center gap-1.5">
-                <Layers size={12} className="text-primary" /> Lotes de costo
-              </p>
-
-              <div className="grid grid-cols-2 gap-2">
-                {loteActivo && (
-                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-2.5 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-primary">Lote activo</span>
-                      <span className="badge-activo">Vigente</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="campo-label">Stock</span>
-                        <span className="font-medium">{loteActivo.stock} uds</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="campo-label">Costo</span>
-                        <span className="font-medium">{loteActivo.costo ? formatPrecio(loteActivo.costo) : '—'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="campo-label">Precio venta</span>
-                        <span className="font-bold text-primary">{formatPrecio(loteActivo.precio_venta)}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {loteEnCola && (
-                  <div className="rounded-lg border border-amber-400/20 bg-amber-50 p-2.5 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-amber-600">En cola</span>
-                      <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 text-xs font-medium">Espera</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="campo-label">Stock</span>
-                        <span className="font-medium">{loteEnCola.cantidad_disponible} uds</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="campo-label">Costo</span>
-                        <span className="font-medium">{formatPrecio(loteEnCola.costo_unitario)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="campo-label">Precio proyectado</span>
-                        <span className="font-bold text-amber-600">{formatPrecio(loteEnCola.precio_venta_proyectado)}</span>
-                      </div>
-                    </div>
-                    <p className="text-amber-500 text-xs">Activa al agotar {loteActivo?.stock ?? '?'} uds del lote actual.</p>
-                  </div>
-                )}
-              </div>
+          {item.descripcion && (
+            <div className="pt-2 border-t border-gray-100">
+              <p className="campo-label">Descripción</p>
+              <p className="text-sm text-gray-600">{item.descripcion}</p>
             </div>
           )}
 
