@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom'
-import { ShoppingBag, User, CreditCard, Clock, KeyRound, Eye, EyeOff,
-         CheckCircle, XCircle, ChevronDown, ChevronUp, Download } from 'lucide-react'
+import { ShoppingBag, User, CreditCard, Clock, KeyRound,
+         Eye, EyeOff, CheckCircle, XCircle, ChevronDown, ChevronUp, Download } from 'lucide-react'
 import { useState } from 'react'
 import { usePanelCliente } from '../hooks/usePanelCliente'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
@@ -24,7 +23,7 @@ export default function PanelCliente() {
     usuario, clienteData, pedidos, misAbonos, loadPedidos,
     tab, setTab,
     modalPass, setModalPass, formPass, setFormPass, cambiandoPass, handleCambiarPass,
-    getBadge,
+    getBadge, descargarComprobante,
   } = usePanelCliente(setErrorActual)
 
   const passReqs = {
@@ -33,31 +32,11 @@ export default function PanelCliente() {
     numero:    /[0-9]/.test(formPass.nueva || ''),
   }
 
-  const descargarComprobante = async (abonoId) => {
-    try {
-      const res = await fetch(`/api/pagos/${abonoId}/comprobante`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      })
-      if (!res.ok) throw new Error('Error al descargar')
-      const blob = await res.blob()
-      const url  = URL.createObjectURL(blob)
-      const a    = document.createElement('a')
-      a.href     = url
-      a.download = `comprobante-pago-${abonoId}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      // fallback: abrir en nueva pestaña
-      window.open(`/api/pagos/${abonoId}/comprobante`, '_blank')
-    }
-  }
-
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
       <NavbarPublico />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-
         {/* Tabs */}
         <div className="flex gap-1 mb-8 bg-light-card dark:bg-dark-card p-1 rounded-xl border border-gray-100 dark:border-dark-border w-fit">
           {TABS.map(t => (
@@ -76,7 +55,9 @@ export default function PanelCliente() {
 
             {/* Pedidos */}
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">Pedidos</h2>
+              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">
+                Mis Pedidos
+              </h2>
               {loadPedidos && (
                 <div className="space-y-2">
                   {[1,2,3].map(i => (
@@ -92,12 +73,11 @@ export default function PanelCliente() {
               )}
               {pedidos.map(p => {
                 const abierto = pedidoAbierto === p.id
+                const abonosPedido = misAbonos.filter(a => a.pedido_id === p.id)
                 return (
-                  <div key={p.id}
-                    className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border overflow-hidden">
-                    {/* Cabecera — click para expandir */}
-                    <button
-                      type="button"
+                  <div key={p.id} className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border overflow-hidden">
+                    {/* Cabecera */}
+                    <button type="button"
                       onClick={() => setPedidoAbierto(abierto ? null : p.id)}
                       className="w-full p-4 text-left flex items-start justify-between gap-2">
                       <div className="space-y-0.5 flex-1">
@@ -121,40 +101,62 @@ export default function PanelCliente() {
 
                     {/* Detalle expandible */}
                     {abierto && (
-                      <div className="px-4 pb-4 border-t border-gray-100 dark:border-dark-border pt-3 space-y-2">
-                        <div className="flex justify-between text-xs text-gray-400">
-                          <span>Tipo</span>
-                          <span>{p.tipo_venta === 'domicilio' ? '🏠 Domicilio' : '🏪 Mostrador'}</span>
+                      <div className="px-4 pb-4 border-t border-gray-100 dark:border-dark-border pt-3 space-y-3">
+                        {/* Info básica */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-gray-400">Tipo</span>
+                            <p className="font-medium">{p.tipo_venta === 'domicilio' ? '🏠 Domicilio' : '🏪 Mostrador'}</p>
+                          </div>
+                          {p.notas && (
+                            <div>
+                              <span className="text-gray-400">Notas</span>
+                              <p className="font-medium italic">{p.notas}</p>
+                            </div>
+                          )}
                         </div>
-                        {p.notas && (
-                          <div className="flex justify-between text-xs text-gray-400">
-                            <span>Notas</span>
-                            <span className="italic text-right max-w-[60%]">{p.notas}</span>
+
+                        {/* Productos del pedido */}
+                        {p.productos?.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 mb-1">Productos</p>
+                            <div className="space-y-1">
+                              {p.productos.map((pr, i) => (
+                                <div key={i} className="flex justify-between text-xs bg-gray-50 dark:bg-dark-bg rounded px-2 py-1.5">
+                                  <span>{pr.nombre} × {pr.cantidad}</span>
+                                  <span className="text-primary font-medium">{formatPrecio(pr.precio_unitario * pr.cantidad)}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
-                        <div className="flex justify-between text-xs font-semibold pt-1 border-t border-gray-100">
+
+                        {/* Total */}
+                        <div className="flex justify-between text-xs font-semibold border-t border-gray-100 pt-2">
                           <span>Total</span>
                           <span className="text-primary">{formatPrecio(p.total)}</span>
                         </div>
-                        {/* Abonos del pedido */}
-                        {misAbonos.filter(a => a.pedido_id === p.id).length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            <p className="text-xs font-medium text-gray-500">Pagos registrados</p>
-                            {misAbonos.filter(a => a.pedido_id === p.id).map(a => (
-                              <div key={a.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-dark-bg rounded-lg px-3 py-1.5">
-                                <span className="text-gray-500">{a.metodo} · {formatFechaHora(a.fecha_pago || a.created_at)}</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-primary font-semibold">{formatPrecio(a.monto)}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => descargarComprobante(a.id)}
-                                    title="Descargar comprobante"
-                                    className="text-gray-400 hover:text-primary transition-colors">
-                                    <Download size={12} />
-                                  </button>
+
+                        {/* Pagos/abonos del pedido */}
+                        {abonosPedido.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 mb-1">Pagos registrados</p>
+                            <div className="space-y-1">
+                              {abonosPedido.map(a => (
+                                <div key={a.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-dark-bg rounded px-2 py-1.5">
+                                  <span className="text-gray-500 capitalize">{a.metodo}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-primary font-semibold">{formatPrecio(a.monto)}</span>
+                                    <button type="button"
+                                      onClick={() => descargarComprobante(a.id)}
+                                      title="Descargar comprobante"
+                                      className="text-gray-400 hover:text-primary transition-colors">
+                                      <Download size={12} />
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -166,7 +168,9 @@ export default function PanelCliente() {
 
             {/* Abonos */}
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">Abonos</h2>
+              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">
+                Mis Abonos
+              </h2>
               {misAbonos.length === 0 && (
                 <div className="text-center py-10 bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border">
                   <CreditCard size={32} className="mx-auto text-gray-300 mb-2" />
@@ -177,20 +181,26 @@ export default function PanelCliente() {
                 <div key={a.id} className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <span className="text-sm font-medium text-light-text dark:text-dark-text">
-                        {a.numero_comprobante || `Comprobante #${a.id}`}
-                      </span>
-                      <p className="text-xs text-gray-400">Pedido #{a.pedido_id} · {a.metodo}</p>
+                      <p className="text-sm font-medium text-light-text dark:text-dark-text">
+                        Pago #{a.id}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Pedido #{a.pedido_id} · <span className="capitalize">{a.metodo}</span>
+                      </p>
+                      {a.created_at && (
+                        <p className="text-xs text-gray-400">
+                          {formatFechaHora(a.created_at)}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
                         <p className="text-primary font-bold text-sm">{formatPrecio(a.monto)}</p>
                         <span className={a.estado?.toLowerCase().includes('anula') ? 'badge-anulado' : 'badge-activo'}>
-                          {a.estado || 'Activo'}
+                          {a.estado || 'Pagado'}
                         </span>
                       </div>
-                      <button
-                        type="button"
+                      <button type="button"
                         onClick={() => descargarComprobante(a.id)}
                         title="Descargar comprobante"
                         className="text-gray-400 hover:text-primary transition-colors p-1">
@@ -201,7 +211,6 @@ export default function PanelCliente() {
                 </div>
               ))}
             </div>
-
           </div>
         )}
 
@@ -318,12 +327,7 @@ export default function PanelCliente() {
               )}
             </div>
             <div className="flex gap-2 pt-1">
-              <button
-                onClick={() => {
-                  setModalPass(false)
-                  setFormPass({ actual: '', nueva: '', confirmar: '' })
-                  setErrorActual('')
-                }}
+              <button onClick={() => { setModalPass(false); setFormPass({ actual: '', nueva: '', confirmar: '' }); setErrorActual('') }}
                 className="flex-1 py-2 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-xl">
                 Cancelar
               </button>
