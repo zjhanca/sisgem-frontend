@@ -5,7 +5,7 @@ import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
 const formVacio = { pedido_id: '', monto: '', metodo: 'efectivo' }
-const MONTO_MINIMO_ABONO = 6000
+const MONTO_MINIMO_ABONO = 10000
 
 function esPagado(n)  { return n && (n.toLowerCase().includes('paga') || n.toLowerCase().includes('activ') || n.toLowerCase().includes('complet')) }
 function esAbono(n)   { return n && n.toLowerCase().includes('abono') }
@@ -14,7 +14,7 @@ function esAnulado(n) { return n && (n.toLowerCase().includes('anula') || n.toLo
 export function usePagos() {
   const qc = useQueryClient()
   const [modalNuevo, setModalNuevo]     = useState(false)
-  const [modalDetalle, setModalDetalle] = useState({ abierto: false, pedido_id: null }) // historial por venta
+  const [modalDetalle, setModalDetalle] = useState({ abierto: false, pedido_id: null })
   const [modalAnular, setModalAnular]   = useState({ abierto: false, pago: null })
   const [form, setForm]       = useState(formVacio)
   const [errores, setErrores] = useState({})
@@ -25,14 +25,11 @@ export function usePagos() {
   const [pedidoBusqueda, setPedidoBusqueda] = useState('')
   const [pedidoDropdown, setPedidoDropdown] = useState(false)
 
-  const { data: pagos = [] }   = useQuery({ queryKey: ['pagos'],   queryFn: pagosService.getAll })
+  const { data: pagos = [] }          = useQuery({ queryKey: ['pagos'],   queryFn: pagosService.getAll })
   const { data: todosLosPedidos = [] } = useQuery({ queryKey: ['pedidos'], queryFn: pagosService.getPedidos })
 
   const getFechaPago = p => p.fecha_pago || p.fecha || p.created_at || null
 
-  // solo pedidos con saldo pendiente (fiados o abonos parciales) — excluir completados y anulados,
-  // se usa ÚNICAMENTE para el listado del selector de búsqueda en "Nuevo Pago" (no para
-  // buscar por id, que siempre debe mirar la lista completa — ver pedidoSel más abajo)
   const pagadoPorPedidoCalc = (pedidosList, pagosList) =>
     pedidosList.reduce((acc, p) => {
       const activos = pagosList.filter(pg => pg.pedido_id === p.id && !esAnulado(pg.estado))
@@ -49,15 +46,8 @@ export function usePagos() {
 
   const pagadoPorPedido = pagadoPorPedidoCalc(todosLosPedidos, pagos)
 
-  // ===========================================================
-  // AGRUPACIÓN "estilo distinct": una fila por venta (pedido_id),
-  // con el total acumulado de pagos activos, saldo pendiente,
-  // fecha del último movimiento, y la fecha límite de anulación
-  // de la venta (heredada de pedidos.fecha_limite_anulacion).
-  // ===========================================================
   const pagosAgrupados = useMemo(() => {
     const grupos = new Map()
-
     for (const pago of pagos) {
       const key = pago.pedido_id
       if (!grupos.has(key)) {
@@ -67,8 +57,6 @@ export function usePagos() {
           total_pedido: +pago.total_pedido || 0,
           fecha_pedido: pago.fecha_pedido || null,
           fecha_limite_anulacion: pago.fecha_limite_anulacion || null,
-          // si la VENTA (no el pago) fue anulada, ya no debe considerarse
-          // pagable, sin importar cuanto se alcanzo a abonar antes
           venta_anulada: esAnulado(pago.estado_venta),
           pagos: [],
           total_pagado: 0,
@@ -77,33 +65,20 @@ export function usePagos() {
       }
       const grupo = grupos.get(key)
       grupo.pagos.push(pago)
-
-      if (!esAnulado(pago.estado)) {
-        grupo.total_pagado += +pago.monto
-      }
-
+      if (!esAnulado(pago.estado)) grupo.total_pagado += +pago.monto
       const fechaPago = getFechaPago(pago)
       if (fechaPago && (!grupo.ultima_fecha || new Date(fechaPago) > new Date(grupo.ultima_fecha))) {
         grupo.ultima_fecha = fechaPago
       }
     }
-
     return Array.from(grupos.values()).map(g => {
       const saldoPendiente = Math.max(0, g.total_pedido - g.total_pagado)
-      // una venta anulada nunca se marca como pendiente de pago, aunque no
-      // se haya completado: no admite mas pagos ni muestra saldo por cobrar
       const completo = g.venta_anulada || (g.total_pedido > 0 && saldoPendiente === 0)
       const pagosOrdenados = [...g.pagos].sort((a, b) => new Date(getFechaPago(b)) - new Date(getFechaPago(a)))
       return { ...g, pagos: pagosOrdenados, saldo_pendiente: g.venta_anulada ? 0 : saldoPendiente, completo }
     }).sort((a, b) => new Date(b.ultima_fecha) - new Date(a.ultima_fecha))
   }, [pagos])
 
-  // ===========================================================
-  // Regla: un pago solo se puede anular si la VENTA asociada
-  // todavía está dentro de su ventana de 72h (fecha_limite_anulacion).
-  // Si no hay fecha_limite_anulacion (dato viejo sin migrar), se
-  // calcula como fallback fecha_pedido + 72h.
-  // ===========================================================
   const getLimiteAnulacionVenta = grupo => {
     if (!grupo) return null
     if (grupo.fecha_limite_anulacion) return new Date(grupo.fecha_limite_anulacion)
@@ -120,18 +95,13 @@ export function usePagos() {
     return new Date() <= limite
   }
 
-  // IMPORTANTE: buscar por id siempre en la lista COMPLETA (todosLosPedidos), no en
-  // la filtrada `pedidos` — de lo contrario, si el pedido ya no aparece en la lista
-  // filtrada (por timing o por cualquier motivo), totalPedido/montoPendiente caen a
-  // $0 y el formulario de pago se ve roto aunque el pedido sí exista y sea válido.
-  const pedidoSel       = todosLosPedidos.find(p => p.id === +form.pedido_id)
-  const esFiado         = !!pedidoSel?.permite_fiado
-  const totalPedido     = pedidoSel?.total || 0
-  const totalPagado     = pagadoPorPedido[+form.pedido_id] || 0
-  const montoPendiente  = Math.max(0, totalPedido - totalPagado)
-  const pagoCompleto    = totalPedido > 0 && montoPendiente === 0
+  const pedidoSel      = todosLosPedidos.find(p => p.id === +form.pedido_id)
+  const esFiado        = !!pedidoSel?.permite_fiado
+  const totalPedido    = pedidoSel?.total || 0
+  const totalPagado    = pagadoPorPedido[+form.pedido_id] || 0
+  const montoPendiente = Math.max(0, totalPedido - totalPagado)
+  const pagoCompleto   = totalPedido > 0 && montoPendiente === 0
 
-  // abrir modal de pago con pedido preseleccionado (desde ventas o desde la fila agrupada)
   const abrirConPedido = pedido_id => {
     setForm({ ...formVacio, pedido_id })
     setPedidoBusqueda(''); setPedidoDropdown(false)
@@ -150,36 +120,31 @@ export function usePagos() {
 
   const anular = useMutation({
     mutationFn: pagosService.anular,
-    onSuccess: () => { qc.invalidateQueries(['pagos']); setModalAnular({ abierto: false, pago: null }); toast.success('Pago anulado') },
+    onSuccess: () => {
+      qc.invalidateQueries(['pagos'])
+      setModalAnular({ abierto: false, pago: null })
+      toast.success('Pago anulado')
+    },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
 
-  // ===========================================================
-  // Validación BLOQUEANTE en tiempo real: el input de monto
-  // directamente no permite escribir/aceptar un valor mayor al
-  // saldo pendiente (se capa automáticamente). Además, exige un
-  // abono MÍNIMO de $6.000 — salvo que el monto ingresado cubra
-  // exactamente el saldo pendiente restante (para no impedir
-  // saldar una deuda cuyo remanente sea menor a $6.000).
-  // ===========================================================
   const handleMontoChange = val => {
-    if (val === '') { setForm(f => ({ ...f, monto: '' })); setErrores(prev => ({ ...prev, monto: undefined })); return }
-
-    let num = +val
-    if (isNaN(num)) return // ignora caracteres no numéricos, no actualiza el form
-
-    if (num < 0) num = 0
-
-    if (!esFiado && montoPendiente > 0 && num > montoPendiente) {
-      num = montoPendiente // capar automáticamente al máximo permitido, sin mostrar error
+    if (val === '') {
+      setForm(f => ({ ...f, monto: '' }))
+      setErrores(prev => ({ ...prev, monto: undefined }))
+      return
     }
-
+    let num = +val
+    if (isNaN(num)) return
+    if (num < 0) num = 0
+    if (!esFiado && montoPendiente > 0 && num > montoPendiente) num = montoPendiente
     setForm(f => ({ ...f, monto: String(num) }))
-
-    // validación en tiempo real del mínimo de abono
     const cubreElPendiente = montoPendiente > 0 && num >= montoPendiente
     if (num > 0 && num < MONTO_MINIMO_ABONO && !cubreElPendiente) {
-      setErrores(prev => ({ ...prev, monto: `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}` }))
+      setErrores(prev => ({
+        ...prev,
+        monto: `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
+      }))
     } else {
       setErrores(prev => ({ ...prev, monto: undefined }))
     }
@@ -212,14 +177,13 @@ export function usePagos() {
     crear.mutate(form)
   }
 
-  const getEstadoPago = (estado) => {
+  const getEstadoPago = estado => {
     if (!estado) return { label: 'Pagado', clase: 'badge-activo' }
     if (esAnulado(estado)) return { label: 'Anulado', clase: 'badge-anulado' }
     if (esAbono(estado))   return { label: 'Abono',   clase: 'badge-pendiente' }
     return { label: 'Pagado', clase: 'badge-activo' }
   }
 
-  // filtros sobre los grupos (una fila por venta)
   const pagosAgrupadosFiltrados = pagosAgrupados.filter(g => {
     if (filtroEstado === 'pagado'  && !g.completo) return false
     if (filtroEstado === 'abono'   && (g.completo || g.saldo_pendiente <= 0)) return false
@@ -234,12 +198,9 @@ export function usePagos() {
     ? (+form.monto >= montoPendiente ? 'total' : 'abono')
     : null
 
-  // helper para abrir el historial de una venta específica
   const verHistorial = pedido_id => setModalDetalle({ abierto: true, pedido_id })
   const grupoDetalle = pagosAgrupados.find(g => g.pedido_id === modalDetalle.pedido_id) || null
 
-  // descarga el reporte de pagos: "normal" trae todo sin filtro de fecha,
-  // "rango" (personalizado) filtra por desde/hasta — en PDF o Excel
   const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
     const nombres = { normal: 'general', rango: 'personalizado' }
     const ext = formato === 'excel' ? 'xlsx' : 'pdf'

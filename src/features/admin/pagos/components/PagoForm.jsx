@@ -8,12 +8,12 @@ export default function PagoForm({
   handleSubmit, handleMontoChange, handlePedidoChange, creando, tipoPagoActual, esFiado,
   pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
 }) {
-  const cerrar = () => { setModalNuevo(false); setPedidoBusqueda(''); setPedidoDropdown(false) }
+  const cerrar = () => {
+    setModalNuevo(false)
+    setPedidoBusqueda('')
+    setPedidoDropdown(false)
+  }
 
-  // `pedidos` es la lista filtrada (solo pendientes) — se usa únicamente para las
-  // opciones del buscador. El pedido ya seleccionado viene precalculado desde el
-  // hook (buscado en la lista COMPLETA), así que siempre se muestra correctamente
-  // incluso si por algún motivo no está en `pedidos`.
   const pedidosFiltrados = pedidos.filter(p => {
     if (!pedidoBusqueda) return true
     const t = pedidoBusqueda.toLowerCase()
@@ -29,6 +29,7 @@ export default function PagoForm({
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Registrar Pago">
       <form onSubmit={handleSubmit} className="space-y-3">
 
+        {/* Pedido */}
         <div>
           <label className="campo-label">Pedido *</label>
           {pedidoSeleccionado && !pedidoDropdown ? (
@@ -86,8 +87,14 @@ export default function PagoForm({
 
         {form.pedido_id && (
           <div className="p-3 rounded-lg bg-gray-50 text-xs space-y-1">
-            <div className="flex justify-between"><span className="text-gray-400">Total pedido</span><span>{formatPrecio(totalPedido)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-400">Ya pagado</span><span className="text-green-600">{formatPrecio(totalPagado)}</span></div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Total pedido</span>
+              <span>{formatPrecio(totalPedido)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Ya pagado</span>
+              <span className="text-green-600">{formatPrecio(totalPagado)}</span>
+            </div>
             <div className="flex justify-between font-semibold border-t border-gray-200 pt-1">
               <span>Pendiente</span>
               <span className={pagoCompleto ? 'text-green-600' : 'text-primary'}>
@@ -102,18 +109,28 @@ export default function PagoForm({
             <div className="flex items-center justify-between mb-1">
               <label className="campo-label mb-0">Monto *</label>
               {tipoPagoActual && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'
+                }`}>
                   {tipoPagoActual === 'total' ? '✓ Total' : '~ Abono'}
                 </span>
               )}
             </div>
-            <input type="text" inputMode="numeric"
-              value={form.monto} onChange={e => handleMontoChange(e.target.value.replace(/\D/g, ''))}
-              className={`campo-input ${errores.monto ? 'border-red-400 focus:ring-red-400/30' : ''}`}
-              placeholder="0" disabled={pagoCompleto} />
+            {/* monto siempre editable — readOnly solo cuando está completo para permitir copiar */}
+            <input
+              type="text"
+              inputMode="numeric"
+              value={form.monto}
+              onChange={e => {
+                if (!pagoCompleto) handleMontoChange(e.target.value.replace(/\D/g, ''))
+              }}
+              className={`campo-input ${errores.monto ? 'border-red-400 focus:ring-red-400/30' : ''} ${pagoCompleto ? 'opacity-50 cursor-not-allowed' : ''}`}
+              placeholder="0"
+            />
             {errores.monto && <p className="campo-error">{errores.monto}</p>}
             {!pagoCompleto && montoPendiente > 0 && (
-              <button type="button" onClick={() => handleMontoChange(String(montoPendiente))}
+              <button type="button"
+                onClick={() => handleMontoChange(String(montoPendiente))}
                 className="text-xs text-primary mt-1 hover:underline">
                 Usar pendiente ({formatPrecio(montoPendiente)})
               </button>
@@ -121,9 +138,13 @@ export default function PagoForm({
           </div>
           <div>
             <label className="campo-label">Método de Pago</label>
-            <select value={form.metodo} onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))} className="campo-input">
+            <select
+              value={form.metodo}
+              onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))}
+              className="campo-input">
               <option value="efectivo">Efectivo</option>
-              <option value="transferencia">Transferencia</option>            </select>
+              <option value="transferencia">Transferencia</option>
+            </select>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { ShoppingBag, User, CreditCard, Clock, KeyRound, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react'
+import { ShoppingBag, User, CreditCard, Clock, KeyRound, Eye, EyeOff,
+         CheckCircle, XCircle, ChevronDown, ChevronUp, Download } from 'lucide-react'
 import { useState } from 'react'
 import { usePanelCliente } from '../hooks/usePanelCliente'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
@@ -17,6 +18,7 @@ export default function PanelCliente() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [focusNueva, setFocusNueva]   = useState(false)
   const [errorActual, setErrorActual]  = useState('')
+  const [pedidoAbierto, setPedidoAbierto] = useState(null)
 
   const {
     usuario, clienteData, pedidos, misAbonos, loadPedidos,
@@ -31,14 +33,32 @@ export default function PanelCliente() {
     numero:    /[0-9]/.test(formPass.nueva || ''),
   }
 
+  const descargarComprobante = async (abonoId) => {
+    try {
+      const res = await fetch(`/api/pagos/${abonoId}/comprobante`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      })
+      if (!res.ok) throw new Error('Error al descargar')
+      const blob = await res.blob()
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `comprobante-pago-${abonoId}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      // fallback: abrir en nueva pestaña
+      window.open(`/api/pagos/${abonoId}/comprobante`, '_blank')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
-
       <NavbarPublico />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
 
-        {/* tabs */}
+        {/* Tabs */}
         <div className="flex gap-1 mb-8 bg-light-card dark:bg-dark-card p-1 rounded-xl border border-gray-100 dark:border-dark-border w-fit">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -54,7 +74,7 @@ export default function PanelCliente() {
         {tab === 'actividad' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            {/* pedidos */}
+            {/* Pedidos */}
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">Pedidos</h2>
               {loadPedidos && (
@@ -70,29 +90,81 @@ export default function PanelCliente() {
                   <p className="text-gray-400 text-xs">Sin pedidos aún</p>
                 </div>
               )}
-              {pedidos.map(p => (
-                <div key={p.id} className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm text-light-text dark:text-dark-text">Pedido #{p.id}</span>
-                        <span className={getBadge(p.estado)}>{p.estado || 'Pendiente'}</span>
+              {pedidos.map(p => {
+                const abierto = pedidoAbierto === p.id
+                return (
+                  <div key={p.id}
+                    className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border overflow-hidden">
+                    {/* Cabecera — click para expandir */}
+                    <button
+                      type="button"
+                      onClick={() => setPedidoAbierto(abierto ? null : p.id)}
+                      className="w-full p-4 text-left flex items-start justify-between gap-2">
+                      <div className="space-y-0.5 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-sm text-light-text dark:text-dark-text">
+                            Pedido #{p.id}
+                          </span>
+                          <span className={getBadge(p.estado)}>{p.estado || 'Pendiente'}</span>
+                        </div>
+                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                          <Clock size={10} /> {formatFechaHora(p.fecha_pedido)}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-400 flex items-center gap-1">
-                        <Clock size={10} /> {formatFechaHora(p.fecha_pedido)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {p.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}
-                      </p>
-                      {p.notas && <p className="text-xs italic text-gray-400">{p.notas}</p>}
-                    </div>
-                    <p className="text-primary font-bold text-sm shrink-0">{formatPrecio(p.total)}</p>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <p className="text-primary font-bold text-sm">{formatPrecio(p.total)}</p>
+                        {abierto
+                          ? <ChevronUp size={14} className="text-gray-400" />
+                          : <ChevronDown size={14} className="text-gray-400" />}
+                      </div>
+                    </button>
+
+                    {/* Detalle expandible */}
+                    {abierto && (
+                      <div className="px-4 pb-4 border-t border-gray-100 dark:border-dark-border pt-3 space-y-2">
+                        <div className="flex justify-between text-xs text-gray-400">
+                          <span>Tipo</span>
+                          <span>{p.tipo_venta === 'domicilio' ? '🏠 Domicilio' : '🏪 Mostrador'}</span>
+                        </div>
+                        {p.notas && (
+                          <div className="flex justify-between text-xs text-gray-400">
+                            <span>Notas</span>
+                            <span className="italic text-right max-w-[60%]">{p.notas}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-xs font-semibold pt-1 border-t border-gray-100">
+                          <span>Total</span>
+                          <span className="text-primary">{formatPrecio(p.total)}</span>
+                        </div>
+                        {/* Abonos del pedido */}
+                        {misAbonos.filter(a => a.pedido_id === p.id).length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <p className="text-xs font-medium text-gray-500">Pagos registrados</p>
+                            {misAbonos.filter(a => a.pedido_id === p.id).map(a => (
+                              <div key={a.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-dark-bg rounded-lg px-3 py-1.5">
+                                <span className="text-gray-500">{a.metodo} · {formatFechaHora(a.fecha_pago || a.created_at)}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-primary font-semibold">{formatPrecio(a.monto)}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => descargarComprobante(a.id)}
+                                    title="Descargar comprobante"
+                                    className="text-gray-400 hover:text-primary transition-colors">
+                                    <Download size={12} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
-            {/* abonos */}
+            {/* Abonos */}
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">Abonos</h2>
               {misAbonos.length === 0 && (
@@ -110,11 +182,20 @@ export default function PanelCliente() {
                       </span>
                       <p className="text-xs text-gray-400">Pedido #{a.pedido_id} · {a.metodo}</p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-primary font-bold text-sm">{formatPrecio(a.monto)}</p>
-                      <span className={a.estado?.toLowerCase().includes('anula') ? 'badge-anulado' : 'badge-activo'}>
-                        {a.estado || 'Activo'}
-                      </span>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <p className="text-primary font-bold text-sm">{formatPrecio(a.monto)}</p>
+                        <span className={a.estado?.toLowerCase().includes('anula') ? 'badge-anulado' : 'badge-activo'}>
+                          {a.estado || 'Activo'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => descargarComprobante(a.id)}
+                        title="Descargar comprobante"
+                        className="text-gray-400 hover:text-primary transition-colors p-1">
+                        <Download size={14} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -143,7 +224,10 @@ export default function PanelCliente() {
                   </div>
                   <div className="grid grid-cols-1 gap-3 text-sm pt-3 border-t border-gray-100 dark:border-dark-border">
                     <div><p className="campo-label">Teléfono</p><p className="font-medium">{clienteData.telefono || '—'}</p></div>
-                    <div><p className="campo-label">Documento</p><p className="font-medium">{clienteData.tipo_documento}: {clienteData.numero_documento || '—'}</p></div>
+                    <div>
+                      <p className="campo-label">Documento</p>
+                      <p className="font-medium">{clienteData.tipo_documento}: {clienteData.numero_documento || '—'}</p>
+                    </div>
                   </div>
                 </div>
 
@@ -170,7 +254,7 @@ export default function PanelCliente() {
         )}
       </main>
 
-      {/* MODAL CAMBIAR CONTRASEÑA */}
+      {/* Modal cambiar contraseña */}
       {modalPass && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4">
@@ -234,7 +318,12 @@ export default function PanelCliente() {
               )}
             </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={() => { setModalPass(false); setFormPass({ actual: '', nueva: '', confirmar: '' }); setErrorActual('') }}
+              <button
+                onClick={() => {
+                  setModalPass(false)
+                  setFormPass({ actual: '', nueva: '', confirmar: '' })
+                  setErrorActual('')
+                }}
                 className="flex-1 py-2 text-sm border border-gray-200 dark:border-dark-border text-gray-500 rounded-xl">
                 Cancelar
               </button>

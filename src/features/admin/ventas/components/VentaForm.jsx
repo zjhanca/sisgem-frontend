@@ -3,7 +3,6 @@ import Modal from '@shared/components/Modal'
 import { Search, Scan, Trash2, CreditCard, Clock, Layers, AlertTriangle } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
-// letras (con acentos y ñ) y espacios únicamente
 const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/
 
 export default function VentaForm({
@@ -22,7 +21,9 @@ export default function VentaForm({
 
   useEffect(() => {
     const handler = e => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) { setClienteBusqueda(''); setClienteDropdown(false) }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setClienteBusqueda(''); setClienteDropdown(false)
+      }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -35,19 +36,21 @@ export default function VentaForm({
   }
 
   const permitefiado = clienteSeleccionado?.permite_fiado
-  // cupoFiadoDisponible: null = sin límite configurado (fiado ilimitado)
   const sinCupo = permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
 
-  // cantidad total por producto (suma de todas sus líneas, si está dividido por lote)
   const totalPorProducto = {}
-  for (const p of form.productos) totalPorProducto[p.producto_id] = (totalPorProducto[p.producto_id] || 0) + (+p.cantidad || 0)
+  for (const p of form.productos)
+    totalPorProducto[p.producto_id] = (totalPorProducto[p.producto_id] || 0) + (+p.cantidad || 0)
 
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
       <form onSubmit={handleCrear} className="space-y-4">
 
+        {/* Banner tipo pago */}
         <div className={`flex items-center gap-2 p-3 rounded-xl border ${
-          form.tipo_pago === 'fiado' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-primary/10 border-primary/30'
+          form.tipo_pago === 'fiado'
+            ? 'bg-amber-500/10 border-amber-500/30'
+            : 'bg-primary/10 border-primary/30'
         }`}>
           {form.tipo_pago === 'fiado'
             ? <Clock size={15} className="text-amber-500 shrink-0" />
@@ -64,13 +67,24 @@ export default function VentaForm({
           </div>
         </div>
 
+        {/* Cliente */}
         <div>
           <label className="campo-label">Cliente</label>
           <div className="flex gap-2 mb-2">
-            {[{ val:'registrado', label:'Cliente Registrado' }, { val:'manual', label:'Nombre Manual' }].map(t => (
+            {[
+              { val: 'registrado', label: 'Cliente Registrado' },
+              { val: 'manual',     label: 'Cliente Anónimo'    },  {/* ← cambiado */}
+            ].map(t => (
               <button key={t.val} type="button"
-                onClick={() => { setForm(f => ({ ...f, tipo_cliente: t.val, cliente_id: '', cliente_nombre: '', tipo_pago: 'total' })); setClienteBusqueda('') }}
-                className={`px-3 py-1 text-xs rounded-full border ${form.tipo_cliente === t.val ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-500'}`}>
+                onClick={() => {
+                  setForm(f => ({ ...f, tipo_cliente: t.val, cliente_id: '', cliente_nombre: '', tipo_pago: 'total' }))
+                  setClienteBusqueda('')
+                }}
+                className={`px-3 py-1 text-xs rounded-full border ${
+                  form.tipo_cliente === t.val
+                    ? 'bg-primary text-white border-primary'
+                    : 'border-gray-200 text-gray-500'
+                }`}>
                 {t.label}
               </button>
             ))}
@@ -80,10 +94,10 @@ export default function VentaForm({
             <div className="space-y-1" ref={dropdownRef}>
               {clienteSeleccionado && !clienteBusqueda ? (
                 <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-primary">{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</span>
-                    {permitefiado && <span className="badge-pendiente">Fiado habilitado</span>}
-                  </div>
+                  <span className="font-medium text-primary">
+                    {clienteSeleccionado.nombre} {clienteSeleccionado.apellido}
+                  </span>
+                  {/* ← badge "Fiado habilitado" eliminado */}
                   <button type="button"
                     onClick={() => { setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' })); setClienteBusqueda('') }}
                     className="text-gray-400 hover:text-red-400 ml-2">✕</button>
@@ -92,19 +106,20 @@ export default function VentaForm({
                 <div className="relative">
                   <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
                   <input value={clienteBusqueda}
-                    onChange={e => { setClienteBusqueda(e.target.value); setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' })) }}
+                    onChange={e => {
+                      setClienteBusqueda(e.target.value)
+                      setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' }))
+                    }}
                     onFocus={() => setClienteDropdown(true)}
-                    className="campo-input pl-8 text-xs" placeholder="Buscar o seleccionar cliente..." />
+                    className="campo-input pl-8 text-xs"
+                    placeholder="Buscar o seleccionar cliente..." />
                   {clienteDropdown && clientesFiltrados.length > 0 && (
                     <div className="absolute top-full left-0 right-0 z-30 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                       {clientesFiltrados.map(c => (
                         <button key={c.id} type="button"
                           onMouseDown={e => { e.preventDefault(); seleccionarCliente(c) }}
                           className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text">
-                          <div className="flex items-center gap-2">
-                            <span>{c.nombre} {c.apellido}</span>
-                            {c.permite_fiado && <span className="badge-pendiente text-xs">Fiado</span>}
-                          </div>
+                          <span>{c.nombre} {c.apellido}</span>
                           {c.telefono && <span className="text-gray-400">{c.telefono}</span>}
                         </button>
                       ))}
@@ -113,6 +128,7 @@ export default function VentaForm({
                 </div>
               )}
 
+              {/* Barra cupo fiado */}
               {clienteSeleccionado && form.tipo_pago === 'fiado' && cupoFiadoDisponible != null && (
                 <div className="mt-1.5 space-y-1">
                   <div className="flex justify-between text-xs">
@@ -122,19 +138,21 @@ export default function VentaForm({
                     </span>
                   </div>
                   <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${excedeCupoFiado ? 'bg-amber-400' : 'bg-primary'}`}
-                      style={{ width: `${cupoFiadoDisponible > 0 ? Math.min(100, (totalVenta / cupoFiadoDisponible) * 100) : 100}%` }} />
+                    <div
+                      className={`h-full rounded-full transition-all ${excedeCupoFiado ? 'bg-amber-400' : 'bg-primary'}`}
+                      style={{ width: `${cupoFiadoDisponible > 0 ? Math.min(100, (totalVenta / cupoFiadoDisponible) * 100) : 100}%` }}
+                    />
                   </div>
                 </div>
               )}
 
-              {/* aviso de pago mixto cuando la venta excede el cupo disponible */}
+              {/* Aviso pago mixto */}
               {clienteSeleccionado && form.tipo_pago === 'fiado' && excedeCupoFiado && !sinCupo && (
                 <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
                   <div className="flex items-start gap-2">
                     <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-700 leading-relaxed">
-                      Este cliente solo tiene <strong>${cupoFiadoDisponible.toLocaleString('es-CO')}</strong> de cupo fiado disponible.
+                      Solo tiene <strong>${cupoFiadoDisponible.toLocaleString('es-CO')}</strong> de cupo.
                       Se fiarán <strong>${montoFiado.toLocaleString('es-CO')}</strong> y debes cobrar
                       <strong> ${montoInmediato.toLocaleString('es-CO')}</strong> ahora.
                     </p>
@@ -155,17 +173,22 @@ export default function VentaForm({
                 </div>
               )}
 
+              {/* Sin cupo */}
               {clienteSeleccionado && sinCupo && form.tipo_pago === 'fiado' && (
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
                   <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-red-600">Este cliente no tiene cupo de fiado disponible actualmente. Elige "Pago Total".</p>
+                  <p className="text-xs text-red-600">
+                    Este cliente no tiene cupo de fiado disponible. Elige "Pago Total".
+                  </p>
                 </div>
               )}
 
+              {/* Botones tipo pago */}
               {clienteSeleccionado && (
                 <div className="flex gap-2 pt-1">
-                  {[{ val:'total', label:'Pago Total', icon:CreditCard, active:'bg-primary text-white border-primary' },
-                    { val:'fiado', label:'Fiado', icon:Clock, active:'bg-amber-500 text-white border-amber-500', disabled:!permitefiado || sinCupo }
+                  {[
+                    { val: 'total', label: 'Pago Total', icon: CreditCard, active: 'bg-primary text-white border-primary' },
+                    { val: 'fiado', label: 'Fiado', icon: Clock, active: 'bg-amber-500 text-white border-amber-500', disabled: !permitefiado || sinCupo },
                   ].map(t => (
                     <button key={t.val} type="button"
                       disabled={t.disabled}
@@ -182,20 +205,23 @@ export default function VentaForm({
               )}
             </div>
           ) : (
+            // Cliente Anónimo — campo opcional
             <input value={form.cliente_nombre}
-              onChange={e => { if (SOLO_LETRAS.test(e.target.value)) setForm(f => ({ ...f, cliente_nombre: e.target.value })) }}
-              className="campo-input" placeholder="Nombre del cliente" />
+              onChange={e => {
+                if (SOLO_LETRAS.test(e.target.value))
+                  setForm(f => ({ ...f, cliente_nombre: e.target.value }))
+              }}
+              className="campo-input"
+              placeholder="Nombre del cliente (opcional)" />
           )}
         </div>
 
+        {/* Método de pago */}
         {form.tipo_pago !== 'fiado' && (
           <div>
             <label className="campo-label">Método de Pago</label>
             <div className="flex gap-2">
-              {[
-                { val: 'efectivo',     label: 'Efectivo' },
-                { val: 'transferencia',label: 'Transferencia' },
-              ].map(m => (
+              {[{ val: 'efectivo', label: 'Efectivo' }, { val: 'transferencia', label: 'Transferencia' }].map(m => (
                 <button key={m.val} type="button"
                   onClick={() => setForm(f => ({ ...f, metodo_pago: m.val }))}
                   className={`flex-1 py-2 text-xs rounded-lg border transition-all ${
@@ -210,6 +236,7 @@ export default function VentaForm({
           </div>
         )}
 
+        {/* Productos */}
         <div className="p-3 rounded-xl border border-gray-200 space-y-2">
           <p className="text-xs font-semibold">Productos</p>
           <div className="flex gap-2">
@@ -238,7 +265,13 @@ export default function VentaForm({
             <div className="relative">
               <input placeholder="Cód. barras" className="campo-input w-28 text-xs pr-7" inputMode="numeric"
                 onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo(e.target.value); e.target.value = '' } }} />
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    buscarPorCodigo(e.target.value)
+                    e.target.value = ''
+                  }
+                }} />
               <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
             </div>
           </div>
@@ -261,12 +294,13 @@ export default function VentaForm({
                           {p.nombre}
                           {esSegundoLote && <span className="text-amber-600">(siguiente lote)</span>}
                         </span>
-                        <button type="button" onClick={() => quitarProducto(i)} className="text-red-400 hover:text-red-500 shrink-0 ml-2">
+                        <button type="button" onClick={() => quitarProducto(i)}
+                          className="text-red-400 hover:text-red-500 shrink-0 ml-2">
                           <Trash2 size={12} />
                         </button>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className={`${esSegundoLote ? 'text-amber-600' : 'text-gray-500'}`}>
+                        <span className={esSegundoLote ? 'text-amber-600' : 'text-gray-500'}>
                           {formatPrecio(p.precio_unitario)} c/u
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
@@ -276,9 +310,15 @@ export default function VentaForm({
                               disabled={!p.cantidad || +p.cantidad <= 1}
                               className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">−</button>
                             <input type="text" inputMode="numeric" value={p.cantidad}
-                              onChange={e => { const v = e.target.value; if (v === '') { cambiarCantidad(i, ''); return }; if (/^\d+$/.test(v)) cambiarCantidad(i, v) }}
+                              onChange={e => {
+                                const v = e.target.value
+                                if (v === '') { cambiarCantidad(i, ''); return }
+                                if (/^\d+$/.test(v)) cambiarCantidad(i, v)
+                              }}
                               className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
-                                hayError ? 'border-red-400 focus:ring-red-400/30 text-red-400' : 'border-gray-200 focus:ring-primary/20'
+                                hayError
+                                  ? 'border-red-400 focus:ring-red-400/30 text-red-400'
+                                  : 'border-gray-200 focus:ring-primary/20'
                               }`} />
                             <button type="button"
                               onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
@@ -300,17 +340,26 @@ export default function VentaForm({
                 )
               })}
               <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-200">
-                <span>Total</span><span className="text-primary">{formatPrecio(totalVenta)}</span>
+                <span>Total</span>
+                <span className="text-primary">{formatPrecio(totalVenta)}</span>
               </div>
             </div>
           )}
         </div>
 
+        {/* Submit */}
         <div className="flex justify-end pt-2 border-t border-gray-100">
           <button type="submit"
-            disabled={creando || Object.values(totalPorProducto).length === 0 || form.productos.some(p => !p.cantidad || +p.cantidad < 1) || sinCupo}
+            disabled={
+              creando ||
+              Object.values(totalPorProducto).length === 0 ||
+              form.productos.some(p => !p.cantidad || +p.cantidad < 1) ||
+              sinCupo
+            }
             className={`btn-primary disabled:opacity-50 ${form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''}`}>
-            {creando ? 'Registrando...' : form.tipo_pago === 'fiado' ? (excedeCupoFiado ? 'Registrar Fiado Parcial' : 'Registrar Fiado') : 'Aceptar'}
+            {creando ? 'Registrando...' : form.tipo_pago === 'fiado'
+              ? (excedeCupoFiado ? 'Registrar Fiado Parcial' : 'Registrar Fiado')
+              : 'Aceptar'}
           </button>
         </div>
       </form>
