@@ -32,7 +32,7 @@ export default function Categorias() {
     modal, modalDetalle, modalEliminar,
     setModalDetalle, setModalEliminar,
     abrirModal, cerrarModal,
-    toggleEstado, eliminar, actualizarMargen,
+    toggleEstado, eliminar,
     guardando, eliminando,
   } = useCategorias()
 
@@ -41,7 +41,6 @@ export default function Categorias() {
   const columnas = [
     { key: 'nombre',      label: 'Nombre' },
     { key: 'descripcion', label: 'Descripción', render: r => r.descripcion || '—' },
-    { key: 'margen',      label: 'Margen %', render: r => `${r.margen ?? 45}%` },
     { key: 'created_at',  label: 'Creada', render: r => formatFecha(r.created_at) },
     { key: 'estado', label: 'Estado',
       render: r => <SwitchEstado activo={r.estado} labelActivo="Activa" labelInactivo="Inactiva"

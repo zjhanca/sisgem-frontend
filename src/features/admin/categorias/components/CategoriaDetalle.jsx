@@ -28,7 +28,6 @@ export default function CategoriaDetalle({ modalDetalle, setModalDetalle, abrirM
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><p className="campo-label">Margen</p><p className="font-semibold text-primary">{item.margen ?? 45}%</p></div>
             <div><p className="campo-label">Creada</p><p>{formatFecha(item.created_at)}</p></div>
             <div><p className="campo-label">Última actualización</p><p>{formatFecha(item.updated_at)}</p></div>
           </div>

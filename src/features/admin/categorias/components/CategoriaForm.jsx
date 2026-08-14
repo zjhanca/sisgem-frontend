@@ -4,7 +4,6 @@ import { Upload, Link as LinkIcon, X } from 'lucide-react'
 
 export default function CategoriaForm({ modal, form, errores, handleChange, handleSubmit, cerrarModal, guardando }) {
   const fileRef = useRef(null)
-  const esNuevo = !modal.item
 
   const handleFile = e => {
     const file = e.target.files[0]
@@ -19,31 +18,12 @@ export default function CategoriaForm({ modal, form, errores, handleChange, hand
       titulo={modal.item ? 'Editar Categoría' : 'Nueva Categoría'}>
       <form onSubmit={handleSubmit} className="space-y-3">
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="campo-label">Nombre *</label>
-            <input value={form.nombre} onChange={e => handleChange('nombre', e.target.value)}
-              className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`}
-              placeholder="Nombre de la categoría" maxLength={100} />
-            {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
-          </div>
-          <div>
-            <label className="campo-label">Margen de ganancia (%) *</label>
-            <input type="number" min="0" max="999" step="0.5"
-              value={form.margen === 0 || form.margen ? form.margen : ''}
-              onChange={e => {
-                const valor = e.target.value
-                if (valor.replace('.', '').replace('-', '').length > 3) return
-                handleChange('margen', valor)
-              }}
-              maxLength={3}
-              className={`campo-input ${errores.margen ? 'border-red-400' : ''}`}
-              placeholder="Ej: 45" />
-            {errores.margen
-              ? <p className="campo-error">{errores.margen}</p>
-              : <p className="text-xs text-gray-400 mt-1">Precio = costo × (1 + margen / 100)</p>
-            }
-          </div>
+        <div>
+          <label className="campo-label">Nombre *</label>
+          <input value={form.nombre} onChange={e => handleChange('nombre', e.target.value)}
+            className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`}
+            placeholder="Nombre de la categoría" maxLength={100} />
+          {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
         </div>
 
         <div>
