@@ -71,7 +71,6 @@ function GestorImagenes({ imagenes, onChange }) {
 
   return (
     <div className="space-y-2">
-      {/* subir desde disco */}
       <button type="button" onClick={() => fileRef.current?.click()}
         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-200
           text-xs text-gray-400 hover:border-primary/40 hover:text-primary transition-colors">
@@ -79,7 +78,6 @@ function GestorImagenes({ imagenes, onChange }) {
       </button>
       <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFile} />
 
-      {/* por URL */}
       <div className="flex gap-2">
         <input value={nuevaUrl} onChange={e => setNuevaUrl(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); agregar() } }}
@@ -87,7 +85,6 @@ function GestorImagenes({ imagenes, onChange }) {
         <button type="button" onClick={agregar} className="btn-outline shrink-0 px-2.5"><Plus size={14} /></button>
       </div>
 
-      {/* grid de imágenes */}
       {imagenes.length > 0 ? (
         <div className="grid grid-cols-3 gap-2">
           {imagenes.map((url, i) => (
@@ -124,20 +121,28 @@ function GestorImagenes({ imagenes, onChange }) {
   )
 }
 
-export default function ProductoForm({ modal, form, setForm, errores, handleChange, handleSubmit, cerrarModal, guardando, categorias, marcas, verificandoCodigo }) {
+export default function ProductoForm({
+  modal, form, setForm, errores, handleChange, handleSubmit,
+  cerrarModal, guardando, categorias, marcas, verificandoCodigo,
+}) {
   const esNuevo = !modal.item
+
   return (
     <Modal abierto={modal.abierto} onCerrar={cerrarModal} bloquearCierre
       titulo={modal.item ? 'Editar Producto' : 'Nuevo Producto'} ancho="max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
+
+          {/* Nombre */}
           <div className="col-span-2">
             <label className="campo-label">Nombre *</label>
             <input value={form.nombre} onChange={e => handleChange('nombre', e.target.value)}
-              className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`} placeholder="Nombre del producto" />
+              className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`}
+              placeholder="Nombre del producto" />
             {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
           </div>
 
+          {/* Aviso precio al editar */}
           {!esNuevo && (
             <div className="col-span-2">
               <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-600">
@@ -147,11 +152,42 @@ export default function ProductoForm({ modal, form, setForm, errores, handleChan
             </div>
           )}
 
+          {/* Categoría y Marca */}
           <BuscadorSelect label="Categoría" items={categorias} valorId={form.categoria_id}
             onSelect={id => setForm(p => ({ ...p, categoria_id: id }))} placeholder="Buscar categoría..." />
           <BuscadorSelect label="Marca" items={marcas} valorId={form.marca_id}
             onSelect={id => setForm(p => ({ ...p, marca_id: id }))} placeholder="Buscar marca..." />
 
+          {/* Margen — visible siempre (crear y editar) */}
+          <div className="col-span-2">
+            <label className="campo-label">
+              Margen de ganancia (%)
+              {esNuevo && <span className="text-gray-400 font-normal ml-1">— define el precio de venta al recibir stock</span>}
+            </label>
+            <input
+              type="number" min="0" max="999" step="0.5"
+              value={form.margen === 0 || form.margen ? form.margen : ''}
+              onChange={e => {
+                const v = e.target.value
+                if (v.replace('.','').replace('-','').length > 3) return
+                handleChange('margen', v)
+              }}
+              className={`campo-input ${errores.margen ? 'border-red-400' : ''}`}
+              placeholder="Ej: 30 (deja vacío para usar el margen de la categoría)" />
+            {errores.margen
+              ? <p className="campo-error">{errores.margen}</p>
+              : <p className="text-xs text-gray-400 mt-1">
+                  Precio = costo × (1 + margen / 100), redondeado a $50.
+                  {!esNuevo && form.margen !== '' && (
+                    <span className="ml-1 text-primary font-medium">
+                      Margen actual: {form.margen}%
+                    </span>
+                  )}
+                </p>
+            }
+          </div>
+
+          {/* Código de barras */}
           <div className="col-span-2">
             <label className="campo-label">Código de Barras (solo números)</label>
             <div className="relative">
@@ -170,6 +206,7 @@ export default function ProductoForm({ modal, form, setForm, errores, handleChan
             {verificandoCodigo && <span className="campo-hint flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Verificando...</span>}
           </div>
 
+          {/* Descripción */}
           <div className="col-span-2">
             <label className="campo-label">Descripción</label>
             <textarea value={form.descripcion} onChange={e => handleChange('descripcion', e.target.value)}
@@ -177,12 +214,12 @@ export default function ProductoForm({ modal, form, setForm, errores, handleChan
             <p className="campo-hint text-right">{(form.descripcion || '').length}/300</p>
           </div>
 
+          {/* Imágenes */}
           <div className="col-span-2">
             <label className="campo-label">Imágenes ({(form.imagenes || []).length})</label>
             <GestorImagenes
               imagenes={form.imagenes || []}
               onChange={imgs => {
-                // imgs puede ser array nuevo o función updater
                 const nuevas = typeof imgs === 'function' ? imgs(form.imagenes || []) : imgs
                 setForm(p => ({ ...p, imagenes: nuevas, imagen_url: nuevas[0] || '' }))
               }}

@@ -7,16 +7,19 @@ import toast from 'react-hot-toast'
 const formVacio = {
   nombre: '', descripcion: '', precio: 0, stock: 0,
   categoria_id: '', proveedor_id: '', marca_id: '',
-  codigo_barras: '', imagen_url: '',
-  imagenes: [],
+  codigo_barras: '', imagen_url: '', imagenes: [],
+  margen: '',
 }
 
-// pone en mayúscula la primera letra de cada palabra (ej. "salsa tomate" -> "Salsa Tomate")
 const capitalizarPalabras = str => str.replace(/(^|\s)\S/g, letra => letra.toUpperCase())
 
 const validar = form => {
   const e = {}
   if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio'
+  if (form.margen !== '' && form.margen !== null && form.margen !== undefined) {
+    if (isNaN(+form.margen) || +form.margen < 0)
+      e.margen = 'El margen debe ser un número positivo'
+  }
   return e
 }
 
@@ -25,7 +28,7 @@ export function useProductos() {
   const [modal, setModal]                 = useState({ abierto: false, item: null })
   const [modalDetalle, setModalDetalle]   = useState({ abierto: false, item: null })
   const [modalEliminar, setModalEliminar] = useState({ abierto: false, item: null })
-  const [form, setForm]       = useState(formVacio)
+  const [form, setForm]                   = useState(formVacio)
   const [errores, setErrores]             = useState({})
   const [verificandoCodigo, setVerificandoCodigo] = useState(false)
   const timerCodigo = useRef(null)
@@ -35,7 +38,6 @@ export function useProductos() {
   const { data: proveedores = [] } = useQuery({ queryKey: ['proveedores'], queryFn: productosService.getProveedores })
   const { data: marcas = [] }      = useQuery({ queryKey: ['marcas'],      queryFn: productosService.getMarcas })
 
-  // verificar código de barras duplicado (contra lista local)
   const verificarCodigo = useCallback((codigo, itemId) => {
     if (!codigo || codigo.length < 3) {
       setErrores(prev => ({ ...prev, codigo_barras: '' }))
@@ -58,34 +60,41 @@ export function useProductos() {
 
   const guardar = useMutation({
     mutationFn: data => {
-      // enviar imagen_url como la primera del array (compatibilidad backend)
       const payload = {
         ...data,
         imagen_url: data.imagenes?.[0] || data.imagen_url || '',
-        // si el backend acepta array de imágenes, se envía también
         imagenes: data.imagenes || [],
+        margen: data.margen !== '' && data.margen != null ? +data.margen : null,
       }
       return modal.item
         ? productosService.update(modal.item.id, payload)
         : productosService.create(payload)
     },
-    onSuccess: () => { qc.invalidateQueries(['productos']); cerrarModal(); toast.success('Producto guardado') },
+    onSuccess: () => {
+      qc.invalidateQueries(['productos'])
+      cerrarModal()
+      toast.success('Producto guardado')
+    },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar'),
   })
+
   const toggleEstado = useMutation({
     mutationFn: productosService.toggleEstado,
     onSuccess: () => { qc.invalidateQueries(['productos']); toast.success('Estado actualizado') },
   })
+
   const eliminar = useMutation({
     mutationFn: productosService.delete,
-    onSuccess: () => { qc.invalidateQueries(['productos']); setModalEliminar({ abierto: false, item: null }); toast.success('Producto eliminado') },
+    onSuccess: () => {
+      qc.invalidateQueries(['productos'])
+      setModalEliminar({ abierto: false, item: null })
+      toast.success('Producto eliminado')
+    },
     onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar'),
   })
 
   const abrirModal = (item = null) => {
     if (item) {
-      // reconstruir array de imágenes desde el item
-      // soporta: item.imagenes (array), item.imagenes (string JSON desde la BD), item.imagen_url (string)
       let imgsRaw = item.imagenes
       if (typeof imgsRaw === 'string') {
         try { imgsRaw = JSON.parse(imgsRaw) } catch { imgsRaw = [] }
@@ -97,16 +106,17 @@ export function useProductos() {
         imagenes = [item.imagen_url]
       }
       setForm({
-        nombre:       item.nombre,
-        descripcion:  item.descripcion || '',
-        precio:       item.precio,
-        stock:        item.stock,
-        categoria_id: item.categoria_id || '',
-        proveedor_id: item.proveedor_id || '',
-        marca_id:     item.marca_id || '',
-        codigo_barras:item.codigo_barras || '',
-        imagen_url:   item.imagen_url || '',
+        nombre:        item.nombre,
+        descripcion:   item.descripcion || '',
+        precio:        item.precio,
+        stock:         item.stock,
+        categoria_id:  item.categoria_id || '',
+        proveedor_id:  item.proveedor_id || '',
+        marca_id:      item.marca_id || '',
+        codigo_barras: item.codigo_barras || '',
+        imagen_url:    item.imagen_url || '',
         imagenes,
+        margen:        item.margen != null ? item.margen : '',
       })
     } else {
       setForm(formVacio)
@@ -114,6 +124,7 @@ export function useProductos() {
     setErrores({})
     setModal({ abierto: true, item })
   }
+
   const cerrarModal = () => { setModal({ abierto: false, item: null }); setErrores({}) }
 
   const handleChange = (campo, valor) => {
@@ -124,17 +135,16 @@ export function useProductos() {
     setErrores(prev => ({ ...prev, [campo]: e[campo] || '' }))
     if (campo === 'codigo_barras') verificarCodigo(valor, modal.item?.id)
   }
+
   const handleSubmit = e => {
     e.preventDefault()
     const e2 = validar(form)
     if (Object.keys(e2).length) { setErrores(e2); return }
     if (errores.codigo_barras) return
-    if (verificandoCodigo) { return }
+    if (verificandoCodigo) return
     guardar.mutate(form)
   }
 
-  // descarga el reporte de productos en PDF o Excel (sin período, es un
-  // listado completo del catálogo actual)
   const descargarReporte = async ({ formato = 'pdf' } = {}) => {
     const ext = formato === 'excel' ? 'xlsx' : 'pdf'
     const url = `/reportes/productos?formato=${formato}`
