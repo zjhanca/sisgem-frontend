@@ -1,7 +1,8 @@
 import { ShoppingBag, User, CreditCard, Clock, KeyRound,
          Eye, EyeOff, CheckCircle, XCircle, ChevronDown, ChevronUp, Download } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePanelCliente } from '../hooks/usePanelCliente'
+import { tiendaService } from '../services/tiendaService'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import NavbarPublico from '@shared/components/NavbarPublico'
 import Footer from '../components/Footer'
@@ -11,17 +12,51 @@ const TABS = [
   { id: 'perfil',    label: 'Mi Perfil', icon: User        },
 ]
 
+// Carga los productos de un pedido al expandirlo
+function ProductosPedido({ pedidoId }) {
+  const [prods, setProds] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    tiendaService.getProductosPedido(pedidoId)
+      .then(datos => setProds(datos || []))
+      .catch(() => setProds([]))
+      .finally(() => setLoading(false))
+  }, [pedidoId])
+
+  if (loading) return <p className="text-xs text-gray-400 py-2">Cargando productos...</p>
+  if (!prods.length) return <p className="text-xs text-gray-400 py-2">Sin productos</p>
+
+  return (
+    <div className="space-y-1">
+      {prods.map((pr, i) => (
+        <div key={i} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-dark-bg rounded px-2 py-1.5 gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {pr.imagen_url && (
+              <img src={pr.imagen_url} alt="" className="w-7 h-7 object-cover rounded shrink-0"
+                onError={e => e.target.style.display='none'} />
+            )}
+            <span className="truncate">{pr.nombre}</span>
+          </div>
+          <span className="text-gray-400 shrink-0">× {pr.cantidad}</span>
+          <span className="text-primary font-semibold shrink-0">{formatPrecio(pr.subtotal)}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function PanelCliente() {
   const [showActual, setShowActual]   = useState(false)
   const [showNueva, setShowNueva]     = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [focusNueva, setFocusNueva]   = useState(false)
-  const [errorActual, setErrorActual]  = useState('')
-  const [pedidoAbierto, setPedidoAbierto] = useState(null)
+  const [errorActual, setErrorActual] = useState('')
 
   const {
-    usuario, clienteData, pedidos, misAbonos, loadPedidos,
+    clienteData, pedidos, misAbonos, loadPedidos,
     tab, setTab,
+    pedidoAbierto, setPedidoAbierto,
     modalPass, setModalPass, formPass, setFormPass, cambiandoPass, handleCambiarPass,
     getBadge, descargarComprobante,
   } = usePanelCliente(setErrorActual)
@@ -35,8 +70,8 @@ export default function PanelCliente() {
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
       <NavbarPublico />
-
       <main className="max-w-6xl mx-auto px-4 py-8">
+
         {/* Tabs */}
         <div className="flex gap-1 mb-8 bg-light-card dark:bg-dark-card p-1 rounded-xl border border-gray-100 dark:border-dark-border w-fit">
           {TABS.map(t => (
@@ -55,16 +90,10 @@ export default function PanelCliente() {
 
             {/* Pedidos */}
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">
-                Mis Pedidos
-              </h2>
-              {loadPedidos && (
-                <div className="space-y-2">
-                  {[1,2,3].map(i => (
-                    <div key={i} className="h-20 rounded-xl bg-light-card dark:bg-dark-card border border-gray-100 dark:border-dark-border animate-pulse" />
-                  ))}
-                </div>
-              )}
+              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text">Mis Pedidos</h2>
+              {loadPedidos && [1,2,3].map(i => (
+                <div key={i} className="h-20 rounded-xl bg-light-card dark:bg-dark-card border border-gray-100 dark:border-dark-border animate-pulse" />
+              ))}
               {!loadPedidos && pedidos.length === 0 && (
                 <div className="text-center py-10 bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border">
                   <ShoppingBag size={32} className="mx-auto text-gray-300 mb-2" />
@@ -76,15 +105,13 @@ export default function PanelCliente() {
                 const abonosPedido = misAbonos.filter(a => a.pedido_id === p.id)
                 return (
                   <div key={p.id} className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border overflow-hidden">
-                    {/* Cabecera */}
+                    {/* Cabecera clickeable */}
                     <button type="button"
                       onClick={() => setPedidoAbierto(abierto ? null : p.id)}
                       className="w-full p-4 text-left flex items-start justify-between gap-2">
                       <div className="space-y-0.5 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm text-light-text dark:text-dark-text">
-                            Pedido #{p.id}
-                          </span>
+                          <span className="font-medium text-sm text-light-text dark:text-dark-text">Pedido #{p.id}</span>
                           <span className={getBadge(p.estado)}>{p.estado || 'Pendiente'}</span>
                         </div>
                         <p className="text-xs text-gray-400 flex items-center gap-1">
@@ -102,34 +129,12 @@ export default function PanelCliente() {
                     {/* Detalle expandible */}
                     {abierto && (
                       <div className="px-4 pb-4 border-t border-gray-100 dark:border-dark-border pt-3 space-y-3">
-                        {/* Info básica */}
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <span className="text-gray-400">Tipo</span>
-                            <p className="font-medium">{p.tipo_venta === 'domicilio' ? '🏠 Domicilio' : '🏪 Mostrador'}</p>
-                          </div>
-                          {p.notas && (
-                            <div>
-                              <span className="text-gray-400">Notas</span>
-                              <p className="font-medium italic">{p.notas}</p>
-                            </div>
-                          )}
-                        </div>
 
-                        {/* Productos del pedido */}
-                        {p.productos?.length > 0 && (
-                          <div>
-                            <p className="text-xs font-semibold text-gray-500 mb-1">Productos</p>
-                            <div className="space-y-1">
-                              {p.productos.map((pr, i) => (
-                                <div key={i} className="flex justify-between text-xs bg-gray-50 dark:bg-dark-bg rounded px-2 py-1.5">
-                                  <span>{pr.nombre} × {pr.cantidad}</span>
-                                  <span className="text-primary font-medium">{formatPrecio(pr.precio_unitario * pr.cantidad)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        {/* Productos */}
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 mb-1">Productos</p>
+                          <ProductosPedido pedidoId={p.id} />
+                        </div>
 
                         {/* Total */}
                         <div className="flex justify-between text-xs font-semibold border-t border-gray-100 pt-2">
@@ -137,18 +142,17 @@ export default function PanelCliente() {
                           <span className="text-primary">{formatPrecio(p.total)}</span>
                         </div>
 
-                        {/* Pagos/abonos del pedido */}
+                        {/* Pagos del pedido con comprobante */}
                         {abonosPedido.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-gray-500 mb-1">Pagos registrados</p>
+                            <p className="text-xs font-semibold text-gray-500 mb-1">Pagos</p>
                             <div className="space-y-1">
                               {abonosPedido.map(a => (
                                 <div key={a.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-dark-bg rounded px-2 py-1.5">
                                   <span className="text-gray-500 capitalize">{a.metodo}</span>
                                   <div className="flex items-center gap-2">
                                     <span className="text-primary font-semibold">{formatPrecio(a.monto)}</span>
-                                    <button type="button"
-                                      onClick={() => descargarComprobante(a.id)}
+                                    <button type="button" onClick={() => descargarComprobante(a.id)}
                                       title="Descargar comprobante"
                                       className="text-gray-400 hover:text-primary transition-colors">
                                       <Download size={12} />
@@ -168,9 +172,7 @@ export default function PanelCliente() {
 
             {/* Abonos */}
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text mb-1">
-                Mis Abonos
-              </h2>
+              <h2 className="text-sm font-semibold text-light-text dark:text-dark-text">Mis Abonos</h2>
               {misAbonos.length === 0 && (
                 <div className="text-center py-10 bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border">
                   <CreditCard size={32} className="mx-auto text-gray-300 mb-2" />
@@ -181,17 +183,10 @@ export default function PanelCliente() {
                 <div key={a.id} className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <p className="text-sm font-medium text-light-text dark:text-dark-text">
-                        Pago #{a.id}
-                      </p>
+                      <p className="text-sm font-medium text-light-text dark:text-dark-text">Pago #{a.id}</p>
                       <p className="text-xs text-gray-400">
                         Pedido #{a.pedido_id} · <span className="capitalize">{a.metodo}</span>
                       </p>
-                      {a.created_at && (
-                        <p className="text-xs text-gray-400">
-                          {formatFechaHora(a.created_at)}
-                        </p>
-                      )}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
@@ -200,8 +195,7 @@ export default function PanelCliente() {
                           {a.estado || 'Pagado'}
                         </span>
                       </div>
-                      <button type="button"
-                        onClick={() => descargarComprobante(a.id)}
+                      <button type="button" onClick={() => descargarComprobante(a.id)}
                         title="Descargar comprobante"
                         className="text-gray-400 hover:text-primary transition-colors p-1">
                         <Download size={14} />
@@ -211,6 +205,7 @@ export default function PanelCliente() {
                 </div>
               ))}
             </div>
+
           </div>
         )}
 
@@ -239,7 +234,6 @@ export default function PanelCliente() {
                     </div>
                   </div>
                 </div>
-
                 <div className="bg-light-card dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -251,9 +245,7 @@ export default function PanelCliente() {
                     </div>
                   </div>
                   <button onClick={() => setModalPass(true)}
-                    className="text-xs font-medium text-primary hover:underline">
-                    Cambiar
-                  </button>
+                    className="text-xs font-medium text-primary hover:underline">Cambiar</button>
                 </div>
               </>
             ) : (

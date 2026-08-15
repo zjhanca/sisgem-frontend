@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
 import { tiendaService } from '../services/tiendaService'
@@ -10,12 +10,12 @@ const passVacio = { actual: '', nueva: '', confirmar: '' }
 export function usePanelCliente(setErrorActual) {
   const { usuario, logout } = useAuth()
   const navigate            = useNavigate()
-  const qc                  = useQueryClient()
 
   const [tab, setTab]             = useState('actividad')
   const [modalPass, setModalPass] = useState(false)
   const [formPass, setFormPass]   = useState(passVacio)
   const [cambiandoPass, setCambiandoPass] = useState(false)
+  const [pedidoAbierto, setPedidoAbierto] = useState(null)
 
   const { data: clienteData } = useQuery({
     queryKey: ['mi-perfil'],
@@ -31,11 +31,36 @@ export function usePanelCliente(setErrorActual) {
     queryFn:  () => tiendaService.getPedidosByCliente(cliente_id),
     enabled:  !!cliente_id,
   })
-  const { data: abonos = [] } = useQuery({
-    queryKey: ['mis-abonos'],
-    queryFn:  tiendaService.getAbonos,
+
+  // Todos los pagos, filtramos por pedidos del cliente en el hook
+  const { data: todosPagos = [] } = useQuery({
+    queryKey: ['todos-pagos'],
+    queryFn:  tiendaService.getPagos,
     enabled:  !!cliente_id,
   })
+
+  const pedidoIds = new Set(pedidos.map(p => p.id))
+  const misAbonos = todosPagos.filter(p =>
+    pedidoIds.has(p.pedido_id) &&
+    !p.estado?.toLowerCase().includes('anula')
+  )
+
+  const descargarComprobante = async (pagoId) => {
+    try {
+      const res = await tiendaService.descargarComprobante(pagoId)
+      const blob = new Blob([res.data], { type: 'text/html' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `comprobante-pago-${pagoId}.html`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('No se pudo descargar el comprobante')
+    }
+  }
 
   const handleCambiarPass = async () => {
     if (!formPass.actual || !formPass.nueva || !formPass.confirmar) {
@@ -83,13 +108,11 @@ export function usePanelCliente(setErrorActual) {
     return 'badge-pendiente'
   }
 
-  const pedidoIds = pedidos.map(p => p.id)
-  const misAbonos = abonos.filter(a => pedidoIds.includes(a.pedido_id))
-
   return {
     usuario, clienteData, pedidos, misAbonos, loadPedidos,
     tab, setTab,
+    pedidoAbierto, setPedidoAbierto,
     modalPass, setModalPass, formPass, setFormPass, cambiandoPass, handleCambiarPass,
-    handleLogout, getBadge,
+    handleLogout, getBadge, descargarComprobante,
   }
 }
