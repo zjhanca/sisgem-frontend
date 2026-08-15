@@ -32,7 +32,6 @@ export function usePanelCliente(setErrorActual) {
     enabled:  !!cliente_id,
   })
 
-  // Todos los pagos, filtramos por pedidos del cliente en el hook
   const { data: todosPagos = [] } = useQuery({
     queryKey: ['todos-pagos'],
     queryFn:  tiendaService.getPagos,
@@ -48,11 +47,11 @@ export function usePanelCliente(setErrorActual) {
   const descargarComprobante = async (pagoId) => {
     try {
       const res = await tiendaService.descargarComprobante(pagoId)
-      const blob = new Blob([res.data], { type: 'text/html' })
+      const blob = new Blob([res.data], { type: 'application/pdf' })
       const url  = URL.createObjectURL(blob)
       const a    = document.createElement('a')
       a.href     = url
-      a.download = `comprobante-pago-${pagoId}.html`
+      a.download = `comprobante-pago-${pagoId}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
