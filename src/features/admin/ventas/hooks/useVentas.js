@@ -4,23 +4,25 @@ import { ventasService } from '../services/ventasService'
 import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
+const MINIMO_FIADO = 10000
+
 export function useVentas() {
   const qc = useQueryClient()
-  const [modalNuevo, setModalNuevo]     = useState(false)
-  const [modalDetalle, setModalDetalle] = useState({ abierto: false, venta: null })
-  const [modalAnular, setModalAnular]   = useState({ abierto: false, venta: null })
+  const [modalNuevo, setModalNuevo]       = useState(false)
+  const [modalDetalle, setModalDetalle]   = useState({ abierto: false, venta: null })
+  const [modalAnular, setModalAnular]     = useState({ abierto: false, venta: null })
   const [notaAnulacion, setNotaAnulacion] = useState('')
-  const [filtroEstado, setFiltroEstado] = useState('')
+  const [filtroEstado, setFiltroEstado]   = useState('')
   const [filtroBusqueda, setFiltroBusqueda] = useState('')
-  const [filtroDesde, setFiltroDesde]   = useState('')
-  const [filtroHasta, setFiltroHasta]   = useState('')
+  const [filtroDesde, setFiltroDesde]     = useState('')
+  const [filtroHasta, setFiltroHasta]     = useState('')
   const [form, setForm] = useState({
     tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '',
     productos: [], tipo_pago: 'total', metodo_pago: 'efectivo',
     metodo_pago_inmediato: 'efectivo',
   })
-  const [prodBusqueda, setProdBusqueda]       = useState('')
-  const [prodsFiltrados, setProdsFiltrados]   = useState([])
+  const [prodBusqueda, setProdBusqueda]     = useState('')
+  const [prodsFiltrados, setProdsFiltrados] = useState([])
   const [clienteBusqueda, setClienteBusqueda] = useState('')
 
   const { data: ventas = [] }    = useQuery({ queryKey: ['pedidos'],        queryFn: ventasService.getAll })
@@ -33,7 +35,6 @@ export function useVentas() {
 
   const getStock = producto_id => productos.find(p => p.id === producto_id)?.stock ?? Infinity
 
-  // Una sola línea por producto — sin lógica de lotes en el carrito
   const construirLinea = (prod, cantidad) => ({
     producto_id:     prod.id,
     cantidad,
@@ -140,11 +141,7 @@ export function useVentas() {
 
     setForm(f => {
       const idx = f.productos.findIndex(p => p.producto_id === prod.id)
-      if (idx === -1) {
-        // producto nuevo — agregar al final
-        return { ...f, productos: [...f.productos, construirLinea(prod, 1)] }
-      }
-      // producto existente — actualizar cantidad en su posición
+      if (idx === -1) return { ...f, productos: [...f.productos, construirLinea(prod, 1)] }
       const nuevos = [...f.productos]
       nuevos[idx] = { ...nuevos[idx], cantidad: nuevaCantidad }
       return { ...f, productos: nuevos }
@@ -163,7 +160,7 @@ export function useVentas() {
     const linea = form.productos[idx]
     if (!linea) return
     const stock = linea.stock ?? getStock(linea.producto_id)
-    const num = Math.max(1, +nuevaCantidad || 1)
+    const num  = Math.max(1, +nuevaCantidad || 1)
     const cant = Math.min(num, stock)
     if (+nuevaCantidad > stock) toast.error(`Stock insuficiente — máximo ${stock} unidades`)
     setForm(f => ({
@@ -200,6 +197,11 @@ export function useVentas() {
       if (+p.cantidad > stock) {
         toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return
       }
+    }
+    // Validar mínimo para fiado
+    if (form.tipo_pago === 'fiado' && totalVenta < MINIMO_FIADO) {
+      toast.error(`El mínimo para ventas a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}`)
+      return
     }
     if (form.tipo_pago === 'fiado' && form.cliente_id && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0) {
       toast.error('Este cliente no tiene cupo de fiado disponible actualmente'); return
@@ -284,7 +286,7 @@ export function useVentas() {
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     descargarReporte,
     clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
-    notaAnulacion, setNotaAnulacion,
+    notaAnulacion, setNotaAnulacion, MINIMO_FIADO,
     creando: crearVenta.isPending, anulando: anular.isPending,
   }
 }

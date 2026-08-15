@@ -1,9 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Trash2, CreditCard, Clock, Layers, AlertTriangle } from 'lucide-react'
+import { Search, Scan, Trash2, CreditCard, Clock, AlertTriangle } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
-
-const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/
 
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
@@ -11,6 +9,7 @@ export default function VentaForm({
   prodBusqueda, prodsFiltrados, buscarProducto, buscarPorCodigo,
   agregarProducto, quitarProducto, cambiarCantidad, totalVenta, handleCrear, creando,
   clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
+  MINIMO_FIADO,
 }) {
   const cerrar = () => {
     setModalNuevo(false)
@@ -39,8 +38,9 @@ export default function VentaForm({
     setClienteDropdown(false)
   }
 
-  const permitefiado = clienteSeleccionado?.permite_fiado
-  const sinCupo = permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
+  const permitefiado     = clienteSeleccionado?.permite_fiado
+  const sinCupo          = permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
+  const minimoInsuficiente = totalVenta < (MINIMO_FIADO || 10000)
 
   const totalPorProducto = {}
   for (const p of form.productos)
@@ -74,8 +74,6 @@ export default function VentaForm({
         {/* Cliente */}
         <div>
           <label className="campo-label">Cliente</label>
-
-          {/* Selector de tipo */}
           <div className="flex gap-2 mb-2">
             {[
               { val: 'registrado', label: 'Cliente Registrado' },
@@ -103,14 +101,12 @@ export default function VentaForm({
             ))}
           </div>
 
-          {/* Cliente anónimo — solo muestra aviso, sin input */}
           {form.tipo_cliente === 'manual' ? (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-500">
               <span className="text-base">👤</span>
               <span>Venta registrada como <strong className="text-gray-700">Cliente Anónimo</strong></span>
             </div>
           ) : (
-            /* Cliente registrado */
             <div className="space-y-1" ref={dropdownRef}>
               {clienteSeleccionado && !clienteBusqueda ? (
                 <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
@@ -127,8 +123,7 @@ export default function VentaForm({
               ) : (
                 <div className="relative">
                   <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
-                  <input
-                    value={clienteBusqueda}
+                  <input value={clienteBusqueda}
                     onChange={e => {
                       setClienteBusqueda(e.target.value)
                       setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' }))
@@ -208,22 +203,34 @@ export default function VentaForm({
 
               {/* Botones tipo pago */}
               {clienteSeleccionado && (
-                <div className="flex gap-2 pt-1">
-                  {[
-                    { val: 'total', label: 'Pago Total', icon: CreditCard, active: 'bg-primary text-white border-primary' },
-                    { val: 'fiado', label: 'Fiado', icon: Clock, active: 'bg-amber-500 text-white border-amber-500', disabled: !permitefiado || sinCupo },
-                  ].map(t => (
-                    <button key={t.val} type="button"
-                      disabled={t.disabled}
-                      onClick={() => !t.disabled && setForm(f => ({ ...f, tipo_pago: t.val }))}
-                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs rounded-lg border transition-all ${
-                        form.tipo_pago === t.val ? t.active : t.disabled
-                          ? 'border-gray-200 text-gray-300 cursor-not-allowed opacity-50'
-                          : 'border-gray-200 text-gray-500 hover:border-primary/40'
-                      }`}>
-                      <t.icon size={12} /> {t.label}
-                    </button>
-                  ))}
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-2 pt-1">
+                    {[
+                      { val: 'total', label: 'Pago Total', icon: CreditCard, active: 'bg-primary text-white border-primary' },
+                      {
+                        val: 'fiado', label: 'Fiado', icon: Clock,
+                        active: 'bg-amber-500 text-white border-amber-500',
+                        disabled: !permitefiado || sinCupo || minimoInsuficiente,
+                      },
+                    ].map(t => (
+                      <button key={t.val} type="button"
+                        disabled={t.disabled}
+                        onClick={() => !t.disabled && setForm(f => ({ ...f, tipo_pago: t.val }))}
+                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs rounded-lg border transition-all ${
+                          form.tipo_pago === t.val ? t.active : t.disabled
+                            ? 'border-gray-200 text-gray-300 cursor-not-allowed opacity-50'
+                            : 'border-gray-200 text-gray-500 hover:border-primary/40'
+                        }`}>
+                        <t.icon size={12} /> {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Aviso mínimo fiado */}
+                  {permitefiado && minimoInsuficiente && (
+                    <p className="text-xs text-gray-400 text-center">
+                      Mínimo <strong>${(MINIMO_FIADO || 10000).toLocaleString('es-CO')}</strong> para ventas a crédito
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -300,25 +307,18 @@ export default function VentaForm({
                 const totalProd = totalPorProducto[p.producto_id] || 0
                 const excede = !cantInvalida && stock !== Infinity && totalProd > stock
                 const hayError = cantInvalida || excede
-                const esSegundoLote = !!p.es_lote_siguiente
                 return (
-                  <div key={`${p.producto_id}-${p.lote_id}-${i}`} className="flex flex-col">
-                    <div className={`flex flex-col gap-1 text-xs p-2 rounded ${esSegundoLote ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                  <div key={`${p.producto_id}-${i}`} className="flex flex-col">
+                    <div className="flex flex-col gap-1 text-xs p-2 rounded bg-gray-50">
                       <div className="flex items-center justify-between">
-                        <span className="flex-1 truncate flex items-center gap-1.5">
-                          {esSegundoLote && <Layers size={11} className="text-amber-500 shrink-0" />}
-                          {p.nombre}
-                          {esSegundoLote && <span className="text-amber-600">(siguiente lote)</span>}
-                        </span>
+                        <span className="flex-1 truncate font-medium">{p.nombre}</span>
                         <button type="button" onClick={() => quitarProducto(i)}
                           className="text-red-400 hover:text-red-500 shrink-0 ml-2">
                           <Trash2 size={12} />
                         </button>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className={esSegundoLote ? 'text-amber-600' : 'text-gray-500'}>
-                          {formatPrecio(p.precio_unitario)} c/u
-                        </span>
+                        <span className="text-gray-500">{formatPrecio(p.precio_unitario)} c/u</span>
                         <div className="flex items-center gap-2 shrink-0">
                           <div className="flex items-center gap-1">
                             <button type="button"
@@ -341,7 +341,7 @@ export default function VentaForm({
                               disabled={stock !== Infinity && totalProd >= stock}
                               className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">+</button>
                           </div>
-                          <span className={`font-semibold w-16 text-right ${hayError ? 'text-red-400' : esSegundoLote ? 'text-amber-600' : 'text-primary'}`}>
+                          <span className={`font-semibold w-16 text-right ${hayError ? 'text-red-400' : 'text-primary'}`}>
                             {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
                           </span>
                         </div>
