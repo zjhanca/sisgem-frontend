@@ -183,7 +183,7 @@ export default function VentaForm({
             <div className="flex items-center justify-between mb-1">
               <label className="campo-label">Cliente</label>
               <button type="button"
-                onClick={() => { cerrar(); navigate('/clientes?nuevo=1') }}
+                onClick={() => { cerrar(); navigate('/admin/clientes?nuevo=1') }}
                 className="flex items-center gap-1 text-xs text-primary hover:underline">
                 <UserPlus size={12} /> Nuevo cliente
               </button>

@@ -1,4 +1,5 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Edit2, Eye, Download, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { useClientes } from '../hooks/useClientes'
@@ -35,8 +36,17 @@ export default function Clientes() {
     eliminar, eliminando, modalEliminar, setModalEliminar, descargarReporte,
   } = useClientes()
 
-  const [confirmToggle, setConfirmToggle] = useState(null)
+  const [confirmToggle, setConfirmToggle]   = useState(null)
   const [confirmDescarga, setConfirmDescarga] = useState(false)
+  const [searchParams, setSearchParams]     = useSearchParams()
+
+  // Abre el modal de nuevo cliente si viene ?nuevo=1 desde VentaForm
+  useEffect(() => {
+    if (searchParams.get('nuevo') === '1') {
+      abrirModal()
+      setSearchParams({}, { replace: true }) // limpia el param de la URL
+    }
+  }, []) // solo al montar
 
   const columnas = [
     { key: 'nombre', label: 'Nombre', render: r => `${r.nombre} ${r.apellido}` },
