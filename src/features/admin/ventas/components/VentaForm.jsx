@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Trash2, CreditCard, Clock, AlertTriangle } from 'lucide-react'
+import { Search, Scan, Trash2, CreditCard, Clock, AlertTriangle, UserPlus } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function VentaForm({
@@ -11,6 +12,7 @@ export default function VentaForm({
   clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
   MINIMO_FIADO,
 }) {
+  const navigate = useNavigate()
   const cerrar = () => {
     setModalNuevo(false)
     setForm({
@@ -38,8 +40,8 @@ export default function VentaForm({
     setClienteDropdown(false)
   }
 
-  const permitefiado     = clienteSeleccionado?.permite_fiado
-  const sinCupo          = permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
+  const permitefiado      = clienteSeleccionado?.permite_fiado
+  const sinCupo           = permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
   const minimoInsuficiente = totalVenta < (MINIMO_FIADO || 10000)
 
   const totalPorProducto = {}
@@ -48,323 +50,334 @@ export default function VentaForm({
 
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
-      <form onSubmit={handleCrear} className="space-y-4">
+      <form onSubmit={handleCrear} className="flex flex-col" style={{ maxHeight: '80vh' }}>
 
-        {/* Banner tipo pago */}
-        <div className={`flex items-center gap-2 p-3 rounded-xl border ${
-          form.tipo_pago === 'fiado'
-            ? 'bg-amber-500/10 border-amber-500/30'
-            : 'bg-primary/10 border-primary/30'
-        }`}>
-          {form.tipo_pago === 'fiado'
-            ? <Clock size={15} className="text-amber-500 shrink-0" />
-            : <CreditCard size={15} className="text-primary shrink-0" />}
-          <div>
-            <p className={`text-xs font-semibold ${form.tipo_pago === 'fiado' ? 'text-amber-500' : 'text-primary'}`}>
-              {form.tipo_pago === 'fiado' ? 'Venta a Crédito (Fiado)' : 'Venta en Mostrador'}
-            </p>
-            <p className="text-xs text-gray-500">
-              {form.tipo_pago === 'fiado'
-                ? 'El cliente pagará después — quedará como pendiente'
-                : 'Se registrará automáticamente como pagada'}
-            </p>
-          </div>
-        </div>
+        {/* Contenido scrolleable */}
+        <div className="overflow-y-auto flex-1 space-y-4 pr-1">
 
-        {/* Cliente */}
-        <div>
-          <label className="campo-label">Cliente</label>
-          <div className="flex gap-2 mb-2">
-            {[
-              { val: 'registrado', label: 'Cliente Registrado' },
-              { val: 'manual',     label: 'Cliente Anónimo'    },
-            ].map(t => (
-              <button key={t.val} type="button"
-                onClick={() => {
-                  setForm(f => ({
-                    ...f,
-                    tipo_cliente: t.val,
-                    cliente_id: '',
-                    cliente_nombre: t.val === 'manual' ? 'Anónimo' : '',
-                    tipo_pago: 'total',
-                  }))
-                  setClienteBusqueda('')
-                  setClienteDropdown(false)
-                }}
-                className={`px-3 py-1 text-xs rounded-full border transition-all ${
-                  form.tipo_cliente === t.val
-                    ? 'bg-primary text-white border-primary'
-                    : 'border-gray-200 text-gray-500 hover:border-primary/40'
-                }`}>
-                {t.label}
-              </button>
-            ))}
+          {/* Banner tipo pago */}
+          <div className={`flex items-center gap-2 p-3 rounded-xl border ${
+            form.tipo_pago === 'fiado'
+              ? 'bg-amber-500/10 border-amber-500/30'
+              : 'bg-primary/10 border-primary/30'
+          }`}>
+            {form.tipo_pago === 'fiado'
+              ? <Clock size={15} className="text-amber-500 shrink-0" />
+              : <CreditCard size={15} className="text-primary shrink-0" />}
+            <div>
+              <p className={`text-xs font-semibold ${form.tipo_pago === 'fiado' ? 'text-amber-500' : 'text-primary'}`}>
+                {form.tipo_pago === 'fiado' ? 'Venta a Crédito (Fiado)' : 'Venta en Mostrador'}
+              </p>
+              <p className="text-xs text-gray-500">
+                {form.tipo_pago === 'fiado'
+                  ? 'El cliente pagará después — quedará como pendiente'
+                  : 'Se registrará automáticamente como pagada'}
+              </p>
+            </div>
           </div>
 
-          {form.tipo_cliente === 'manual' ? (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-500">
-              <span className="text-base">👤</span>
-              <span>Venta registrada como <strong className="text-gray-700">Cliente Anónimo</strong></span>
-            </div>
-          ) : (
-            <div className="space-y-1" ref={dropdownRef}>
-              {clienteSeleccionado && !clienteBusqueda ? (
-                <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
-                  <span className="font-medium text-primary">
-                    {clienteSeleccionado.nombre} {clienteSeleccionado.apellido}
-                  </span>
-                  <button type="button"
-                    onClick={() => {
-                      setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' }))
-                      setClienteBusqueda('')
-                    }}
-                    className="text-gray-400 hover:text-red-400 ml-2">✕</button>
-                </div>
-              ) : (
-                <div className="relative">
-                  <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
-                  <input value={clienteBusqueda}
-                    onChange={e => {
-                      setClienteBusqueda(e.target.value)
-                      setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' }))
-                    }}
-                    onFocus={() => setClienteDropdown(true)}
-                    className="campo-input pl-8 text-xs"
-                    placeholder="Buscar o seleccionar cliente..." />
-                  {clienteDropdown && clientesFiltrados.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 z-30 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
-                      {clientesFiltrados.map(c => (
-                        <button key={c.id} type="button"
-                          onMouseDown={e => { e.preventDefault(); seleccionarCliente(c) }}
-                          className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text">
-                          <span>{c.nombre} {c.apellido}</span>
-                          {c.telefono && <span className="text-gray-400">{c.telefono}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Barra cupo fiado */}
-              {clienteSeleccionado && form.tipo_pago === 'fiado' && cupoFiadoDisponible != null && (
-                <div className="mt-1.5 space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">Cupo fiado disponible</span>
-                    <span className={excedeCupoFiado ? 'text-amber-600 font-semibold' : 'text-primary font-semibold'}>
-                      ${totalVenta.toLocaleString('es-CO')} / ${cupoFiadoDisponible.toLocaleString('es-CO')}
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${excedeCupoFiado ? 'bg-amber-400' : 'bg-primary'}`}
-                      style={{ width: `${cupoFiadoDisponible > 0 ? Math.min(100, (totalVenta / cupoFiadoDisponible) * 100) : 100}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Aviso pago mixto */}
-              {clienteSeleccionado && form.tipo_pago === 'fiado' && excedeCupoFiado && !sinCupo && (
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-700 leading-relaxed">
-                      Solo tiene <strong>${cupoFiadoDisponible.toLocaleString('es-CO')}</strong> de cupo.
-                      Se fiarán <strong>${montoFiado.toLocaleString('es-CO')}</strong> y debes cobrar
-                      <strong> ${montoInmediato.toLocaleString('es-CO')}</strong> ahora.
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    {[{ val: 'efectivo', label: 'Efectivo' }, { val: 'transferencia', label: 'Transferencia' }].map(m => (
-                      <button key={m.val} type="button"
-                        onClick={() => setForm(f => ({ ...f, metodo_pago_inmediato: m.val }))}
-                        className={`flex-1 py-1.5 text-xs rounded-lg border transition-all ${
-                          form.metodo_pago_inmediato === m.val
-                            ? 'bg-amber-500 text-white border-amber-500'
-                            : 'border-amber-200 text-amber-600 hover:border-amber-400'
-                        }`}>
-                        {m.label} (${montoInmediato.toLocaleString('es-CO')})
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Sin cupo */}
-              {clienteSeleccionado && sinCupo && form.tipo_pago === 'fiado' && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
-                  <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-red-600">
-                    Este cliente no tiene cupo de fiado disponible. Elige "Pago Total".
-                  </p>
-                </div>
-              )}
-
-              {/* Botones tipo pago */}
-              {clienteSeleccionado && (
-                <div className="flex flex-col gap-1">
-                  <div className="flex gap-2 pt-1">
-                    {[
-                      { val: 'total', label: 'Pago Total', icon: CreditCard, active: 'bg-primary text-white border-primary' },
-                      {
-                        val: 'fiado', label: 'Fiado', icon: Clock,
-                        active: 'bg-amber-500 text-white border-amber-500',
-                        disabled: !permitefiado || sinCupo || minimoInsuficiente,
-                      },
-                    ].map(t => (
-                      <button key={t.val} type="button"
-                        disabled={t.disabled}
-                        onClick={() => !t.disabled && setForm(f => ({ ...f, tipo_pago: t.val }))}
-                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs rounded-lg border transition-all ${
-                          form.tipo_pago === t.val ? t.active : t.disabled
-                            ? 'border-gray-200 text-gray-300 cursor-not-allowed opacity-50'
-                            : 'border-gray-200 text-gray-500 hover:border-primary/40'
-                        }`}>
-                        <t.icon size={12} /> {t.label}
-                      </button>
-                    ))}
-                  </div>
-                  {/* Aviso mínimo fiado */}
-                  {permitefiado && minimoInsuficiente && (
-                    <p className="text-xs text-gray-400 text-center">
-                      Mínimo <strong>${(MINIMO_FIADO || 10000).toLocaleString('es-CO')}</strong> para ventas a crédito
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Método de pago */}
-        {form.tipo_pago !== 'fiado' && (
-          <div>
-            <label className="campo-label">Método de Pago</label>
+          {/* 1. Productos */}
+          <div className="p-3 rounded-xl border border-gray-200 space-y-2">
+            <p className="text-xs font-semibold">Productos</p>
             <div className="flex gap-2">
-              {[{ val: 'efectivo', label: 'Efectivo' }, { val: 'transferencia', label: 'Transferencia' }].map(m => (
-                <button key={m.val} type="button"
-                  onClick={() => setForm(f => ({ ...f, metodo_pago: m.val }))}
-                  className={`flex-1 py-2 text-xs rounded-lg border transition-all ${
-                    form.metodo_pago === m.val
+              <div className="flex-1 relative">
+                <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
+                <input value={prodBusqueda} onChange={e => buscarProducto(e.target.value)}
+                  className="campo-input pl-8 text-xs"
+                  placeholder="Buscar por nombre o código..." />
+                {prodsFiltrados.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-20 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                    {prodsFiltrados.map(p => (
+                      <button key={p.id} type="button" onClick={() => agregarProducto(p)}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between">
+                        <div>
+                          <span>{p.nombre}</span>
+                          {p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-gray-400">Stock: {p.stock}</span>
+                          <span className="text-primary">{formatPrecio(p.precio)}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <input placeholder="Cód. barras" className="campo-input w-28 text-xs pr-7"
+                  inputMode="numeric"
+                  onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      buscarPorCodigo(e.target.value)
+                      e.target.value = ''
+                    }
+                  }} />
+                <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
+              </div>
+            </div>
+
+            {form.productos.length > 0 && (
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {form.productos.map((p, i) => {
+                  const stock = p.stock ?? Infinity
+                  const cantInvalida = !p.cantidad || +p.cantidad < 1
+                  const totalProd = totalPorProducto[p.producto_id] || 0
+                  const excede = !cantInvalida && stock !== Infinity && totalProd > stock
+                  const hayError = cantInvalida || excede
+                  return (
+                    <div key={`${p.producto_id}-${i}`} className="flex flex-col">
+                      <div className="flex flex-col gap-1 text-xs p-2 rounded bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <span className="flex-1 truncate font-medium">{p.nombre}</span>
+                          <button type="button" onClick={() => quitarProducto(i)}
+                            className="text-red-400 hover:text-red-500 shrink-0 ml-2">
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-500">{formatPrecio(p.precio_unitario)} c/u</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-1">
+                              <button type="button"
+                                onClick={() => cambiarCantidad(i, Math.max(1, (+p.cantidad || 2) - 1))}
+                                disabled={!p.cantidad || +p.cantidad <= 1}
+                                className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">−</button>
+                              <input type="text" inputMode="numeric" value={p.cantidad}
+                                onChange={e => {
+                                  const v = e.target.value
+                                  if (v === '') { cambiarCantidad(i, ''); return }
+                                  if (/^\d+$/.test(v)) cambiarCantidad(i, v)
+                                }}
+                                className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
+                                  hayError
+                                    ? 'border-red-400 focus:ring-red-400/30 text-red-400'
+                                    : 'border-gray-200 focus:ring-primary/20'
+                                }`} />
+                              <button type="button"
+                                onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
+                                disabled={stock !== Infinity && totalProd >= stock}
+                                className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">+</button>
+                            </div>
+                            <span className={`font-semibold w-16 text-right ${hayError ? 'text-red-400' : 'text-primary'}`}>
+                              {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      {hayError && (
+                        <p className="text-xs text-red-400 px-2 pb-0.5">
+                          ⚠ {cantInvalida ? 'La cantidad debe ser al menos 1' : `Solo hay ${stock} unidades disponibles`}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 2. Cliente */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="campo-label">Cliente</label>
+              <button type="button"
+                onClick={() => { cerrar(); navigate('/clientes?nuevo=1') }}
+                className="flex items-center gap-1 text-xs text-primary hover:underline">
+                <UserPlus size={12} /> Nuevo cliente
+              </button>
+            </div>
+            <div className="flex gap-2 mb-2">
+              {[
+                { val: 'registrado', label: 'Cliente Registrado' },
+                { val: 'manual',     label: 'Cliente Anónimo'    },
+              ].map(t => (
+                <button key={t.val} type="button"
+                  onClick={() => {
+                    setForm(f => ({
+                      ...f,
+                      tipo_cliente: t.val,
+                      cliente_id: '',
+                      cliente_nombre: t.val === 'manual' ? 'Anónimo' : '',
+                      tipo_pago: 'total',
+                    }))
+                    setClienteBusqueda('')
+                    setClienteDropdown(false)
+                  }}
+                  className={`px-3 py-1 text-xs rounded-full border transition-all ${
+                    form.tipo_cliente === t.val
                       ? 'bg-primary text-white border-primary'
                       : 'border-gray-200 text-gray-500 hover:border-primary/40'
                   }`}>
-                  {m.label}
+                  {t.label}
                 </button>
               ))}
             </div>
-          </div>
-        )}
 
-        {/* Productos */}
-        <div className="p-3 rounded-xl border border-gray-200 space-y-2">
-          <p className="text-xs font-semibold">Productos</p>
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
-              <input value={prodBusqueda} onChange={e => buscarProducto(e.target.value)}
-                className="campo-input pl-8 text-xs"
-                placeholder="Buscar por nombre o código..." />
-              {prodsFiltrados.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-20 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
-                  {prodsFiltrados.map(p => (
-                    <button key={p.id} type="button" onClick={() => agregarProducto(p)}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between">
-                      <div>
-                        <span>{p.nombre}</span>
-                        {p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}
+            {form.tipo_cliente === 'manual' ? (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-500">
+                <span className="text-base">👤</span>
+                <span>Venta registrada como <strong className="text-gray-700">Cliente Anónimo</strong></span>
+              </div>
+            ) : (
+              <div className="space-y-1" ref={dropdownRef}>
+                {clienteSeleccionado && !clienteBusqueda ? (
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
+                    <span className="font-medium text-primary">
+                      {clienteSeleccionado.nombre} {clienteSeleccionado.apellido}
+                    </span>
+                    <button type="button"
+                      onClick={() => {
+                        setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' }))
+                        setClienteBusqueda('')
+                      }}
+                      className="text-gray-400 hover:text-red-400 ml-2">✕</button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
+                    <input value={clienteBusqueda}
+                      onChange={e => {
+                        setClienteBusqueda(e.target.value)
+                        setForm(f => ({ ...f, cliente_id: '', tipo_pago: 'total' }))
+                      }}
+                      onFocus={() => setClienteDropdown(true)}
+                      className="campo-input pl-8 text-xs"
+                      placeholder="Buscar o seleccionar cliente..." />
+                    {clienteDropdown && clientesFiltrados.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 z-30 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                        {clientesFiltrados.map(c => (
+                          <button key={c.id} type="button"
+                            onMouseDown={e => { e.preventDefault(); seleccionarCliente(c) }}
+                            className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text">
+                            <span>{c.nombre} {c.apellido}</span>
+                            {c.telefono && <span className="text-gray-400">{c.telefono}</span>}
+                          </button>
+                        ))}
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-gray-400">Stock: {p.stock}</span>
-                        <span className="text-primary">{formatPrecio(p.precio)}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="relative">
-              <input placeholder="Cód. barras" className="campo-input w-28 text-xs pr-7"
-                inputMode="numeric"
-                onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    buscarPorCodigo(e.target.value)
-                    e.target.value = ''
-                  }
-                }} />
-              <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
-            </div>
-          </div>
+                    )}
+                  </div>
+                )}
 
-          {form.productos.length > 0 && (
-            <div className="space-y-1 max-h-48 overflow-y-auto">
-              {form.productos.map((p, i) => {
-                const stock = p.stock ?? Infinity
-                const cantInvalida = !p.cantidad || +p.cantidad < 1
-                const totalProd = totalPorProducto[p.producto_id] || 0
-                const excede = !cantInvalida && stock !== Infinity && totalProd > stock
-                const hayError = cantInvalida || excede
-                return (
-                  <div key={`${p.producto_id}-${i}`} className="flex flex-col">
-                    <div className="flex flex-col gap-1 text-xs p-2 rounded bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <span className="flex-1 truncate font-medium">{p.nombre}</span>
-                        <button type="button" onClick={() => quitarProducto(i)}
-                          className="text-red-400 hover:text-red-500 shrink-0 ml-2">
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-500">{formatPrecio(p.precio_unitario)} c/u</span>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <div className="flex items-center gap-1">
-                            <button type="button"
-                              onClick={() => cambiarCantidad(i, Math.max(1, (+p.cantidad || 2) - 1))}
-                              disabled={!p.cantidad || +p.cantidad <= 1}
-                              className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">−</button>
-                            <input type="text" inputMode="numeric" value={p.cantidad}
-                              onChange={e => {
-                                const v = e.target.value
-                                if (v === '') { cambiarCantidad(i, ''); return }
-                                if (/^\d+$/.test(v)) cambiarCantidad(i, v)
-                              }}
-                              className={`w-10 text-center text-xs rounded border px-1 py-0.5 bg-transparent focus:outline-none focus:ring-1 ${
-                                hayError
-                                  ? 'border-red-400 focus:ring-red-400/30 text-red-400'
-                                  : 'border-gray-200 focus:ring-primary/20'
-                              }`} />
-                            <button type="button"
-                              onClick={() => cambiarCantidad(i, (+p.cantidad || 0) + 1)}
-                              disabled={stock !== Infinity && totalProd >= stock}
-                              className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-xs font-bold disabled:opacity-40 hover:bg-primary/20">+</button>
-                          </div>
-                          <span className={`font-semibold w-16 text-right ${hayError ? 'text-red-400' : 'text-primary'}`}>
-                            {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
-                          </span>
-                        </div>
-                      </div>
+                {/* Barra cupo fiado */}
+                {clienteSeleccionado && form.tipo_pago === 'fiado' && cupoFiadoDisponible != null && (
+                  <div className="mt-1.5 space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-400">Cupo fiado disponible</span>
+                      <span className={excedeCupoFiado ? 'text-amber-600 font-semibold' : 'text-primary font-semibold'}>
+                        ${totalVenta.toLocaleString('es-CO')} / ${cupoFiadoDisponible.toLocaleString('es-CO')}
+                      </span>
                     </div>
-                    {hayError && (
-                      <p className="text-xs text-red-400 px-2 pb-0.5">
-                        ⚠ {cantInvalida ? 'La cantidad debe ser al menos 1' : `Solo hay ${stock} unidades disponibles`}
+                    <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${excedeCupoFiado ? 'bg-amber-400' : 'bg-primary'}`}
+                        style={{ width: `${cupoFiadoDisponible > 0 ? Math.min(100, (totalVenta / cupoFiadoDisponible) * 100) : 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Aviso pago mixto */}
+                {clienteSeleccionado && form.tipo_pago === 'fiado' && excedeCupoFiado && !sinCupo && (
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700 leading-relaxed">
+                        Solo tiene <strong>${cupoFiadoDisponible.toLocaleString('es-CO')}</strong> de cupo.
+                        Se fiarán <strong>${montoFiado.toLocaleString('es-CO')}</strong> y debes cobrar
+                        <strong> ${montoInmediato.toLocaleString('es-CO')}</strong> ahora.
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      {[{ val: 'efectivo', label: 'Efectivo' }, { val: 'transferencia', label: 'Transferencia' }].map(m => (
+                        <button key={m.val} type="button"
+                          onClick={() => setForm(f => ({ ...f, metodo_pago_inmediato: m.val }))}
+                          className={`flex-1 py-1.5 text-xs rounded-lg border transition-all ${
+                            form.metodo_pago_inmediato === m.val
+                              ? 'bg-amber-500 text-white border-amber-500'
+                              : 'border-amber-200 text-amber-600 hover:border-amber-400'
+                          }`}>
+                          {m.label} (${montoInmediato.toLocaleString('es-CO')})
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sin cupo */}
+                {clienteSeleccionado && sinCupo && form.tipo_pago === 'fiado' && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+                    <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-600">
+                      Este cliente no tiene cupo de fiado disponible. Elige "Pago Total".
+                    </p>
+                  </div>
+                )}
+
+                {/* Botones tipo pago */}
+                {clienteSeleccionado && (
+                  <div className="flex flex-col gap-1">
+                    <div className="flex gap-2 pt-1">
+                      {[
+                        { val: 'total', label: 'Pago Total', icon: CreditCard, active: 'bg-primary text-white border-primary' },
+                        {
+                          val: 'fiado', label: 'Fiado', icon: Clock,
+                          active: 'bg-amber-500 text-white border-amber-500',
+                          disabled: !permitefiado || sinCupo || minimoInsuficiente,
+                        },
+                      ].map(t => (
+                        <button key={t.val} type="button"
+                          disabled={t.disabled}
+                          onClick={() => !t.disabled && setForm(f => ({ ...f, tipo_pago: t.val }))}
+                          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs rounded-lg border transition-all ${
+                            form.tipo_pago === t.val ? t.active : t.disabled
+                              ? 'border-gray-200 text-gray-300 cursor-not-allowed opacity-50'
+                              : 'border-gray-200 text-gray-500 hover:border-primary/40'
+                          }`}>
+                          <t.icon size={12} /> {t.label}
+                        </button>
+                      ))}
+                    </div>
+                    {permitefiado && minimoInsuficiente && (
+                      <p className="text-xs text-gray-400 text-center">
+                        Mínimo <strong>${(MINIMO_FIADO || 10000).toLocaleString('es-CO')}</strong> para ventas a crédito
                       </p>
                     )}
                   </div>
-                )
-              })}
-              <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-200">
-                <span>Total</span>
-                <span className="text-primary">{formatPrecio(totalVenta)}</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 3. Método de pago */}
+          {form.tipo_pago !== 'fiado' && (
+            <div>
+              <label className="campo-label">Método de Pago</label>
+              <div className="flex gap-2">
+                {[{ val: 'efectivo', label: 'Efectivo' }, { val: 'transferencia', label: 'Transferencia' }].map(m => (
+                  <button key={m.val} type="button"
+                    onClick={() => setForm(f => ({ ...f, metodo_pago: m.val }))}
+                    className={`flex-1 py-2 text-xs rounded-lg border transition-all ${
+                      form.metodo_pago === m.val
+                        ? 'bg-primary text-white border-primary'
+                        : 'border-gray-200 text-gray-500 hover:border-primary/40'
+                    }`}>
+                    {m.label}
+                  </button>
+                ))}
               </div>
             </div>
           )}
+
         </div>
 
-        {/* Submit */}
-        <div className="flex justify-end pt-2 border-t border-gray-100">
+        {/* Total fijo + Submit */}
+        <div className="pt-3 mt-3 border-t border-gray-100 space-y-3 shrink-0">
+          <div className="flex justify-between items-center px-1">
+            <span className="text-sm font-semibold text-light-text">Total</span>
+            <span className="text-lg font-bold text-primary">{formatPrecio(totalVenta)}</span>
+          </div>
           <button type="submit"
             disabled={
               creando ||
@@ -372,7 +385,9 @@ export default function VentaForm({
               form.productos.some(p => !p.cantidad || +p.cantidad < 1) ||
               sinCupo
             }
-            className={`btn-primary disabled:opacity-50 ${form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''}`}>
+            className={`w-full btn-primary justify-center disabled:opacity-50 ${
+              form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''
+            }`}>
             {creando ? 'Registrando...' : form.tipo_pago === 'fiado'
               ? (excedeCupoFiado ? 'Registrar Fiado Parcial' : 'Registrar Fiado')
               : 'Aceptar'}
