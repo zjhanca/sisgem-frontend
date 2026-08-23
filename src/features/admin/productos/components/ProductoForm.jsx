@@ -144,7 +144,7 @@ export default function ProductoForm({
           {modal.item && (
             <div className="col-span-2">
               <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 text-xs text-gray-500">
-                💰 Precio de venta actual: <strong className="text-primary">
+                Precio de venta actual: <strong className="text-primary">
                   {form.precio ? `$${parseFloat(form.precio).toLocaleString('es-CO')}` : '—'}
                 </strong> — se actualiza automáticamente al recibir una orden de compra.
               </div>
