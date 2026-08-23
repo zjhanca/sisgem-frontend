@@ -22,6 +22,15 @@ export default function OrdenForm({
     setProvSeleccionado(null)
   }
 
+  const prodActual = productos.find(p => p.id === +itemForm.producto_id)
+  const precioActual = prodActual?.precio ? +prodActual.precio : 0
+
+  // Validaciones en tiempo real
+  const costoNum      = +itemForm.costo_unitario || 0
+  const precioVentaNum = +itemForm.precio_venta  || 0
+  const errorMenorCosto   = precioVentaNum > 0 && costoNum > 0 && precioVentaNum < costoNum
+  const errorMenorActual  = precioVentaNum > 0 && precioActual > 0 && precioVentaNum < precioActual
+
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre
       titulo="Nueva Orden de Compra" ancho="max-w-2xl">
@@ -150,23 +159,25 @@ export default function OrdenForm({
           <div className="grid grid-cols-4 gap-2">
             <div>
               <label className="campo-label">Costo unitario *</label>
-              <input type="number" step="0.01" min="0" value={itemForm.costo_unitario}
+              <input type="number" step="1" min="0" value={itemForm.costo_unitario}
                 onChange={e => setItemForm(p => ({ ...p, costo_unitario: e.target.value }))}
                 className="campo-input text-xs" placeholder="0" />
             </div>
             <div>
               <label className="campo-label">Precio venta *</label>
-              <input type="number" step="0.01" min="0" value={itemForm.precio_venta}
+              <input type="number" step="1" min="0" value={itemForm.precio_venta}
                 onChange={e => setItemForm(p => ({ ...p, precio_venta: e.target.value }))}
                 className={`campo-input text-xs ${
-                  itemForm.precio_venta && itemForm.costo_unitario &&
-                  +itemForm.precio_venta < +itemForm.costo_unitario
-                    ? 'border-red-400' : ''
+                  errorMenorCosto || errorMenorActual ? 'border-red-400' : ''
                 }`}
                 placeholder="0" />
-              {itemForm.precio_venta && itemForm.costo_unitario &&
-               +itemForm.precio_venta < +itemForm.costo_unitario && (
+              {errorMenorCosto && (
                 <p className="campo-error">Menor al costo</p>
+              )}
+              {!errorMenorCosto && errorMenorActual && (
+                <p className="campo-error">
+                  No puede bajar de {formatPrecio(precioActual)}
+                </p>
               )}
             </div>
             <div>
