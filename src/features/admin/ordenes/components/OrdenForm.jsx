@@ -22,7 +22,6 @@ export default function OrdenForm({
     setProvSeleccionado(null)
   }
 
-  // Precio de venta actual del producto seleccionado (referencia)
   const prodActual = productos.find(p => p.id === +itemForm.producto_id)
   const precioActual = prodActual?.precio || null
 
@@ -98,7 +97,7 @@ export default function OrdenForm({
             )}
           </div>
 
-          {/* Buscador producto */}
+          {/* Buscador */}
           <div className="flex gap-2">
             <div className="flex-1 relative">
               {itemForm.producto_id ? (
@@ -124,7 +123,10 @@ export default function OrdenForm({
                             setProdsFiltrados([])
                           }}
                           className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text">
-                          <span>{p.nombre}{p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}</span>
+                          <span>
+                            {p.nombre}
+                            {p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}
+                          </span>
                           <span className="text-primary shrink-0 ml-2">Venta: {formatPrecio(p.precio)}</span>
                         </button>
                       ))}
@@ -147,7 +149,7 @@ export default function OrdenForm({
             </div>
           </div>
 
-          {/* Campos costo / precio / cantidad */}
+          {/* Costo / Precio / Cantidad */}
           <div className="grid grid-cols-4 gap-2">
             <div>
               <label className="campo-label">Costo unitario *</label>
@@ -159,8 +161,8 @@ export default function OrdenForm({
               <label className="campo-label">
                 Precio venta *
                 {precioActual && (
-                  <span className="text-gray-400 font-normal ml-1">
-                    (actual: {formatPrecio(precioActual)})
+                  <span className="block text-gray-400 font-normal">
+                    actual: {formatPrecio(precioActual)}
                   </span>
                 )}
               </label>
@@ -191,7 +193,7 @@ export default function OrdenForm({
             </div>
           </div>
 
-          {/* Lista de productos agregados */}
+          {/* Lista productos agregados */}
           {form.productos.length > 0 && (
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {form.productos.map((p, i) => (
@@ -199,9 +201,11 @@ export default function OrdenForm({
                   <span className="flex-1 truncate">{p.nombre}</span>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
                     <span className="text-gray-400">{p.cantidad} × {formatPrecio(p.costo_unitario)}</span>
-                    <span className="text-gray-400">→ venta: {formatPrecio(p.precio_venta)}</span>
+                    <span className="text-gray-400">→ {formatPrecio(p.precio_venta)}</span>
                     <span className="text-primary font-medium">{formatPrecio(p.costo_unitario * p.cantidad)}</span>
-                    <button type="button" onClick={() => quitarItem(i)} className="text-red-400"><Trash2 size={12} /></button>
+                    <button type="button" onClick={() => quitarItem(i)} className="text-red-400">
+                      <Trash2 size={12} />
+                    </button>
                   </div>
                 </div>
               ))}
