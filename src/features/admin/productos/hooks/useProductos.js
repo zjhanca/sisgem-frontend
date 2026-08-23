@@ -5,7 +5,7 @@ import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
 const formVacio = {
-  nombre: '', descripcion: '', precio: '',  stock: 0,
+  nombre: '', descripcion: '', stock: 0,
   categoria_id: '', proveedor_id: '', marca_id: '',
   codigo_barras: '', imagen_url: '', imagenes: [],
 }
@@ -15,7 +15,6 @@ const capitalizarPalabras = str => str.replace(/(^|\s)\S/g, letra => letra.toUpp
 const validar = form => {
   const e = {}
   if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio'
-  if (!form.precio || +form.precio <= 0) e.precio = 'El precio es obligatorio'
   return e
 }
 
@@ -58,7 +57,6 @@ export function useProductos() {
     mutationFn: data => {
       const payload = {
         ...data,
-        precio:     +data.precio,
         imagen_url: data.imagenes?.[0] || data.imagen_url || '',
         imagenes:   data.imagenes || [],
       }
@@ -104,7 +102,7 @@ export function useProductos() {
       setForm({
         nombre:        item.nombre,
         descripcion:   item.descripcion || '',
-        precio:        item.precio,
+        precio:        item.precio,      // solo lectura en el form
         stock:         item.stock,
         categoria_id:  item.categoria_id || '',
         proveedor_id:  item.proveedor_id || '',

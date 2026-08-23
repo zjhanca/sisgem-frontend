@@ -140,22 +140,16 @@ export default function ProductoForm({
             {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
           </div>
 
-          {/* Precio */}
-          <div className="col-span-2">
-            <label className="campo-label">Precio de venta *</label>
-            <input
-              type="number" min="0" step="50"
-              value={form.precio || ''}
-              onChange={e => handleChange('precio', e.target.value)}
-              className={`campo-input ${errores.precio ? 'border-red-400' : ''}`}
-              placeholder="Ej: 3500" />
-            {errores.precio
-              ? <p className="campo-error">{errores.precio}</p>
-              : <p className="campo-hint">
-                  El precio puede cambiar automáticamente si el costo de compra supera este valor al recibir una orden.
-                </p>
-            }
-          </div>
+          {/* Precio solo lectura al editar */}
+          {modal.item && (
+            <div className="col-span-2">
+              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 text-xs text-gray-500">
+                💰 Precio de venta actual: <strong className="text-primary">
+                  {form.precio ? `$${parseFloat(form.precio).toLocaleString('es-CO')}` : '—'}
+                </strong> — se actualiza automáticamente al recibir una orden de compra.
+              </div>
+            </div>
+          )}
 
           {/* Categoría y Marca */}
           <BuscadorSelect label="Categoría" items={categorias} valorId={form.categoria_id}
