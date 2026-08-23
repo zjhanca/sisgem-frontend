@@ -164,9 +164,9 @@ export function useOrdenes() {
       if (data.ok) {
         setItemForm(p => ({
           ...p,
-          producto_id:   data.datos.id,
+          producto_id:    data.datos.id,
           costo_unitario: '',
-          precio_venta:  data.datos.precio || '',
+          precio_venta:   data.datos.precio || '',
         }))
         setProdBusqueda(data.datos.nombre)
       } else toast.error('Producto no encontrado')
@@ -182,16 +182,24 @@ export function useOrdenes() {
       { toast.error('Ingresa el precio de venta'); return }
     if (+itemForm.precio_venta < +itemForm.costo_unitario)
       { toast.error('El precio de venta no puede ser menor al costo'); return }
+
+    // No puede ser menor al precio actual del producto
+    const prod = productos.find(p => p.id === +itemForm.producto_id)
+    const precioActual = prod?.precio ? +prod.precio : 0
+    if (precioActual > 0 && +itemForm.precio_venta < precioActual) {
+      toast.error(`El precio de venta no puede bajar del actual ($${precioActual.toLocaleString('es-CO')})`)
+      return
+    }
+
     if (form.productos.find(p => p.producto_id === +itemForm.producto_id))
       { toast.error('Producto ya agregado'); return }
 
-    const prod = productos.find(p => p.id === +itemForm.producto_id)
     setForm(p => ({ ...p, productos: [...p.productos, {
-      producto_id:   +itemForm.producto_id,
-      nombre:        prod?.nombre,
+      producto_id:    +itemForm.producto_id,
+      nombre:         prod?.nombre,
       costo_unitario: +itemForm.costo_unitario,
-      precio_venta:  +itemForm.precio_venta,
-      cantidad:      +itemForm.cantidad,
+      precio_venta:   +itemForm.precio_venta,
+      cantidad:       +itemForm.cantidad,
     }]}))
     setItemForm(itemVacio)
     setProdBusqueda(''); setProdsFiltrados([])
