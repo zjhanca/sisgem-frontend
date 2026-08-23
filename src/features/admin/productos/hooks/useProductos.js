@@ -5,10 +5,9 @@ import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
 const formVacio = {
-  nombre: '', descripcion: '', precio: 0, stock: 0,
+  nombre: '', descripcion: '', precio: '',  stock: 0,
   categoria_id: '', proveedor_id: '', marca_id: '',
   codigo_barras: '', imagen_url: '', imagenes: [],
-  margen: '',
 }
 
 const capitalizarPalabras = str => str.replace(/(^|\s)\S/g, letra => letra.toUpperCase())
@@ -16,10 +15,7 @@ const capitalizarPalabras = str => str.replace(/(^|\s)\S/g, letra => letra.toUpp
 const validar = form => {
   const e = {}
   if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio'
-  if (form.margen !== '' && form.margen !== null && form.margen !== undefined) {
-    if (isNaN(+form.margen) || +form.margen < 0)
-      e.margen = 'El margen debe ser un número positivo'
-  }
+  if (!form.precio || +form.precio <= 0) e.precio = 'El precio es obligatorio'
   return e
 }
 
@@ -62,9 +58,9 @@ export function useProductos() {
     mutationFn: data => {
       const payload = {
         ...data,
+        precio:     +data.precio,
         imagen_url: data.imagenes?.[0] || data.imagen_url || '',
-        imagenes: data.imagenes || [],
-        margen: data.margen !== '' && data.margen != null ? +data.margen : null,
+        imagenes:   data.imagenes || [],
       }
       return modal.item
         ? productosService.update(modal.item.id, payload)
@@ -116,7 +112,6 @@ export function useProductos() {
         codigo_barras: item.codigo_barras || '',
         imagen_url:    item.imagen_url || '',
         imagenes,
-        margen:        item.margen != null ? item.margen : '',
       })
     } else {
       setForm(formVacio)

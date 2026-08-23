@@ -22,11 +22,16 @@ export default function OrdenForm({
     setProvSeleccionado(null)
   }
 
+  // Precio de venta actual del producto seleccionado (referencia)
+  const prodActual = productos.find(p => p.id === +itemForm.producto_id)
+  const precioActual = prodActual?.precio || null
+
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre
       titulo="Nueva Orden de Compra" ancho="max-w-2xl">
       <form onSubmit={handleCrear} className="space-y-3">
 
+        {/* Proveedor */}
         <div>
           <label className="campo-label">Proveedor *</label>
           {provSeleccionado ? (
@@ -63,6 +68,7 @@ export default function OrdenForm({
           )}
         </div>
 
+        {/* Fecha y método */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="campo-label">Fecha de Compra *</label>
@@ -80,6 +86,7 @@ export default function OrdenForm({
           </div>
         </div>
 
+        {/* Productos */}
         <div className="p-3 rounded-xl border border-gray-200 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold">Productos</p>
@@ -90,13 +97,15 @@ export default function OrdenForm({
               </button>
             )}
           </div>
+
+          {/* Buscador producto */}
           <div className="flex gap-2">
             <div className="flex-1 relative">
               {itemForm.producto_id ? (
                 <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
                   <span className="font-medium text-primary">{prodBusqueda}</span>
                   <button type="button"
-                    onClick={() => { setItemForm(f => ({ ...f, producto_id: '', costo_unitario: '' })); setProdBusqueda('') }}
+                    onClick={() => { setItemForm(f => ({ ...f, producto_id: '', costo_unitario: '', precio_venta: '' })); setProdBusqueda('') }}
                     className="text-gray-400 hover:text-red-400 ml-2">✕</button>
                 </div>
               ) : (
@@ -109,10 +118,14 @@ export default function OrdenForm({
                     <div className="absolute top-full left-0 right-0 z-20 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                       {prodsFiltrados.map(p => (
                         <button key={p.id} type="button"
-                          onClick={() => { setItemForm(f => ({ ...f, producto_id: p.id, costo_unitario: '' })); setProdBusqueda(p.nombre); setProdsFiltrados([]) }}
+                          onClick={() => {
+                            setItemForm(f => ({ ...f, producto_id: p.id, costo_unitario: '', precio_venta: p.precio || '' }))
+                            setProdBusqueda(p.nombre)
+                            setProdsFiltrados([])
+                          }}
                           className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text">
                           <span>{p.nombre}{p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}</span>
-                          <span className="text-primary">Stock: {p.stock}</span>
+                          <span className="text-primary shrink-0 ml-2">Venta: {formatPrecio(p.precio)}</span>
                         </button>
                       ))}
                     </div>
@@ -133,12 +146,36 @@ export default function OrdenForm({
               <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+
+          {/* Campos costo / precio / cantidad */}
+          <div className="grid grid-cols-4 gap-2">
             <div>
-              <label className="campo-label">Costo Unitario</label>
-              <input type="number" step="0.01" value={itemForm.costo_unitario}
+              <label className="campo-label">Costo unitario *</label>
+              <input type="number" step="0.01" min="0" value={itemForm.costo_unitario}
                 onChange={e => setItemForm(p => ({ ...p, costo_unitario: e.target.value }))}
-                className="campo-input text-xs" placeholder="0.00" />
+                className="campo-input text-xs" placeholder="0" />
+            </div>
+            <div>
+              <label className="campo-label">
+                Precio venta *
+                {precioActual && (
+                  <span className="text-gray-400 font-normal ml-1">
+                    (actual: {formatPrecio(precioActual)})
+                  </span>
+                )}
+              </label>
+              <input type="number" step="0.01" min="0" value={itemForm.precio_venta}
+                onChange={e => setItemForm(p => ({ ...p, precio_venta: e.target.value }))}
+                className={`campo-input text-xs ${
+                  itemForm.precio_venta && itemForm.costo_unitario &&
+                  +itemForm.precio_venta < +itemForm.costo_unitario
+                    ? 'border-red-400' : ''
+                }`}
+                placeholder="0" />
+              {itemForm.precio_venta && itemForm.costo_unitario &&
+               +itemForm.precio_venta < +itemForm.costo_unitario && (
+                <p className="campo-error">Menor al costo</p>
+              )}
             </div>
             <div>
               <label className="campo-label">Cantidad</label>
@@ -147,28 +184,36 @@ export default function OrdenForm({
                 className="campo-input text-xs" />
             </div>
             <div className="flex items-end">
-              <button type="button" onClick={agregarItem} className="btn-primary w-full justify-center text-xs">Agregar</button>
+              <button type="button" onClick={agregarItem}
+                className="btn-primary w-full justify-center text-xs">
+                Agregar
+              </button>
             </div>
           </div>
+
+          {/* Lista de productos agregados */}
           {form.productos.length > 0 && (
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {form.productos.map((p, i) => (
                 <div key={i} className="flex justify-between items-center text-xs p-2 rounded bg-gray-50">
                   <span className="flex-1 truncate">{p.nombre}</span>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-gray-400">{p.cantidad}×{formatPrecio(p.costo_unitario)}</span>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <span className="text-gray-400">{p.cantidad} × {formatPrecio(p.costo_unitario)}</span>
+                    <span className="text-gray-400">→ venta: {formatPrecio(p.precio_venta)}</span>
                     <span className="text-primary font-medium">{formatPrecio(p.costo_unitario * p.cantidad)}</span>
                     <button type="button" onClick={() => quitarItem(i)} className="text-red-400"><Trash2 size={12} /></button>
                   </div>
                 </div>
               ))}
               <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-200">
-                <span>Total</span><span className="text-primary">{formatPrecio(totalOrden)}</span>
+                <span>Total compra</span>
+                <span className="text-primary">{formatPrecio(totalOrden)}</span>
               </div>
             </div>
           )}
         </div>
 
+        {/* Factura */}
         <div>
           <label className="campo-label">Factura (PDF o imagen)</label>
           <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary/40 transition-colors">
@@ -178,6 +223,7 @@ export default function OrdenForm({
           </label>
         </div>
 
+        {/* Notas */}
         <div>
           <label className="campo-label">Notas (Opcional)</label>
           <textarea value={form.notas} onChange={e => setForm(p => ({ ...p, notas: e.target.value }))}

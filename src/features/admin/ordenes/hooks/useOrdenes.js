@@ -5,7 +5,6 @@ import { useAuth } from '@shared/contexts/AuthContext'
 import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
-// estados reales del backend: pendiente(10), activo(11), anulado(12)
 const ESTADOS_ORDEN = [
   { key: 'pendiente', label: 'Pendiente', color: 'yellow' },
   { key: 'activo',    label: 'Activo',    color: 'blue'   },
@@ -21,6 +20,8 @@ const formVacio = {
   notas: '',
 }
 
+const itemVacio = { producto_id: '', costo_unitario: '', precio_venta: '', cantidad: 1 }
+
 export function useOrdenes() {
   const qc = useQueryClient()
   const { usuario } = useAuth()
@@ -33,7 +34,7 @@ export function useOrdenes() {
   const [filtroProveedor, setFiltroProveedor] = useState('')
   const [form, setForm]             = useState(formVacio)
   const [formEditar, setFormEditar] = useState({})
-  const [itemForm, setItemForm]     = useState({ producto_id: '', costo_unitario: '', cantidad: 1 })
+  const [itemForm, setItemForm]     = useState(itemVacio)
   const [facturaFile, setFacturaFile]       = useState(null)
   const [facturaPreview, setFacturaPreview] = useState('')
   const [prodBusqueda, setProdBusqueda]     = useState('')
@@ -47,7 +48,6 @@ export function useOrdenes() {
   const { data: productos = [] }   = useQuery({ queryKey: ['productos'],      queryFn: ordenesService.getProductos })
   const { data: estadosBD = [] }   = useQuery({ queryKey: ['estados-compra'], queryFn: ordenesService.getEstados })
 
-  // mapear nombre del backend al key del frontend
   const getKeyEstado = nombre => {
     if (!nombre) return 'pendiente'
     const n = nombre.toLowerCase()
@@ -56,7 +56,6 @@ export function useOrdenes() {
     return 'pendiente'
   }
 
-  // detectar órdenes vencidas automáticamente
   const ordenesConEstado = ordenes.map(o => {
     if (getKeyEstado(o.estado) === 'pendiente' && o.fecha_limite_pago) {
       if (new Date(o.fecha_limite_pago) < new Date()) return { ...o, _vencida: true }
@@ -64,7 +63,6 @@ export function useOrdenes() {
     return o
   })
 
-  // obtener ID del estado del backend por key
   const getEstadoId = key => {
     const mapa = {
       pendiente: ['pendiente'],
@@ -103,6 +101,7 @@ export function useOrdenes() {
       setModalNuevo(false); setForm(formVacio)
       setProvBusqueda(''); setProvSeleccionado(null)
       setFacturaFile(null); setFacturaPreview('')
+      setItemForm(itemVacio)
       toast.success('Orden creada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
@@ -149,6 +148,7 @@ export function useOrdenes() {
     const t = texto.toLowerCase()
     setProvsFiltrados(proveedores.filter(p => !t || p.nombre.toLowerCase().includes(t)))
   }
+
   const buscarProducto = texto => {
     setProdBusqueda(texto)
     if (!texto) { setProdsFiltrados([]); return }
@@ -157,25 +157,46 @@ export function useOrdenes() {
       p.nombre.toLowerCase().includes(t) || (p.codigo_barras && p.codigo_barras.includes(t))
     ).slice(0, 8))
   }
+
   const buscarPorCodigo = async cod => {
     try {
       const { data } = await ordenesService.getBarcode(cod)
-      if (data.ok) { setItemForm(p => ({ ...p, producto_id: data.datos.id, costo_unitario: data.datos.precio })); setProdBusqueda(data.datos.nombre) }
-      else toast.error('Producto no encontrado')
+      if (data.ok) {
+        setItemForm(p => ({
+          ...p,
+          producto_id:   data.datos.id,
+          costo_unitario: '',
+          precio_venta:  data.datos.precio || '',
+        }))
+        setProdBusqueda(data.datos.nombre)
+      } else toast.error('Producto no encontrado')
     } catch { toast.error('Producto no encontrado') }
   }
+
   const agregarItem = () => {
-    if (!itemForm.producto_id)                                     { toast.error('Selecciona un producto'); return }
-    if (!itemForm.costo_unitario || +itemForm.costo_unitario <= 0) { toast.error('Ingresa el costo'); return }
+    if (!itemForm.producto_id)
+      { toast.error('Selecciona un producto'); return }
+    if (!itemForm.costo_unitario || +itemForm.costo_unitario <= 0)
+      { toast.error('Ingresa el costo unitario'); return }
+    if (!itemForm.precio_venta || +itemForm.precio_venta <= 0)
+      { toast.error('Ingresa el precio de venta'); return }
+    if (+itemForm.precio_venta < +itemForm.costo_unitario)
+      { toast.error('El precio de venta no puede ser menor al costo'); return }
+    if (form.productos.find(p => p.producto_id === +itemForm.producto_id))
+      { toast.error('Producto ya agregado'); return }
+
     const prod = productos.find(p => p.id === +itemForm.producto_id)
-    if (form.productos.find(p => p.producto_id === +itemForm.producto_id)) { toast.error('Producto ya agregado'); return }
     setForm(p => ({ ...p, productos: [...p.productos, {
-      producto_id: +itemForm.producto_id, nombre: prod?.nombre,
-      costo_unitario: +itemForm.costo_unitario, cantidad: +itemForm.cantidad,
+      producto_id:   +itemForm.producto_id,
+      nombre:        prod?.nombre,
+      costo_unitario: +itemForm.costo_unitario,
+      precio_venta:  +itemForm.precio_venta,
+      cantidad:      +itemForm.cantidad,
     }]}))
-    setItemForm({ producto_id: '', costo_unitario: '', cantidad: 1 })
+    setItemForm(itemVacio)
     setProdBusqueda(''); setProdsFiltrados([])
   }
+
   const quitarItem = idx => setForm(p => ({ ...p, productos: p.productos.filter((_, i) => i !== idx) }))
   const totalOrden = form.productos.reduce((s, p) => s + p.costo_unitario * p.cantidad, 0)
 
@@ -183,7 +204,8 @@ export function useOrdenes() {
     e.preventDefault()
     if (!form.proveedor_id)     { toast.error('Selecciona un proveedor'); return }
     if (!form.fecha_compra)     { toast.error('Ingresa la fecha de compra'); return }
-    if (form.fecha_compra > new Date().toISOString().split('T')[0]) { toast.error('La fecha de compra no puede ser futura'); return }
+    if (form.fecha_compra > new Date().toISOString().split('T')[0])
+      { toast.error('La fecha de compra no puede ser futura'); return }
     if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
     crear.mutate(form)
   }
@@ -191,7 +213,8 @@ export function useOrdenes() {
   const handleEditar = e => {
     e.preventDefault()
     if (!formEditar.fecha_compra) { toast.error('Ingresa la fecha de compra'); return }
-    if (formEditar.fecha_compra > new Date().toISOString().split('T')[0]) { toast.error('La fecha de compra no puede ser futura'); return }
+    if (formEditar.fecha_compra > new Date().toISOString().split('T')[0])
+      { toast.error('La fecha de compra no puede ser futura'); return }
     editar.mutate({ id: modalEditar.orden.id, data: formEditar })
   }
 
@@ -203,8 +226,6 @@ export function useOrdenes() {
 
   const ordenesVencidas = ordenesConEstado.filter(o => o._vencida).length
 
-  // descarga el reporte de ordenes: "normal" trae todo sin filtro de fecha,
-  // "rango" (personalizado) filtra por desde/hasta — en PDF o Excel
   const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
     const nombres = { normal: 'general', rango: 'personalizado' }
     const ext = formato === 'excel' ? 'xlsx' : 'pdf'

@@ -125,8 +125,6 @@ export default function ProductoForm({
   modal, form, setForm, errores, handleChange, handleSubmit,
   cerrarModal, guardando, categorias, marcas, verificandoCodigo,
 }) {
-  const esNuevo = !modal.item
-
   return (
     <Modal abierto={modal.abierto} onCerrar={cerrarModal} bloquearCierre
       titulo={modal.item ? 'Editar Producto' : 'Nuevo Producto'} ancho="max-w-2xl">
@@ -142,50 +140,28 @@ export default function ProductoForm({
             {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
           </div>
 
-          {/* Aviso precio al editar */}
-          {!esNuevo && (
-            <div className="col-span-2">
-              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-600">
-                El precio se actualiza automáticamente al recibir compras. Precio actual:{' '}
-                <strong>{form.precio ? `$${parseFloat(form.precio).toLocaleString('es-CO')}` : '—'}</strong>
-              </div>
-            </div>
-          )}
+          {/* Precio */}
+          <div className="col-span-2">
+            <label className="campo-label">Precio de venta *</label>
+            <input
+              type="number" min="0" step="50"
+              value={form.precio || ''}
+              onChange={e => handleChange('precio', e.target.value)}
+              className={`campo-input ${errores.precio ? 'border-red-400' : ''}`}
+              placeholder="Ej: 3500" />
+            {errores.precio
+              ? <p className="campo-error">{errores.precio}</p>
+              : <p className="campo-hint">
+                  El precio puede cambiar automáticamente si el costo de compra supera este valor al recibir una orden.
+                </p>
+            }
+          </div>
 
           {/* Categoría y Marca */}
           <BuscadorSelect label="Categoría" items={categorias} valorId={form.categoria_id}
             onSelect={id => setForm(p => ({ ...p, categoria_id: id }))} placeholder="Buscar categoría..." />
           <BuscadorSelect label="Marca" items={marcas} valorId={form.marca_id}
             onSelect={id => setForm(p => ({ ...p, marca_id: id }))} placeholder="Buscar marca..." />
-
-          {/* Margen — visible siempre (crear y editar) */}
-          <div className="col-span-2">
-            <label className="campo-label">
-              Margen de ganancia (%)
-              {esNuevo && <span className="text-gray-400 font-normal ml-1">— define el precio de venta al recibir stock</span>}
-            </label>
-            <input
-              type="number" min="0" max="999" step="0.5"
-              value={form.margen === 0 || form.margen ? form.margen : ''}
-              onChange={e => {
-                const v = e.target.value
-                if (v.replace('.','').replace('-','').length > 3) return
-                handleChange('margen', v)
-              }}
-              className={`campo-input ${errores.margen ? 'border-red-400' : ''}`}
-              placeholder="Ej: 30 (deja vacío para usar el margen de la categoría)" />
-            {errores.margen
-              ? <p className="campo-error">{errores.margen}</p>
-              : <p className="text-xs text-gray-400 mt-1">
-                  Precio = costo × (1 + margen / 100), redondeado a $50.
-                  {!esNuevo && form.margen !== '' && (
-                    <span className="ml-1 text-primary font-medium">
-                      Margen actual: {form.margen}%
-                    </span>
-                  )}
-                </p>
-            }
-          </div>
 
           {/* Código de barras */}
           <div className="col-span-2">
