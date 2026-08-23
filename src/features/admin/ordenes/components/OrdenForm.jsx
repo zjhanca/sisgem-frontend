@@ -22,9 +22,6 @@ export default function OrdenForm({
     setProvSeleccionado(null)
   }
 
-  const prodActual = productos.find(p => p.id === +itemForm.producto_id)
-  const precioActual = prodActual?.precio || null
-
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre
       titulo="Nueva Orden de Compra" ancho="max-w-2xl">
@@ -158,14 +155,7 @@ export default function OrdenForm({
                 className="campo-input text-xs" placeholder="0" />
             </div>
             <div>
-              <label className="campo-label">
-                Precio venta *
-                {precioActual && (
-                  <span className="block text-gray-400 font-normal">
-                    actual: {formatPrecio(precioActual)}
-                  </span>
-                )}
-              </label>
+              <label className="campo-label">Precio venta *</label>
               <input type="number" step="0.01" min="0" value={itemForm.precio_venta}
                 onChange={e => setItemForm(p => ({ ...p, precio_venta: e.target.value }))}
                 className={`campo-input text-xs ${
