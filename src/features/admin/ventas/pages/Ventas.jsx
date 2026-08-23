@@ -16,8 +16,8 @@ const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLo
 const getBadgeEstado = nombre => {
   if (!nombre) return { color: 'bg-amber-500', label: 'Pendiente' }
   const l = nombre.toLowerCase()
-  if (l.includes('anula'))                          return { color: 'bg-gray-300', label: 'Anulado' }
-  if (l.includes('complet') || l.includes('paga'))  return { color: 'bg-primary',  label: 'Completado' }
+  if (l.includes('anula'))                         return { color: 'bg-gray-300', label: 'Anulado' }
+  if (l.includes('complet') || l.includes('paga')) return { color: 'bg-primary',  label: 'Completado' }
   return { color: 'bg-amber-500', label: 'Pendiente' }
 }
 
@@ -29,7 +29,6 @@ function BadgeEstado({ color, label }) {
   )
 }
 
-// tope máximo para los filtros de fecha: no se puede filtrar hacia el futuro
 const maxFechaHoy = () => new Date().toISOString().slice(0, 16)
 
 export default function Ventas() {
@@ -58,8 +57,8 @@ export default function Ventas() {
     creando: creandoPago,
   } = usePagos()
 
-  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'comprobante', id }
-  const [modalReporte, setModalReporte] = useState(false)
+  const [confirmDescarga, setConfirmDescarga] = useState(null)
+  const [modalReporte, setModalReporte]       = useState(false)
 
   const estadosVenta = estados.filter(e => {
     const n = e.nombre?.toLowerCase()
@@ -68,7 +67,7 @@ export default function Ventas() {
 
   const columnas = [
     { key: 'cliente', label: 'Cliente' },
-    { key: 'total', label: 'Total', render: r => formatPrecio(r.total) },
+    { key: 'total',   label: 'Total',  render: r => formatPrecio(r.total) },
     { key: 'estado_id', label: 'Estado',
       render: r => {
         const { color, label } = getBadgeEstado(r.estado)
@@ -86,20 +85,6 @@ export default function Ventas() {
       }
     },
     { key: 'fecha_pedido', label: 'Fecha', render: r => formatFechaHora(r.fecha_pedido) },
-    { key: 'fecha_limite_anulacion', label: 'Cambio hasta',
-      render: r => {
-        const esAnulada = r.estado?.toLowerCase().includes('anula')
-        if (esAnulada) return <span className="text-gray-400">—</span>
-        const limite = getFechaLimiteAnulacion(r)
-        if (!limite) return <span className="text-gray-400">—</span>
-        const vencido = new Date() > limite
-        return (
-          <span className={vencido ? 'text-gray-400' : 'text-amber-600'}>
-            {formatFechaHora(limite)}
-          </span>
-        )
-      }
-    },
   ]
 
   return (
@@ -111,7 +96,7 @@ export default function Ventas() {
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
-            <Plus size={14} /> Nueva 
+            <Plus size={14} /> Nueva
           </button>
         </div>
       </div>

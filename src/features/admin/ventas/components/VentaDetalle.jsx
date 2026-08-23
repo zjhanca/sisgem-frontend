@@ -1,18 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import Modal from '@shared/components/Modal'
-import { Download, Clock, Loader2, Package, Undo2, Phone, CreditCard, FileText } from 'lucide-react'
+import { Download, Clock, Loader2, Package, Phone, CreditCard, FileText } from 'lucide-react'
 import { formatPrecio, formatFecha, formatFechaHora } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { ventasService } from '../services/ventasService'
-
-function getFechaLimiteAnulacion(venta) {
-  if (!venta) return null
-  if (venta.fecha_limite_anulacion) return new Date(venta.fecha_limite_anulacion)
-  if (!venta.fecha_pedido) return null
-  const f = new Date(venta.fecha_pedido)
-  f.setHours(f.getHours() + 72)
-  return f
-}
 
 function proximoAbono(fechaVenta) {
   if (!fechaVenta) return null
@@ -36,17 +27,12 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
   const dias = esFiado ? diasRestantes(venta?.fecha_pedido) : null
   const vencida = dias !== null && dias < 0
 
-  const esAnulada = venta?.estado?.toLowerCase().includes('anula')
-  const limiteAnulacion = !esAnulada ? getFechaLimiteAnulacion(venta) : null
-  const anulacionVencida = limiteAnulacion ? new Date() > limiteAnulacion : false
-
   const { data: detalle, isLoading } = useQuery({
     queryKey: ['pedido-detalle', venta?.id],
     queryFn: () => ventasService.getDetalle(venta.id),
     enabled: !!venta?.id && modalDetalle.abierto,
   })
 
-  // Datos del cliente desde la venta o del detalle
   const clienteInfo = {
     nombre:           venta?.cliente,
     telefono:         detalle?.telefono || venta?.telefono,
@@ -109,23 +95,6 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
               </div>
             )}
 
-            {/* Plazo anulación */}
-            {limiteAnulacion && (
-              <div className={`flex items-start gap-2 p-3 rounded-lg border text-xs ${
-                anulacionVencida ? 'bg-gray-50 border-gray-200' : 'bg-primary/5 border-primary/20'
-              }`}>
-                <Undo2 size={14} className={`shrink-0 mt-0.5 ${anulacionVencida ? 'text-gray-400' : 'text-primary'}`} />
-                <div className="flex-1">
-                  <p className={`font-semibold ${anulacionVencida ? 'text-gray-400' : 'text-primary'}`}>
-                    {anulacionVencida ? 'Plazo de anulación vencido' : 'Cambio hasta'}
-                  </p>
-                  <p className={anulacionVencida ? 'text-gray-400 mt-0.5' : 'text-gray-500 mt-0.5'}>
-                    {formatFechaHora(limiteAnulacion)}
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* Fiado */}
             {esFiado && (
               <div className={`flex items-start gap-2 p-3 rounded-lg border text-xs ${
@@ -142,7 +111,8 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                     </span>
                   </p>
                   <p className={`mt-0.5 ${vencida ? 'text-red-400' : dias <= 3 ? 'text-amber-400' : 'text-gray-400'}`}>
-                    {vencida ? `Vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
+                    {vencida
+                      ? `Vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
                       : dias === 0 ? 'Vence hoy'
                       : `Faltan ${dias} día${dias !== 1 ? 's' : ''}`}
                   </p>
@@ -152,7 +122,9 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
 
             {/* Productos */}
             <div className="pt-1 border-t border-gray-100">
-              <p className="campo-label mb-1.5 flex items-center gap-1"><Package size={11} /> Productos comprados</p>
+              <p className="campo-label mb-1.5 flex items-center gap-1">
+                <Package size={11} /> Productos comprados
+              </p>
               {isLoading ? (
                 <div className="flex items-center justify-center py-4 text-gray-400">
                   <Loader2 size={14} className="animate-spin mr-2" /> Cargando productos...
@@ -191,7 +163,8 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
               <span className="text-lg font-bold text-primary">{formatPrecio(venta.total)}</span>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => descargarPDF(`/reportes/pedido/${venta.id}`, `comprobante-${venta.id}.pdf`)}
+              <button
+                onClick={() => descargarPDF(`/reportes/pedido/${venta.id}`, `comprobante-${venta.id}.pdf`)}
                 className="btn-outline text-xs flex-1 justify-center">
                 <Download size={12} /> Comprobante
               </button>
