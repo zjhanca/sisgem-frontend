@@ -15,29 +15,32 @@ const MENU = [
   {
     id: 'usuarios',
     label: 'Usuarios',
+    permiso: 'ver_usuarios',
     items: [
-      { to: '/admin/roles',    label: 'Roles',    icon: Shield },
-      { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
+      { to: '/admin/roles',    label: 'Roles',    icon: Shield,  permiso: 'ver_roles'    },
+      { to: '/admin/usuarios', label: 'Usuarios', icon: Users,   permiso: 'ver_usuarios' },
     ]
   },
   {
     id: 'compras',
     label: 'Compras',
+    permiso: 'ver_productos',
     items: [
-      { to: '/admin/categorias', label: 'Categorías',       icon: Grid3X3 },
-      { to: '/admin/marcas',     label: 'Marcas',           icon: Tag },
-      { to: '/admin/productos',  label: 'Productos',        icon: Package },
-      { to: '/admin/proveedores',label: 'Proveedores',      icon: Building2 },
-      { to: '/admin/ordenes',    label: 'Órdenes de Compra',icon: ClipboardList },
+      { to: '/admin/categorias', label: 'Categorías',        icon: Grid3X3,     permiso: 'ver_productos'   },
+      { to: '/admin/marcas',     label: 'Marcas',            icon: Tag,         permiso: 'ver_productos'   },
+      { to: '/admin/productos',  label: 'Productos',         icon: Package,     permiso: 'ver_productos'   },
+      { to: '/admin/proveedores',label: 'Proveedores',       icon: Building2,   permiso: 'ver_proveedores' },
+      { to: '/admin/ordenes',    label: 'Órdenes de Compra', icon: ClipboardList,permiso: 'ver_ordenes'    },
     ]
   },
   {
     id: 'ventas',
     label: 'Ventas',
+    permiso: 'ver_ventas',
     items: [
-      { to: '/admin/clientes', label: 'Clientes', icon: Users },
-      { to: '/admin/ventas',   label: 'Ventas',   icon: BarChart2 },
-      { to: '/admin/pagos',    label: 'Pagos',    icon: CreditCard },
+      { to: '/admin/clientes', label: 'Clientes', icon: Users,    permiso: 'ver_clientes' },
+      { to: '/admin/ventas',   label: 'Ventas',   icon: BarChart2,permiso: 'ver_ventas'   },
+      { to: '/admin/pagos',    label: 'Pagos',    icon: CreditCard,permiso: 'ver_pagos'   },
     ]
   },
 ]
@@ -175,9 +178,17 @@ function ModalContrasena({ onCerrar }) {
   )
 }
 
-function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollapse, gruposAbiertos, toggleGrupo, onCambiarContrasena }) {
+function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollapse, gruposAbiertos, toggleGrupo, onCambiarContrasena, tienePermiso }) {
   const navRef = useRef(null)
   const [perfilAbierto, setPerfilAbierto] = useState(false)
+
+  // Filtra grupos e items según permisos
+  const menuFiltrado = MENU
+    .map(grupo => ({
+      ...grupo,
+      items: grupo.items.filter(item => tienePermiso(item.permiso))
+    }))
+    .filter(grupo => grupo.items.length > 0)
 
   return (
     <div className={`flex flex-col h-full border-r border-gray-800
@@ -217,9 +228,9 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
         </NavLink>
       </div>
 
-      {/* menú agrupado */}
+      {/* menú agrupado filtrado por permisos */}
       <nav ref={navRef} className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
-        {MENU.map(grupo => {
+        {menuFiltrado.map(grupo => {
           const abierto = gruposAbiertos[grupo.id] ?? true
 
           if (collapsed && !mobile) {
@@ -320,7 +331,7 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
 }
 
 export default function AdminLayout() {
-  const { usuario, logout } = useAuth()
+  const { usuario, logout, tienePermiso } = useAuth()
   const navigate = useNavigate()
   const [collapsed, setCollapsed]             = useState(false)
   const [menuMovil, setMenuMovil]             = useState(false)
@@ -339,7 +350,11 @@ export default function AdminLayout() {
   const toggleCollapse = useCallback(() => setCollapsed(c => !c), [])
   const cerrarMovil    = useCallback(() => setMenuMovil(false), [])
 
-  const sidebarProps = { usuario, handleLogout, toggleCollapse, gruposAbiertos, toggleGrupo, onCambiarContrasena: () => setModalContrasena(true) }
+  const sidebarProps = {
+    usuario, handleLogout, toggleCollapse, gruposAbiertos,
+    toggleGrupo, tienePermiso,
+    onCambiarContrasena: () => setModalContrasena(true)
+  }
 
   return (
     <div className="flex h-screen bg-light-bg overflow-hidden">
