@@ -16,10 +16,12 @@ api.interceptors.response.use(
   res => res,
   err => {
     const url = err.config?.url || ''
-    const esLoginORecuperar = url.includes('/auth/login') || url.includes('/auth/recuperar') || url.includes('/auth/registro') || url.includes('/auth/cambiar-password') || url.includes('/usuarios/me/contrasena')
+    const esAuth = url.includes('/auth/login') || url.includes('/auth/recuperar')
+      || url.includes('/auth/registro') || url.includes('/auth/cambiar-password')
+      || url.includes('/usuarios/me/contrasena')
 
-    // solo redirigir si NO es una llamada de auth
-    if (!esLoginORecuperar && (err.response?.status === 401 || err.response?.status === 403)) {
+    // solo cerrar sesión en 401 (token inválido/expirado), NO en 403 (sin permiso)
+    if (!esAuth && err.response?.status === 401) {
       localStorage.removeItem('sisgem_token')
       localStorage.removeItem('sisgem_usuario')
       window.location.href = '/login'
