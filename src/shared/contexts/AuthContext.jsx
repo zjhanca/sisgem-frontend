@@ -8,10 +8,13 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const token = localStorage.getItem('sisgem_token')
-    const user = localStorage.getItem('sisgem_usuario')
+    const user  = localStorage.getItem('sisgem_usuario')
     if (token && user) {
       try { setUsuario(JSON.parse(user)) }
-      catch { localStorage.removeItem('sisgem_token'); localStorage.removeItem('sisgem_usuario') }
+      catch {
+        localStorage.removeItem('sisgem_token')
+        localStorage.removeItem('sisgem_usuario')
+      }
     }
     setCargando(false)
   }, [])
@@ -28,8 +31,21 @@ export function AuthProvider({ children }) {
     setUsuario(null)
   }
 
+  const tienePermiso = (permiso) => {
+    if (!usuario) return false
+    if (+usuario.rol_id === 1) return true // admin tiene todo
+    return usuario.permisos?.includes(permiso) ?? false
+  }
+
+  const esAdmin   = () => +usuario?.rol_id === 1
+  const esCajero  = () => +usuario?.rol_id === 13
+  const esCliente = () => +usuario?.rol_id === 11
+
   return (
-    <AuthContext.Provider value={{ usuario, login, logout, cargando }}>
+    <AuthContext.Provider value={{
+      usuario, login, logout, cargando,
+      tienePermiso, esAdmin, esCajero, esCliente
+    }}>
       {children}
     </AuthContext.Provider>
   )
