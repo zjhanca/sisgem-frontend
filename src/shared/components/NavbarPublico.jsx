@@ -5,13 +5,15 @@ import { Menu, X, LogOut } from 'lucide-react'
 
 export default function NavbarPublico() {
   const { usuario, logout } = useAuth()
-  const navigate   = useNavigate()
-  const location   = useLocation()
+  const navigate  = useNavigate()
+  const location  = useLocation()
   const [menuMovil, setMenuMovil] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/') }
+
   const esAdmin   = usuario && +usuario.rol_id === 1
-  const esCliente = usuario && +usuario.rol_id !== 1
+  const esCajero  = usuario && +usuario.rol_id === 13
+  const esCliente = usuario && +usuario.rol_id === 11
   const enAdmin   = location.pathname.startsWith('/admin')
   const enPerfil  = location.pathname === '/perfil'
 
@@ -30,7 +32,7 @@ export default function NavbarPublico() {
           {usuario ? (
             <div className="flex items-center gap-2">
 
-              {/* saludo — no clickeable */}
+              {/* Saludo */}
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg">
                 <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center
                   text-white text-xs font-bold shrink-0">
@@ -41,8 +43,8 @@ export default function NavbarPublico() {
                 </span>
               </div>
 
-              {/* Panel Admin — mismo estilo que Mi Panel, no clickeable si ya está en /admin */}
-              {esAdmin && (
+              {/* Panel Admin — admin y cajero */}
+              {(esAdmin || esCajero) && (
                 enAdmin ? (
                   <span className="hidden md:block px-3 py-1.5 text-xs rounded-lg
                     border border-primary/30 text-primary/40 font-medium cursor-default select-none">
@@ -57,7 +59,7 @@ export default function NavbarPublico() {
                 )
               )}
 
-              {/* Mi Panel — oculto cuando ya está en /perfil */}
+              {/* Mi Panel — solo clientes */}
               {esCliente && !enPerfil && (
                 <Link to="/perfil"
                   className="hidden md:block px-3 py-1.5 text-xs rounded-lg
@@ -101,13 +103,17 @@ export default function NavbarPublico() {
                 </div>
                 <span className="text-sm font-medium text-light-text">Hola, {usuario.nombre}</span>
               </div>
-              {esAdmin && (
+              {(esAdmin || esCajero) && (
                 <Link to="/admin" onClick={() => setMenuMovil(false)}
-                  className="block text-sm py-1.5 text-primary font-medium">Panel Admin</Link>
+                  className="block text-sm py-1.5 text-primary font-medium">
+                  Panel Admin
+                </Link>
               )}
               {esCliente && !enPerfil && (
                 <Link to="/perfil" onClick={() => setMenuMovil(false)}
-                  className="block text-sm py-1.5 text-primary font-medium">Mi Panel</Link>
+                  className="block text-sm py-1.5 text-primary font-medium">
+                  Mi Panel
+                </Link>
               )}
               <button onClick={handleLogout} className="block text-sm py-1.5 text-red-400 text-left w-full">
                 Cerrar Sesión
