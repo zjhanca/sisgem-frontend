@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Trash2, Upload } from 'lucide-react'
+import { Search, Scan, Trash2, Upload, Pencil, Check, X } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 const METODOS_PAGO = ['Efectivo', 'Transferencia']
@@ -12,6 +12,7 @@ export default function OrdenForm({
   buscarPorCodigo, agregarItem, quitarItem, setProvSeleccionado,
   setProvBusqueda, setProdBusqueda, setProdsFiltrados, totalOrden, handleCrear, creando,
   handleFacturaChange, facturaPreview, onCrearProducto,
+  itemEditando, iniciarEdicionItem, guardarEdicionItem, cancelarEdicionItem,
 }) {
   const [provDropdown, setProvDropdown] = useState(false)
 
@@ -20,16 +21,17 @@ export default function OrdenForm({
     setForm({ proveedor_id: '', productos: [], fecha_compra: '', metodo_pago: 'Efectivo', estado: 'pendiente', notas: '' })
     setProvBusqueda('')
     setProvSeleccionado(null)
+    if (cancelarEdicionItem) cancelarEdicionItem()
   }
 
-  const prodActual = productos.find(p => p.id === +itemForm.producto_id)
-  const precioActual = prodActual?.precio ? +prodActual.precio : 0
+  const costoNum       = +itemForm.costo_unitario || 0
+  const precioVentaNum = +itemForm.precio_venta   || 0
+  const errorMenorCosto  = precioVentaNum > 0 && costoNum > 0 && precioVentaNum < costoNum
+  const prodActual       = productos.find(p => p.id === +itemForm.producto_id)
+  const precioActual     = prodActual?.precio ? +prodActual.precio : 0
+  const errorMenorActual = precioVentaNum > 0 && precioActual > 0 && precioVentaNum < precioActual
 
-  // Validaciones en tiempo real
-  const costoNum      = +itemForm.costo_unitario || 0
-  const precioVentaNum = +itemForm.precio_venta  || 0
-  const errorMenorCosto   = precioVentaNum > 0 && costoNum > 0 && precioVentaNum < costoNum
-  const errorMenorActual  = precioVentaNum > 0 && precioActual > 0 && precioVentaNum < precioActual
+  const modoEdicion = itemEditando !== null && itemEditando !== undefined
 
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre
@@ -94,8 +96,10 @@ export default function OrdenForm({
         {/* Productos */}
         <div className="p-3 rounded-xl border border-gray-200 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold">Productos</p>
-            {onCrearProducto && (
+            <p className="text-xs font-semibold">
+              {modoEdicion ? '✏️ Editando producto' : 'Productos'}
+            </p>
+            {onCrearProducto && !modoEdicion && (
               <button type="button" onClick={onCrearProducto}
                 className="text-xs flex items-center gap-1 text-primary/70 hover:text-primary transition-colors">
                 + Crear nuevo producto
@@ -103,57 +107,66 @@ export default function OrdenForm({
             )}
           </div>
 
-          {/* Buscador */}
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              {itemForm.producto_id ? (
-                <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
-                  <span className="font-medium text-primary">{prodBusqueda}</span>
-                  <button type="button"
-                    onClick={() => { setItemForm(f => ({ ...f, producto_id: '', costo_unitario: '', precio_venta: '' })); setProdBusqueda('') }}
-                    className="text-gray-400 hover:text-red-400 ml-2">✕</button>
-                </div>
-              ) : (
-                <>
-                  <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
-                  <input value={prodBusqueda} onChange={e => buscarProducto(e.target.value)}
-                    onBlur={() => setTimeout(() => setProdsFiltrados([]), 150)}
-                    className="campo-input pl-8 text-xs" placeholder="Buscar por nombre o código..." />
-                  {prodsFiltrados.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 z-20 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
-                      {prodsFiltrados.map(p => (
-                        <button key={p.id} type="button"
-                          onClick={() => {
-                            setItemForm(f => ({ ...f, producto_id: p.id, costo_unitario: '', precio_venta: p.precio || '' }))
-                            setProdBusqueda(p.nombre)
-                            setProdsFiltrados([])
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text">
-                          <span>
-                            {p.nombre}
-                            {p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}
-                          </span>
-                          <span className="text-primary shrink-0 ml-2">Venta: {formatPrecio(p.precio)}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
+          {/* Buscador — solo cuando NO está en modo edición */}
+          {!modoEdicion && (
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                {itemForm.producto_id ? (
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-primary/40 bg-primary/5 text-xs">
+                    <span className="font-medium text-primary">{prodBusqueda}</span>
+                    <button type="button"
+                      onClick={() => { setItemForm(f => ({ ...f, producto_id: '', costo_unitario: '', precio_venta: '' })); setProdBusqueda('') }}
+                      className="text-gray-400 hover:text-red-400 ml-2">✕</button>
+                  </div>
+                ) : (
+                  <>
+                    <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
+                    <input value={prodBusqueda} onChange={e => buscarProducto(e.target.value)}
+                      onBlur={() => setTimeout(() => setProdsFiltrados([]), 150)}
+                      className="campo-input pl-8 text-xs" placeholder="Buscar por nombre o referencia..." />
+                    {prodsFiltrados.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 z-20 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                        {prodsFiltrados.map(p => (
+                          <button key={p.id} type="button"
+                            onClick={() => {
+                              setItemForm(f => ({ ...f, producto_id: p.id, costo_unitario: '', precio_venta: p.precio || '' }))
+                              setProdBusqueda(p.nombre)
+                              setProdsFiltrados([])
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex justify-between text-light-text">
+                            <span>
+                              {p.nombre}
+                              {p.codigo_barras && <span className="text-gray-400 font-mono ml-2">{p.codigo_barras}</span>}
+                            </span>
+                            <span className="text-primary shrink-0 ml-2">Venta: {formatPrecio(p.precio)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="relative">
+                <input placeholder="Referencia" inputMode="numeric"
+                  className="campo-input w-28 text-xs pr-7"
+                  onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      if (e.target.value) { buscarPorCodigo(e.target.value); e.target.value = '' }
+                    }
+                  }} />
+                <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
+              </div>
             </div>
-            <div className="relative">
-              <input placeholder="Cód. barras" inputMode="numeric"
-                className="campo-input w-28 text-xs pr-7"
-                onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    if (e.target.value) { buscarPorCodigo(e.target.value); e.target.value = '' }
-                  }
-                }} />
-              <Scan size={12} className="absolute right-2 top-2.5 text-gray-400" />
+          )}
+
+          {/* Nombre del producto en edición */}
+          {modoEdicion && (
+            <div className="px-3 py-2 rounded-lg border border-amber-300 bg-amber-50 text-xs font-medium text-amber-700">
+              {form.productos[itemEditando]?.nombre}
             </div>
-          </div>
+          )}
 
           {/* Costo / Precio / Cantidad */}
           <div className="grid grid-cols-4 gap-2">
@@ -167,17 +180,11 @@ export default function OrdenForm({
               <label className="campo-label">Precio venta *</label>
               <input type="number" step="1" min="0" value={itemForm.precio_venta}
                 onChange={e => setItemForm(p => ({ ...p, precio_venta: e.target.value }))}
-                className={`campo-input text-xs ${
-                  errorMenorCosto || errorMenorActual ? 'border-red-400' : ''
-                }`}
+                className={`campo-input text-xs ${errorMenorCosto || errorMenorActual ? 'border-red-400' : ''}`}
                 placeholder="0" />
-              {errorMenorCosto && (
-                <p className="campo-error">Menor al costo</p>
-              )}
+              {errorMenorCosto && <p className="campo-error">Menor al costo</p>}
               {!errorMenorCosto && errorMenorActual && (
-                <p className="campo-error">
-                  No puede bajar de {formatPrecio(precioActual)}
-                </p>
+                <p className="campo-error">No puede bajar de {formatPrecio(precioActual)}</p>
               )}
             </div>
             <div>
@@ -186,24 +193,45 @@ export default function OrdenForm({
                 onChange={e => setItemForm(p => ({ ...p, cantidad: e.target.value }))}
                 className="campo-input text-xs" />
             </div>
-            <div className="flex items-end">
-              <button type="button" onClick={agregarItem}
-                className="btn-primary w-full justify-center text-xs">
-                Agregar
-              </button>
+            <div className="flex items-end gap-1">
+              {modoEdicion ? (
+                <>
+                  <button type="button" onClick={guardarEdicionItem}
+                    className="flex-1 btn-primary justify-center text-xs py-2">
+                    <Check size={13} />
+                  </button>
+                  <button type="button" onClick={cancelarEdicionItem}
+                    className="px-2 py-2 rounded-lg border border-gray-200 text-gray-500 hover:text-red-400 text-xs">
+                    <X size={13} />
+                  </button>
+                </>
+              ) : (
+                <button type="button" onClick={agregarItem}
+                  className="flex-1 btn-primary justify-center text-xs">
+                  Agregar
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Lista productos agregados */}
+          {/* Lista productos */}
           {form.productos.length > 0 && (
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {form.productos.map((p, i) => (
-                <div key={i} className="flex justify-between items-center text-xs p-2 rounded bg-gray-50">
-                  <span className="flex-1 truncate">{p.nombre}</span>
+                <div key={i} className={`flex justify-between items-center text-xs p-2 rounded ${
+                  itemEditando === i ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'
+                }`}>
+                  <span className="flex-1 truncate font-medium">{p.nombre}</span>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
                     <span className="text-gray-400">{p.cantidad} × {formatPrecio(p.costo_unitario)}</span>
                     <span className="text-gray-400">→ {formatPrecio(p.precio_venta)}</span>
                     <span className="text-primary font-medium">{formatPrecio(p.costo_unitario * p.cantidad)}</span>
+                    {itemEditando !== i && (
+                      <button type="button" onClick={() => iniciarEdicionItem(i)}
+                        className="text-gray-400 hover:text-primary transition-colors">
+                        <Pencil size={11} />
+                      </button>
+                    )}
                     <button type="button" onClick={() => quitarItem(i)} className="text-red-400">
                       <Trash2 size={12} />
                     </button>
