@@ -85,7 +85,7 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
                 <p className="truncate">{item.marca || '—'}</p>
               </div>
               <div>
-                <p className="campo-label">Código Barras</p>
+                <p className="campo-label">Referencia</p>
                 <p className="font-mono text-xs">{item.codigo_barras || '—'}</p>
               </div>
             </div>

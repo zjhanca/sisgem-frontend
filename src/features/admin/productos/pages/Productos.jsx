@@ -54,7 +54,7 @@ export default function Productos() {
         : <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary/50">—</div>
     },
     { key: 'nombre',        label: 'Nombre' },
-    { key: 'codigo_barras', label: 'Código', render: r => <span className="font-mono text-xs">{r.codigo_barras || '—'}</span> },
+    { key: 'codigo_barras', label: 'Referencia', render: r => <span className="font-mono text-xs">{r.codigo_barras || '—'}</span> },
     { key: 'categoria',     label: 'Categoría', render: r => r.categoria || '—' },
     { key: 'marca',         label: 'Marca',     render: r => r.marca || '—' },
     { key: 'precio',        label: 'Precio',    render: r => formatPrecio(r.precio) },

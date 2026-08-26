@@ -48,7 +48,7 @@ export function useProductos() {
       setVerificandoCodigo(false)
       setErrores(prev => ({
         ...prev,
-        codigo_barras: duplicado ? `Este código ya está asignado a "${duplicado.nombre}"` : ''
+        codigo_barras: duplicado ? `Esta referencia ya está asignada a "${duplicado.nombre}"` : ''
       }))
     }, 400)
   }, [productos])
