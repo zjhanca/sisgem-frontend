@@ -35,6 +35,7 @@ export function useOrdenes() {
   const [form, setForm]             = useState(formVacio)
   const [formEditar, setFormEditar] = useState({})
   const [itemForm, setItemForm]     = useState(itemVacio)
+  const [itemEditando, setItemEditando] = useState(null) // índice del item en edición
   const [facturaFile, setFacturaFile]       = useState(null)
   const [facturaPreview, setFacturaPreview] = useState('')
   const [prodBusqueda, setProdBusqueda]     = useState('')
@@ -101,7 +102,7 @@ export function useOrdenes() {
       setModalNuevo(false); setForm(formVacio)
       setProvBusqueda(''); setProvSeleccionado(null)
       setFacturaFile(null); setFacturaPreview('')
-      setItemForm(itemVacio)
+      setItemForm(itemVacio); setItemEditando(null)
       toast.success('Orden creada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
@@ -173,27 +174,30 @@ export function useOrdenes() {
     } catch { toast.error('Producto no encontrado') }
   }
 
-  const agregarItem = () => {
-    if (!itemForm.producto_id)
-      { toast.error('Selecciona un producto'); return }
-    if (!itemForm.costo_unitario || +itemForm.costo_unitario <= 0)
-      { toast.error('Ingresa el costo unitario'); return }
-    if (!itemForm.precio_venta || +itemForm.precio_venta <= 0)
-      { toast.error('Ingresa el precio de venta'); return }
-    if (+itemForm.precio_venta < +itemForm.costo_unitario)
-      { toast.error('El precio de venta no puede ser menor al costo'); return }
-
-    // No puede ser menor al precio actual del producto
-    const prod = productos.find(p => p.id === +itemForm.producto_id)
+  const validarItem = (item, ignorarIdx = null) => {
+    if (!item.producto_id)
+      { toast.error('Selecciona un producto'); return false }
+    if (!item.costo_unitario || +item.costo_unitario <= 0)
+      { toast.error('Ingresa el costo unitario'); return false }
+    if (!item.precio_venta || +item.precio_venta <= 0)
+      { toast.error('Ingresa el precio de venta'); return false }
+    if (+item.precio_venta < +item.costo_unitario)
+      { toast.error('El precio de venta no puede ser menor al costo'); return false }
+    const prod = productos.find(p => p.id === +item.producto_id)
     const precioActual = prod?.precio ? +prod.precio : 0
-    if (precioActual > 0 && +itemForm.precio_venta < precioActual) {
+    if (precioActual > 0 && +item.precio_venta < precioActual) {
       toast.error(`El precio de venta no puede bajar del actual ($${precioActual.toLocaleString('es-CO')})`)
-      return
+      return false
     }
+    // Verificar duplicado (ignorando el índice que se está editando)
+    const duplicado = form.productos.find((p, i) => p.producto_id === +item.producto_id && i !== ignorarIdx)
+    if (duplicado) { toast.error('Producto ya agregado'); return false }
+    return true
+  }
 
-    if (form.productos.find(p => p.producto_id === +itemForm.producto_id))
-      { toast.error('Producto ya agregado'); return }
-
+  const agregarItem = () => {
+    if (!validarItem(itemForm)) return
+    const prod = productos.find(p => p.id === +itemForm.producto_id)
     setForm(p => ({ ...p, productos: [...p.productos, {
       producto_id:    +itemForm.producto_id,
       nombre:         prod?.nombre,
@@ -205,7 +209,53 @@ export function useOrdenes() {
     setProdBusqueda(''); setProdsFiltrados([])
   }
 
-  const quitarItem = idx => setForm(p => ({ ...p, productos: p.productos.filter((_, i) => i !== idx) }))
+  // Carga un item existente en el formulario para editarlo
+  const iniciarEdicionItem = idx => {
+    const item = form.productos[idx]
+    if (!item) return
+    setItemEditando(idx)
+    setItemForm({
+      producto_id:    item.producto_id,
+      costo_unitario: item.costo_unitario,
+      precio_venta:   item.precio_venta,
+      cantidad:       item.cantidad,
+    })
+    const prod = productos.find(p => p.id === item.producto_id)
+    setProdBusqueda(prod?.nombre || '')
+  }
+
+  // Guarda los cambios del item en edición
+  const guardarEdicionItem = () => {
+    if (!validarItem(itemForm, itemEditando)) return
+    setForm(p => ({
+      ...p,
+      productos: p.productos.map((item, i) =>
+        i === itemEditando
+          ? {
+              ...item,
+              costo_unitario: +itemForm.costo_unitario,
+              precio_venta:   +itemForm.precio_venta,
+              cantidad:       +itemForm.cantidad,
+            }
+          : item
+      )
+    }))
+    setItemForm(itemVacio)
+    setItemEditando(null)
+    setProdBusqueda(''); setProdsFiltrados([])
+  }
+
+  const cancelarEdicionItem = () => {
+    setItemEditando(null)
+    setItemForm(itemVacio)
+    setProdBusqueda(''); setProdsFiltrados([])
+  }
+
+  const quitarItem = idx => {
+    if (itemEditando === idx) cancelarEdicionItem()
+    setForm(p => ({ ...p, productos: p.productos.filter((_, i) => i !== idx) }))
+  }
+
   const totalOrden = form.productos.reduce((s, p) => s + p.costo_unitario * p.cantidad, 0)
 
   const handleCrear = e => {
@@ -257,7 +307,9 @@ export function useOrdenes() {
     form, setForm, formEditar, setFormEditar, itemForm, setItemForm,
     facturaPreview, handleFacturaChange,
     prodBusqueda, prodsFiltrados, provBusqueda, provsFiltrados, provSeleccionado,
-    buscarProveedor, buscarProducto, buscarPorCodigo, agregarItem, quitarItem,
+    buscarProveedor, buscarProducto, buscarPorCodigo,
+    agregarItem, quitarItem,
+    itemEditando, iniciarEdicionItem, guardarEdicionItem, cancelarEdicionItem,
     setProvSeleccionado, setProvBusqueda, setProdBusqueda, setProdsFiltrados,
     totalOrden, handleCrear, handleEditar, abrirEditar,
     cambiarEstado, anular, descargarReporte,

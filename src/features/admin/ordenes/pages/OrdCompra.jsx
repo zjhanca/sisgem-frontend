@@ -5,10 +5,10 @@ import Modal from '@shared/components/Modal'
 import ReporteDescargaModal from '../components/ReporteDescargaModal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { useOrdenes } from '../hooks/useOrdenes'
-import OrdenForm           from '../components/OrdenForm'
-import OrdenDetalle        from '../components/OrdenDetalle'
+import OrdenForm            from '../components/OrdenForm'
+import OrdenDetalle         from '../components/OrdenDetalle'
 import OrdenConfirmDescarga from '../components/Ordenconfirmdescarga'
-import ProductoForm from '../../productos/components/ProductoForm'
+import ProductoForm  from '../../productos/components/ProductoForm'
 import { useProductos } from '../../productos/hooks/useProductos'
 
 const METODOS_PAGO = ['Efectivo', 'Transferencia']
@@ -37,6 +37,7 @@ export default function OrdCompra() {
     facturaPreview, handleFacturaChange,
     prodBusqueda, prodsFiltrados, provBusqueda, provsFiltrados, provSeleccionado,
     buscarProveedor, buscarProducto, buscarPorCodigo, agregarItem, quitarItem,
+    itemEditando, iniciarEdicionItem, guardarEdicionItem, cancelarEdicionItem,
     setProvSeleccionado, setProvBusqueda, setProdBusqueda, setProdsFiltrados,
     totalOrden, handleCrear, handleEditar, abrirEditar,
     cambiarEstado, anular, descargarReporte,
@@ -52,7 +53,7 @@ export default function OrdCompra() {
   } = useProductos()
 
   const [modalCrearProd, setModalCrearProd] = useState(false)
-  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'orden', id }
+  const [confirmDescarga, setConfirmDescarga] = useState(null)
   const [modalReporte, setModalReporte] = useState(false)
 
   const columnas = [
@@ -86,7 +87,7 @@ export default function OrdCompra() {
             <Download size={14} /> Reporte
           </button>
           <button onClick={() => setModalNuevo(true)} className="btn-primary">
-            <Plus size={14} /> Nueva 
+            <Plus size={14} /> Nueva
           </button>
         </div>
       </div>
@@ -97,7 +98,9 @@ export default function OrdCompra() {
           <p className="text-sm text-red-600">
             <span className="font-semibold">{ordenesVencidas}</span> orden{ordenesVencidas > 1 ? 'es' : ''} con factura vencida
           </p>
-          <button onClick={() => setFiltroEstado('vencida')} className="ml-auto text-xs text-red-500 hover:underline">Ver vencidas →</button>
+          <button onClick={() => setFiltroEstado('vencida')} className="ml-auto text-xs text-red-500 hover:underline">
+            Ver vencidas →
+          </button>
         </div>
       )}
 
@@ -120,13 +123,21 @@ export default function OrdCompra() {
           const esAnulada    = getKeyEstado(fila.estado) === 'anulado'
           const esCompletada = getKeyEstado(fila.estado) === 'activo'
           return (<>
-            <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
+            <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle">
+              <Eye size={14} />
+            </button>
             {!esAnulada && !esCompletada && (
-              <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
+              <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar">
+                <Edit2 size={14} />
+              </button>
             )}
-            <button onClick={() => setConfirmDescarga({ tipo: 'orden', id: fila.id })} className="btn-ghost"><Download size={14} /></button>
+            <button onClick={() => setConfirmDescarga({ tipo: 'orden', id: fila.id })} className="btn-ghost">
+              <Download size={14} />
+            </button>
             {!esAnulada && (
-              <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular"><Ban size={14} /></button>
+              <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular">
+                <Ban size={14} />
+              </button>
             )}
           </>)
         }}
@@ -140,6 +151,10 @@ export default function OrdCompra() {
         provBusqueda={provBusqueda} provsFiltrados={provsFiltrados} provSeleccionado={provSeleccionado}
         buscarProveedor={buscarProveedor} buscarProducto={buscarProducto} buscarPorCodigo={buscarPorCodigo}
         agregarItem={agregarItem} quitarItem={quitarItem}
+        itemEditando={itemEditando}
+        iniciarEdicionItem={iniciarEdicionItem}
+        guardarEdicionItem={guardarEdicionItem}
+        cancelarEdicionItem={cancelarEdicionItem}
         setProvSeleccionado={setProvSeleccionado} setProvBusqueda={setProvBusqueda}
         setProdBusqueda={setProdBusqueda} setProdsFiltrados={setProdsFiltrados}
         totalOrden={totalOrden} handleCrear={handleCrear} creando={creando}
@@ -154,7 +169,7 @@ export default function OrdCompra() {
         abrirEditar={abrirEditar} setModalAnular={setModalAnular}
       />
 
-      {/* modal editar */}
+      {/* Modal editar */}
       <Modal abierto={modalEditar.abierto} onCerrar={() => setModalEditar({ abierto: false, orden: null })} bloquearCierre
         titulo={`Editar Orden #${modalEditar.orden?.id}`} ancho="max-w-lg">
         {modalEditar.orden && (
@@ -195,7 +210,7 @@ export default function OrdCompra() {
         )}
       </Modal>
 
-      {/* modal anular */}
+      {/* Modal anular */}
       <Modal abierto={modalAnular.abierto} onCerrar={() => setModalAnular({ abierto: false, orden: null })} bloquearCierre
         titulo="Confirmar Anulación" ancho="max-w-sm">
         {modalAnular.orden && (

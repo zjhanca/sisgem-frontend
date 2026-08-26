@@ -27,13 +27,13 @@ export default function SelectorCliente({
       <div className="flex gap-2 mb-2">
         {[
           { val: 'registrado', label: 'Cliente Registrado' },
-          { val: 'manual',     label: 'Cliente Anónimo'    },
+          { val: 'manual',     label: 'Cliente Mostrador'  },
         ].map(t => (
           <button key={t.val} type="button"
             onClick={() => {
               setForm(f => ({
                 ...f, tipo_cliente: t.val, cliente_id: '',
-                cliente_nombre: t.val === 'manual' ? 'Anónimo' : '',
+                cliente_nombre: t.val === 'manual' ? 'Mostrador' : '',
                 tipo_pago: 'total',
               }))
               setClienteBusqueda('')
@@ -51,8 +51,8 @@ export default function SelectorCliente({
 
       {form.tipo_cliente === 'manual' ? (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-500">
-          <span className="text-base">👤</span>
-          <span>Venta registrada como <strong className="text-gray-700">Cliente Anónimo</strong></span>
+          <span className="text-base">🛒</span>
+          <span>Venta registrada como <strong className="text-gray-700">Cliente Mostrador</strong></span>
         </div>
       ) : (
         <div className="space-y-1" ref={dropdownRef}>

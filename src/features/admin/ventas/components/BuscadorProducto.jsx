@@ -8,7 +8,7 @@ export default function BuscadorProducto({ prodBusqueda, prodsFiltrados, buscarP
         <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
         <input value={prodBusqueda} onChange={e => buscarProducto(e.target.value)}
           className="campo-input pl-8 text-xs"
-          placeholder="Buscar por nombre o código..." />
+          placeholder="Buscar por nombre o referencia..." />
         {prodsFiltrados.length > 0 && (
           <div className="absolute top-full left-0 right-0 z-20 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
             {prodsFiltrados.map(p => (
@@ -28,7 +28,7 @@ export default function BuscadorProducto({ prodBusqueda, prodsFiltrados, buscarP
         )}
       </div>
       <div className="relative">
-        <input placeholder="Cód. barras" className="campo-input w-28 text-xs pr-7"
+        <input placeholder="Referencia" className="campo-input w-28 text-xs pr-7"
           inputMode="numeric"
           onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
           onKeyDown={e => {

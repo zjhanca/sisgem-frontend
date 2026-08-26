@@ -157,9 +157,9 @@ export default function ProductoForm({
           <BuscadorSelect label="Marca" items={marcas} valorId={form.marca_id}
             onSelect={id => setForm(p => ({ ...p, marca_id: id }))} placeholder="Buscar marca..." />
 
-          {/* Código de barras */}
+          {/* Referencia */}
           <div className="col-span-2">
-            <label className="campo-label">Código de Barras (solo números)</label>
+            <label className="campo-label">Referencia (solo números)</label>
             <div className="relative">
               <input value={form.codigo_barras}
                 onChange={e => { if (/^\d*$/.test(e.target.value)) handleChange('codigo_barras', e.target.value) }}
