@@ -1,42 +1,37 @@
 import { useState, useCallback, useRef } from 'react'
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
-import api from '@shared/services/api'
-import toast from 'react-hot-toast'
+import ModalCambiarContrasena from '@shared/components/ModalCambiarContrasena'
 import {
   LayoutDashboard, BarChart2,
   Package, Tag, Grid3X3, Users, Shield,
   Building2, ClipboardList, CreditCard, Menu, X,
-  LogOut, ChevronDown, ChevronRight,
-  KeyRound, Eye, EyeOff, CheckCircle, XCircle
+  LogOut, ChevronDown, ChevronRight, KeyRound,
 } from 'lucide-react'
 
 const MENU = [
   {
     id: 'usuarios',
     label: 'Usuarios',
-    permiso: 'ver_usuarios',
     items: [
-      { to: '/admin/roles',    label: 'Roles',    icon: Shield,  permiso: 'ver_roles'    },
-      { to: '/admin/usuarios', label: 'Usuarios', icon: Users,   permiso: 'ver_usuarios' },
+      { to: '/admin/roles',    label: 'Roles',    icon: Shield,       permiso: 'ver_roles'    },
+      { to: '/admin/usuarios', label: 'Usuarios', icon: Users,        permiso: 'ver_usuarios' },
     ]
   },
   {
     id: 'compras',
     label: 'Compras',
-    permiso: 'ver_productos',
     items: [
-      { to: '/admin/categorias', label: 'Categorías',        icon: Grid3X3,     permiso: 'ver_productos'   },
-      { to: '/admin/marcas',     label: 'Marcas',            icon: Tag,         permiso: 'ver_productos'   },
-      { to: '/admin/productos',  label: 'Productos',         icon: Package,     permiso: 'ver_productos'   },
-      { to: '/admin/proveedores',label: 'Proveedores',       icon: Building2,   permiso: 'ver_proveedores' },
-      { to: '/admin/ordenes',    label: 'Órdenes de Compra', icon: ClipboardList,permiso: 'ver_ordenes'    },
+      { to: '/admin/categorias', label: 'Categorías',        icon: Grid3X3,      permiso: 'ver_productos'   },
+      { to: '/admin/marcas',     label: 'Marcas',            icon: Tag,          permiso: 'ver_productos'   },
+      { to: '/admin/productos',  label: 'Productos',         icon: Package,      permiso: 'ver_productos'   },
+      { to: '/admin/proveedores',label: 'Proveedores',       icon: Building2,    permiso: 'ver_proveedores' },
+      { to: '/admin/ordenes',    label: 'Órdenes de Compra', icon: ClipboardList,permiso: 'ver_ordenes'     },
     ]
   },
   {
     id: 'ventas',
     label: 'Ventas',
-    permiso: 'ver_ventas',
     items: [
       { to: '/admin/clientes', label: 'Clientes', icon: Users,    permiso: 'ver_clientes' },
       { to: '/admin/ventas',   label: 'Ventas',   icon: BarChart2,permiso: 'ver_ventas'   },
@@ -53,141 +48,12 @@ const estadoInicial = () => {
   return MENU.reduce((acc, g) => ({ ...acc, [g.id]: true }), {})
 }
 
-function Requisito({ ok, texto }) {
-  return (
-    <div className={`flex items-center gap-1 text-xs ${ok ? 'text-green-600' : 'text-gray-400'}`}>
-      {ok ? <CheckCircle size={10} /> : <XCircle size={10} />} {texto}
-    </div>
-  )
-}
-
-function ModalContrasena({ onCerrar }) {
-  const [form, setForm] = useState({ actual: '', nueva: '', confirmar: '' })
-  const [ver, setVer]   = useState({ actual: false, nueva: false, confirmar: false })
-  const [cargando, setCargando] = useState(false)
-  const [errores, setErrores]   = useState({})
-  const [focusNueva, setFocusNueva] = useState(false)
-
-  const passReqs = {
-    largo:     form.nueva.length >= 6,
-    mayuscula: /[A-Z]/.test(form.nueva),
-    numero:    /[0-9]/.test(form.nueva),
-  }
-
-  const validar = () => {
-    const e = {}
-    if (!form.actual) e.actual = 'Ingresa tu contraseña actual'
-    if (!form.nueva || form.nueva.length < 6) e.nueva = 'Mínimo 6 caracteres'
-    if (!/[A-Z]/.test(form.nueva)) e.nueva = 'Debe tener al menos una mayúscula'
-    if (!/[0-9]/.test(form.nueva)) e.nueva = 'Debe tener al menos un número'
-    if (form.nueva !== form.confirmar) e.confirmar = 'Las contraseñas no coinciden'
-    return e
-  }
-
-  const handleSubmit = async e => {
-    e.preventDefault()
-    const e2 = validar()
-    if (Object.keys(e2).length) { setErrores(e2); return }
-    setCargando(true)
-    try {
-      await api.patch('/usuarios/me/contrasena', { actual: form.actual, nueva: form.nueva })
-      toast.success('Contraseña actualizada correctamente')
-      onCerrar()
-    } catch (err) {
-      const msg = err.response?.data?.mensaje || 'Error al actualizar'
-      if (msg.toLowerCase().includes('actual')) setErrores({ actual: msg })
-      else toast.error(msg)
-    } finally { setCargando(false) }
-  }
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onCerrar}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-      <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl border border-gray-200 shadow-xl animate-slideIn"
-        onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-light-text">Cambiar Contraseña</h3>
-          <button onClick={onCerrar} className="p-1 rounded-md text-gray-400 hover:text-primary transition-all">
-            <X size={15} />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-3">
-          <div>
-            <label className="campo-label">Contraseña Actual *</label>
-            <div className="relative">
-              <input type={ver.actual ? 'text' : 'password'} value={form.actual}
-                onChange={e => { setForm(p => ({ ...p, actual: e.target.value })); setErrores(p => ({ ...p, actual: '' })) }}
-                className={`campo-input pr-8 ${errores.actual ? 'border-red-400' : ''}`}
-                placeholder="Tu contraseña actual" />
-              <button type="button" onClick={() => setVer(p => ({ ...p, actual: !p.actual }))}
-                className="absolute right-2 top-3 text-gray-400 hover:text-primary">
-                {ver.actual ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            {errores.actual && <p className="campo-error">{errores.actual}</p>}
-          </div>
-
-          <div>
-            <label className="campo-label">Nueva Contraseña *</label>
-            <div className="relative">
-              <input type={ver.nueva ? 'text' : 'password'} value={form.nueva}
-                onChange={e => { setForm(p => ({ ...p, nueva: e.target.value })); setErrores(p => ({ ...p, nueva: '' })) }}
-                onFocus={() => setFocusNueva(true)} onBlur={() => setFocusNueva(false)}
-                className={`campo-input pr-8 ${errores.nueva ? 'border-red-400' : ''}`}
-                placeholder="Mínimo 6 caracteres" />
-              <button type="button" onClick={() => setVer(p => ({ ...p, nueva: !p.nueva }))}
-                className="absolute right-2 top-3 text-gray-400 hover:text-primary">
-                {ver.nueva ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            {(focusNueva || form.nueva) && (
-              <div className="mt-1.5 space-y-1 p-2 bg-gray-50 rounded-lg">
-                <Requisito ok={passReqs.largo}     texto="Mínimo 6 caracteres" />
-                <Requisito ok={passReqs.mayuscula} texto="Una mayúscula" />
-                <Requisito ok={passReqs.numero}    texto="Un número" />
-              </div>
-            )}
-            {errores.nueva && <p className="campo-error">{errores.nueva}</p>}
-          </div>
-
-          <div>
-            <label className="campo-label">Confirmar Nueva *</label>
-            <div className="relative">
-              <input type={ver.confirmar ? 'text' : 'password'} value={form.confirmar}
-                onChange={e => { setForm(p => ({ ...p, confirmar: e.target.value })); setErrores(p => ({ ...p, confirmar: '' })) }}
-                className={`campo-input pr-8 ${errores.confirmar ? 'border-red-400' : ''}`}
-                placeholder="Repetir nueva contraseña" />
-              <button type="button" onClick={() => setVer(p => ({ ...p, confirmar: !p.confirmar }))}
-                className="absolute right-2 top-3 text-gray-400 hover:text-primary">
-                {ver.confirmar ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            {errores.confirmar && <p className="campo-error">{errores.confirmar}</p>}
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-            <button type="button" onClick={onCerrar}
-              className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg">Cancelar</button>
-            <button type="submit" disabled={cargando} className="btn-primary disabled:opacity-50">
-              {cargando ? 'Guardando...' : 'Actualizar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
 function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollapse, gruposAbiertos, toggleGrupo, onCambiarContrasena, tienePermiso }) {
   const navRef = useRef(null)
   const [perfilAbierto, setPerfilAbierto] = useState(false)
 
-  // Filtra grupos e items según permisos
   const menuFiltrado = MENU
-    .map(grupo => ({
-      ...grupo,
-      items: grupo.items.filter(item => tienePermiso(item.permiso))
-    }))
+    .map(grupo => ({ ...grupo, items: grupo.items.filter(item => tienePermiso(item.permiso)) }))
     .filter(grupo => grupo.items.length > 0)
 
   return (
@@ -195,7 +61,7 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
       ${mobile ? 'w-72' : collapsed ? 'w-16' : 'w-60'} transition-all duration-200`}
       style={{ backgroundColor: '#0f1e15' }}>
 
-      {/* logo */}
+      {/* Logo */}
       <div className={`flex items-center gap-2 p-4 border-b border-gray-700 ${collapsed && !mobile ? 'justify-center' : ''}`}>
         <Link to="/" className="flex items-center gap-2 group" title="Ir a la tienda">
           <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 overflow-hidden">
@@ -203,9 +69,7 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
               onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
             <span style={{display:'none'}} className="w-full h-full items-center justify-center text-xs font-bold text-primary">S</span>
           </div>
-          {(!collapsed || mobile) && (
-            <span className="font-bold text-primary text-base">Sisgem</span>
-          )}
+          {(!collapsed || mobile) && <span className="font-bold text-primary text-base">Sisgem</span>}
         </Link>
         {!mobile && (
           <button onClick={toggleCollapse} className="ml-auto text-gray-400 hover:text-primary transition-colors">
@@ -214,25 +78,23 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
         )}
       </div>
 
-      {/* dashboard fijo */}
+      {/* Dashboard fijo */}
       <div className="px-2 pt-2">
         <NavLink to="/admin" end
           className={({ isActive }) =>
             `flex items-center ${collapsed && !mobile ? 'justify-center p-2.5' : 'gap-2.5 px-3 py-2'} rounded-lg text-sm transition-all ${
               isActive ? 'bg-primary text-white font-medium' : 'text-gray-200 hover:bg-white/10 hover:text-primary'
             }`
-          }
-          title="Dashboard">
+          } title="Dashboard">
           <LayoutDashboard size={15} />
           {(!collapsed || mobile) && <span>Dashboard</span>}
         </NavLink>
       </div>
 
-      {/* menú agrupado filtrado por permisos */}
+      {/* Menú filtrado por permisos */}
       <nav ref={navRef} className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
         {menuFiltrado.map(grupo => {
           const abierto = gruposAbiertos[grupo.id] ?? true
-
           if (collapsed && !mobile) {
             return (
               <div key={grupo.id} className="mb-1">
@@ -242,15 +104,13 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
                       `flex items-center justify-center p-2.5 rounded-lg transition-all mb-0.5 ${
                         isActive ? 'bg-primary text-white' : 'text-gray-300 hover:bg-white/10 hover:text-primary'
                       }`
-                    }
-                    title={item.label}>
+                    } title={item.label}>
                     <item.icon size={16} />
                   </NavLink>
                 ))}
               </div>
             )
           }
-
           return (
             <div key={grupo.id} className="mb-2">
               <button onClick={() => toggleGrupo(grupo.id)}
@@ -279,7 +139,7 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
         })}
       </nav>
 
-      {/* footer usuario */}
+      {/* Footer usuario */}
       <div className={`p-3 border-t border-gray-700 ${collapsed && !mobile ? 'flex flex-col items-center gap-2' : 'space-y-1'}`}>
         {(!collapsed || mobile) && (
           <div className="relative">
@@ -333,9 +193,9 @@ function SidebarContent({ collapsed, mobile, usuario, handleLogout, toggleCollap
 export default function AdminLayout() {
   const { usuario, logout, tienePermiso } = useAuth()
   const navigate = useNavigate()
-  const [collapsed, setCollapsed]             = useState(false)
-  const [menuMovil, setMenuMovil]             = useState(false)
-  const [gruposAbiertos, setGruposAbiertos]   = useState(estadoInicial)
+  const [collapsed, setCollapsed]           = useState(false)
+  const [menuMovil, setMenuMovil]           = useState(false)
+  const [gruposAbiertos, setGruposAbiertos] = useState(estadoInicial)
   const [modalContrasena, setModalContrasena] = useState(false)
 
   const toggleGrupo = useCallback(id => {
@@ -353,7 +213,7 @@ export default function AdminLayout() {
   const sidebarProps = {
     usuario, handleLogout, toggleCollapse, gruposAbiertos,
     toggleGrupo, tienePermiso,
-    onCambiarContrasena: () => setModalContrasena(true)
+    onCambiarContrasena: () => setModalContrasena(true),
   }
 
   return (
@@ -382,7 +242,7 @@ export default function AdminLayout() {
         </main>
       </div>
 
-      {modalContrasena && <ModalContrasena onCerrar={() => setModalContrasena(false)} />}
+      {modalContrasena && <ModalCambiarContrasena onCerrar={() => setModalContrasena(false)} />}
     </div>
   )
 }
