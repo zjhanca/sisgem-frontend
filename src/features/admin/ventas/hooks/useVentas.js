@@ -42,15 +42,13 @@ export function useVentas() {
     productos,
     getBarcode: ventasService.getBarcode,
   })
-
-  const fiado = useFiadoCalculo({ clientes, form })
-
+  const fiado    = useFiadoCalculo({ clientes, form })
   const anulacion = useAnulacionVenta()
 
   // ── Helpers carrito adaptados al form local ──
-  const buscarProducto = texto => carrito.buscarProducto(texto, setForm)
-  const buscarPorCodigo = cod => carrito.buscarPorCodigo(cod, prod => carrito.agregarProducto(prod, form, setForm))
-  const agregarProducto = prod => { carrito.agregarProducto(prod, form, setForm) }
+  const buscarProducto  = texto => carrito.buscarProducto(texto, setForm)
+  const buscarPorCodigo = cod   => carrito.buscarPorCodigo(cod, prod => carrito.agregarProducto(prod, form, setForm))
+  const agregarProducto = prod  => { carrito.agregarProducto(prod, form, setForm) }
   const cambiarCantidad = (idx, val) => carrito.cambiarCantidad(idx, val, form, setForm)
   const quitarProducto  = idx => carrito.quitarProducto(idx, setForm)
 
@@ -116,7 +114,7 @@ export function useVentas() {
 
   // ── Handlers ──
   const handleCrear = e => {
-    e.preventDefault()
+    if (e?.preventDefault) e.preventDefault()
     if (form.tipo_cliente === 'registrado' && !form.cliente_id) { toast.error('Selecciona un cliente'); return }
     if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
     for (const p of form.productos) {
@@ -132,7 +130,7 @@ export function useVentas() {
     }
     crearVenta.mutate({
       cliente_id:             form.tipo_cliente === 'registrado' ? form.cliente_id : null,
-      cliente_nombre:         form.tipo_cliente === 'manual' ? (form.cliente_nombre.trim() || 'Anónimo') : null,
+      cliente_nombre:         form.tipo_cliente === 'manual' ? (form.cliente_nombre.trim() || 'Mostrador') : null,
       productos:              form.productos,
       es_fiado:               form.tipo_pago === 'fiado',
       monto_fiado:            form.tipo_pago === 'fiado' ? fiado.montoFiado : 0,
@@ -146,10 +144,10 @@ export function useVentas() {
 
   // ── Filtros ──
   const ventasFiltradas = ventas.filter(v => {
-    if (filtroEstado    && v.estado_id !== +filtroEstado) return false
-    if (filtroBusqueda  && !`${v.id} ${v.cliente}`.toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
-    if (filtroDesde     && v.fecha_pedido && new Date(v.fecha_pedido) < new Date(filtroDesde)) return false
-    if (filtroHasta     && v.fecha_pedido && new Date(v.fecha_pedido) > new Date(filtroHasta)) return false
+    if (filtroEstado   && v.estado_id !== +filtroEstado) return false
+    if (filtroBusqueda && !`${v.id} ${v.cliente}`.toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
+    if (filtroDesde    && v.fecha_pedido && new Date(v.fecha_pedido) < new Date(filtroDesde)) return false
+    if (filtroHasta    && v.fecha_pedido && new Date(v.fecha_pedido) > new Date(filtroHasta)) return false
     return true
   })
 
@@ -176,40 +174,31 @@ export function useVentas() {
   }
 
   return {
-    // datos
     ventasFiltradas, clientes, productos, estados,
-    // form
     form, setForm,
-    // carrito
-    prodBusqueda:   carrito.prodBusqueda,
-    prodsFiltrados: carrito.prodsFiltrados,
-    setProdBusqueda:  carrito.setProdBusqueda,
+    prodBusqueda:      carrito.prodBusqueda,
+    prodsFiltrados:    carrito.prodsFiltrados,
+    setProdBusqueda:   carrito.setProdBusqueda,
     setProdsFiltrados: carrito.setProdsFiltrados,
     buscarProducto, buscarPorCodigo, agregarProducto, cambiarCantidad, quitarProducto,
-    // cliente
     clientesFiltrados, clienteBusqueda, setClienteBusqueda,
-    // fiado
     totalVenta:          fiado.totalVenta,
     clienteSeleccionado: fiado.clienteSeleccionado,
     cupoFiadoDisponible: fiado.cupoFiadoDisponible,
     excedeCupoFiado:     fiado.excedeCupoFiado,
     montoFiado:          fiado.montoFiado,
     montoInmediato:      fiado.montoInmediato,
-    // modales
     modalNuevo, setModalNuevo,
     modalDetalle, setModalDetalle,
     modalAnular, setModalAnular,
-    // filtros
     filtroEstado, setFiltroEstado,
     filtroBusqueda, setFiltroBusqueda,
     filtroDesde, setFiltroDesde,
     filtroHasta, setFiltroHasta,
-    // anulación
     ...anulacion,
-    // mutations
     anular: anularMutation,
     cambiarEstado,
-    // helpers
+    handleCrear,
     getBadge, descargarReporte,
     notaAnulacion, setNotaAnulacion, MINIMO_FIADO,
     creando: crearVenta.isPending, anulando: anularMutation.isPending,
