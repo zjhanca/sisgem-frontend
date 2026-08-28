@@ -5,7 +5,7 @@ import ReporteDescargaModal from '../components/ReporteDescargaModal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { useVentas } from '../hooks/useVentas'
 import { usePagos } from '@features/admin/pagos/hooks/usePagos'
-import VentaForm            from '../components/VentaForm'
+import VentaDetalle         from '../components/VentaForm'
 import VentaDetalle         from '../components/VentaDetalle'
 import VentaAnular          from '../components/VentaAnular'
 import VentaConfirmDescarga from '../components/Ventaconfirmdescarga'
@@ -40,11 +40,11 @@ export default function Ventas() {
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, getBadge, estados, cruzaLote,
+    totalVenta, handleCrear, anular, getBadge, estados,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     descargarReporte,
     clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
-    creando, anulando,
+    creando, anulando, MINIMO_FIADO,
   } = useVentas()
 
   const {
@@ -121,18 +121,22 @@ export default function Ventas() {
               <option key={e.id} value={e.id}>{capitalizar(e.nombre)}</option>
             ))}
           </select>
-          <input type="datetime-local" value={filtroDesde} max={maxFechaHoy()} onChange={e => setFiltroDesde(e.target.value)}
-            className="campo-input w-44 text-xs" title="Desde" />
-          <input type="datetime-local" value={filtroHasta} max={maxFechaHoy()} onChange={e => setFiltroHasta(e.target.value)}
-            className="campo-input w-44 text-xs" title="Hasta" />
+          <input type="datetime-local" value={filtroDesde} max={maxFechaHoy()}
+            onChange={e => setFiltroDesde(e.target.value)} className="campo-input w-44 text-xs" title="Desde" />
+          <input type="datetime-local" value={filtroHasta} max={maxFechaHoy()}
+            onChange={e => setFiltroHasta(e.target.value)} className="campo-input w-44 text-xs" title="Hasta" />
           {(filtroEstado || filtroBusqueda || filtroDesde || filtroHasta) && (
             <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda(''); setFiltroDesde(''); setFiltroHasta('') }}
               className="btn-ghost text-xs text-red-400">Limpiar</button>
           )}
         </>}
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost"><Eye size={14} /></button>
-          <button onClick={() => setConfirmDescarga({ tipo: 'comprobante', id: fila.id })} className="btn-ghost"><Download size={14} /></button>
+          <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost">
+            <Eye size={14} />
+          </button>
+          <button onClick={() => setConfirmDescarga({ tipo: 'comprobante', id: fila.id })} className="btn-ghost">
+            <Download size={14} />
+          </button>
           {fila.permite_fiado && fila.estado?.toLowerCase().includes('pendiente') && (
             <button onClick={() => abrirConPedido(fila.id)}
               className="btn-ghost hover:text-primary" title="Registrar abono">
@@ -158,28 +162,39 @@ export default function Ventas() {
         </>)}
       />
 
-      <VentaForm modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
+      <VentaForm
+        modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
         form={form} setForm={setForm} clientes={clientes}
-        clientesFiltrados={clientesFiltrados} clienteBusqueda={clienteBusqueda} setClienteBusqueda={setClienteBusqueda}
+        clientesFiltrados={clientesFiltrados} clienteBusqueda={clienteBusqueda}
+        setClienteBusqueda={setClienteBusqueda}
         prodBusqueda={prodBusqueda} prodsFiltrados={prodsFiltrados}
         buscarProducto={buscarProducto} buscarPorCodigo={buscarPorCodigo}
-        agregarProducto={agregarProducto} quitarProducto={quitarProducto} cambiarCantidad={cambiarCantidad}
-        totalVenta={totalVenta} handleCrear={handleCrear} creando={creando} cruzaLote={cruzaLote}
+        agregarProducto={agregarProducto} quitarProducto={quitarProducto}
+        cambiarCantidad={cambiarCantidad}
+        totalVenta={totalVenta} handleCrear={handleCrear} creando={creando}
         clienteSeleccionado={clienteSeleccionado} cupoFiadoDisponible={cupoFiadoDisponible}
-        excedeCupoFiado={excedeCupoFiado} montoFiado={montoFiado} montoInmediato={montoInmediato} />
-      <VentaDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle} setModalAnular={setModalAnular} getBadge={getBadge} />
-      <VentaAnular modalAnular={modalAnular} setModalAnular={setModalAnular} anular={anular} anulando={anulando} />
+        excedeCupoFiado={excedeCupoFiado} montoFiado={montoFiado} montoInmediato={montoInmediato}
+        MINIMO_FIADO={MINIMO_FIADO}
+      />
+
+      <VentaDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
+        setModalAnular={setModalAnular} getBadge={getBadge} />
+      <VentaAnular modalAnular={modalAnular} setModalAnular={setModalAnular}
+        anular={anular} anulando={anulando} />
       <VentaConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
       <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
         descargarReporte={descargarReporte} nombreEntidad="ventas" />
-      <PagoForm modalNuevo={modalPago} setModalNuevo={setModalPago}
-        form={formPago} setForm={setFormPago} errores={erroresPago} pedidos={pedidos} pedidoSeleccionado={pedidoSeleccionado}
+      <PagoForm
+        modalNuevo={modalPago} setModalNuevo={setModalPago}
+        form={formPago} setForm={setFormPago} errores={erroresPago}
+        pedidos={pedidos} pedidoSeleccionado={pedidoSeleccionado}
         totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}
         pagoCompleto={pagoCompleto} handleSubmit={handleSubmitPago}
-        handleMontoChange={handleMontoChange} handlePedidoChange={handlePedidoChange} creando={creandoPago}
-        tipoPagoActual={tipoPagoActual} esFiado={esFiado}
+        handleMontoChange={handleMontoChange} handlePedidoChange={handlePedidoChange}
+        creando={creandoPago} tipoPagoActual={tipoPagoActual} esFiado={esFiado}
         pedidoBusqueda={pedidoBusqueda} setPedidoBusqueda={setPedidoBusqueda}
-        pedidoDropdown={pedidoDropdown} setPedidoDropdown={setPedidoDropdown} />
+        pedidoDropdown={pedidoDropdown} setPedidoDropdown={setPedidoDropdown}
+      />
     </div>
   )
 }
