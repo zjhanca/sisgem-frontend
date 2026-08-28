@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ventasService } from '../services/ventasService'
 import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
-import { useCarritoProductos } from '../../../shared/hooks/useCarritoProductos'
-import { useFiadoCalculo }     from '../../../shared/hooks/useFiadoCalculo'
-import { useAnulacionVenta }   from '../../../shared/hooks/useAnulacionVenta'
+import { useCarritoProductos } from '../../../../shared/hooks/useCarritoProductos'
+import { useFiadoCalculo }     from '../../../../shared/hooks/useFiadoCalculo'
+import { useAnulacionVenta }   from '../../../../shared/hooks/useAnulacionVenta'
 import toast from 'react-hot-toast'
 
 const MINIMO_FIADO = 10000
