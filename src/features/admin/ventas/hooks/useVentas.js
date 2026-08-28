@@ -62,20 +62,39 @@ export function useVentas() {
   // ── Mutations ──
   const crearVenta = useMutation({
     mutationFn: async data => {
-      const res = await ventasService.create({ ...data, tipo_venta: 'mostrador' })
-      const pedido_id = res.data.pedido_id
-      if (data._tipo_pago === 'fiado') {
-        if (estadoPendiente) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPendiente.id })
-        if (data._monto_inmediato > 0) {
-          await ventasService.registrarPago({
-            pedido_id, monto: data._monto_inmediato, metodo: data._metodo_pago_inmediato || 'efectivo',
-          })
+      let pedido_id
+      try {
+        const res = await ventasService.create({ ...data, tipo_venta: 'mostrador' })
+        pedido_id = res.data.pedido_id
+        if (!pedido_id) {
+          throw new Error('El servidor no devolvió un pedido_id válido al crear la venta')
         }
-      } else {
-        if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
-        await ventasService.registrarPago({ pedido_id, monto: data._total, metodo: data._metodo_pago || 'efectivo' })
+      } catch (err) {
+        console.error('Fallo al crear el pedido:', err)
+        throw new Error(err.response?.data?.mensaje || 'No se pudo crear la venta (paso 1: creación del pedido)')
       }
-      return res.data
+
+      try {
+        if (data._tipo_pago === 'fiado') {
+          if (estadoPendiente) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPendiente.id })
+          if (data._monto_inmediato > 0) {
+            await ventasService.registrarPago({
+              pedido_id, monto: data._monto_inmediato, metodo: data._metodo_pago_inmediato || 'efectivo',
+            })
+          }
+        } else {
+          if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
+          await ventasService.registrarPago({ pedido_id, monto: data._total, metodo: data._metodo_pago || 'efectivo' })
+        }
+      } catch (err) {
+        console.error(`La venta #${pedido_id} se creó pero falló un paso posterior (estado/pago):`, err)
+        throw new Error(
+          err.response?.data?.mensaje ||
+          `La venta #${pedido_id} se registró, pero no se pudo actualizar el estado o el pago. Revísala manualmente.`
+        )
+      }
+
+      return { pedido_id }
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries(['pedidos'])
@@ -91,7 +110,10 @@ export function useVentas() {
           : 'Venta registrada y marcada como pagada'
       )
     },
-    onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
+    onError: err => {
+      console.error('Error al registrar la venta:', err)
+      toast.error(err.response?.data?.mensaje || err.message || 'Ocurrió un error al registrar la venta')
+    },
   })
 
   const anularMutation = useMutation({
@@ -117,31 +139,36 @@ export function useVentas() {
   // ── Handlers ──
   const handleCrear = e => {
     e.preventDefault()
-    if (form.tipo_cliente === 'registrado' && !form.cliente_id) { toast.error('Selecciona un cliente'); return }
-    if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
-    for (const p of form.productos) {
-      if (!p.cantidad || +p.cantidad < 1) { toast.error(`${p.nombre}: la cantidad debe ser al menos 1`); return }
-      const stock = p.stock ?? carrito.getStock(p.producto_id)
-      if (+p.cantidad > stock) { toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return }
+    try {
+      if (form.tipo_cliente === 'registrado' && !form.cliente_id) { toast.error('Selecciona un cliente'); return }
+      if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
+      for (const p of form.productos) {
+        if (!p.cantidad || +p.cantidad < 1) { toast.error(`${p.nombre}: la cantidad debe ser al menos 1`); return }
+        const stock = p.stock ?? carrito.getStock(p.producto_id)
+        if (+p.cantidad > stock) { toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return }
+      }
+      if (form.tipo_pago === 'fiado' && fiado.totalVenta < MINIMO_FIADO) {
+        toast.error(`El mínimo para ventas a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}`); return
+      }
+      if (form.tipo_pago === 'fiado' && form.cliente_id && fiado.cupoFiadoDisponible != null && fiado.cupoFiadoDisponible <= 0) {
+        toast.error('Este cliente no tiene cupo de fiado disponible actualmente'); return
+      }
+      crearVenta.mutate({
+        cliente_id:             form.tipo_cliente === 'registrado' ? form.cliente_id : null,
+        cliente_nombre:         form.tipo_cliente === 'manual' ? (form.cliente_nombre.trim() || 'Anónimo') : null,
+        productos:              form.productos,
+        es_fiado:               form.tipo_pago === 'fiado',
+        monto_fiado:            form.tipo_pago === 'fiado' ? fiado.montoFiado : 0,
+        _total:                 fiado.totalVenta,
+        _tipo_pago:             form.tipo_pago,
+        _metodo_pago:           form.metodo_pago || 'efectivo',
+        _monto_inmediato:       fiado.montoInmediato,
+        _metodo_pago_inmediato: form.metodo_pago_inmediato || 'efectivo',
+      })
+    } catch (err) {
+      console.error('Error inesperado antes de enviar la venta:', err)
+      toast.error('Ocurrió un error inesperado al validar la venta. Revisa la consola.')
     }
-    if (form.tipo_pago === 'fiado' && fiado.totalVenta < MINIMO_FIADO) {
-      toast.error(`El mínimo para ventas a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}`); return
-    }
-    if (form.tipo_pago === 'fiado' && form.cliente_id && fiado.cupoFiadoDisponible != null && fiado.cupoFiadoDisponible <= 0) {
-      toast.error('Este cliente no tiene cupo de fiado disponible actualmente'); return
-    }
-    crearVenta.mutate({
-      cliente_id:             form.tipo_cliente === 'registrado' ? form.cliente_id : null,
-      cliente_nombre:         form.tipo_cliente === 'manual' ? (form.cliente_nombre.trim() || 'Anónimo') : null,
-      productos:              form.productos,
-      es_fiado:               form.tipo_pago === 'fiado',
-      monto_fiado:            form.tipo_pago === 'fiado' ? fiado.montoFiado : 0,
-      _total:                 fiado.totalVenta,
-      _tipo_pago:             form.tipo_pago,
-      _metodo_pago:           form.metodo_pago || 'efectivo',
-      _monto_inmediato:       fiado.montoInmediato,
-      _metodo_pago_inmediato: form.metodo_pago_inmediato || 'efectivo',
-    })
   }
 
   // ── Filtros ──
