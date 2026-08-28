@@ -4,10 +4,10 @@ import { CreditCard, Clock } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 import ClienteForm      from '@features/admin/clientes/components/ClienteForm'
 import { useClientes }  from '@features/admin/clientes/hooks/useClientes'
-import BuscadorProducto  from './BuscadorProducto'
+import BuscadorProducto    from './BuscadorProducto'
 import ListaProductosVenta from './ListaProductosVenta'
-import SelectorCliente   from './SelectorCliente'
-import PanelFiado        from './PanelFiado'
+import SelectorCliente     from './SelectorCliente'
+import PanelFiado          from './PanelFiado'
 
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
@@ -35,7 +35,7 @@ export default function VentaForm({
     })
   }
 
-  const abrirNuevoCliente = () => { abrirModalCliente(); setModalNuevoCliente(true) }
+  const abrirNuevoCliente  = () => { abrirModalCliente(); setModalNuevoCliente(true) }
   const cerrarNuevoCliente = () => { cerrarModalCliente(); setModalNuevoCliente(false) }
 
   const permitefiado       = clienteSeleccionado?.permite_fiado
@@ -49,7 +49,14 @@ export default function VentaForm({
   return (
     <>
       <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
-        <form onSubmit={handleCrear} className="flex flex-col" style={{ maxHeight: '80vh' }}>
+        <form
+          onSubmit={e => {
+            console.log('submit capturado')
+            handleCrear(e)
+          }}
+          className="flex flex-col"
+          style={{ maxHeight: '80vh' }}
+        >
           <div className="overflow-y-auto flex-1 space-y-4 pr-1">
 
             {/* Banner tipo pago */}
