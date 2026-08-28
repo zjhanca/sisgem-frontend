@@ -46,17 +46,15 @@ export default function VentaForm({
   for (const p of form.productos)
     totalPorProducto[p.producto_id] = (totalPorProducto[p.producto_id] || 0) + (+p.cantidad || 0)
 
+  const handleSubmitVenta = e => {
+    console.log('click aceptar', { totalPorProducto, productos: form.productos, sinCupo })
+    handleCrear(e)
+  }
+
   return (
     <>
       <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
-        <form
-          onSubmit={e => {
-            console.log('submit capturado')
-            handleCrear(e)
-          }}
-          className="flex flex-col"
-          style={{ maxHeight: '80vh' }}
-        >
+        <form className="flex flex-col" style={{ maxHeight: '80vh' }}>
           <div className="overflow-y-auto flex-1 space-y-4 pr-1">
 
             {/* Banner tipo pago */}
@@ -150,7 +148,9 @@ export default function VentaForm({
               <span className="text-sm font-semibold text-light-text">Total</span>
               <span className="text-lg font-bold text-primary">{formatPrecio(totalVenta)}</span>
             </div>
-            <button type="submit"
+            <button
+              type="button"
+              onClick={handleSubmitVenta}
               disabled={
                 creando ||
                 Object.values(totalPorProducto).length === 0 ||
