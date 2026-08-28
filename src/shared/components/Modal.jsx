@@ -24,7 +24,7 @@ export default function Modal({ abierto, onCerrar, titulo, children, ancho = 'ma
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
           <h3 className="text-sm font-semibold text-light-text tracking-tight">{titulo}</h3>
           {onCerrar && (
-            <button onClick={onCerrar}
+            <button type="button" onClick={onCerrar}
               className="p-1 rounded-md text-gray-400 hover:text-primary hover:bg-primary/8 transition-all duration-150">
               <X size={15} />
             </button>
