@@ -74,24 +74,12 @@ export default function Ventas() {
     { key: 'estado_id', label: 'Estado',
       render: r => {
         const { color, label } = getBadgeEstado(r.estado)
-        const esFiadoPendiente = r.es_fiado && r.estado?.toLowerCase().includes('pendiente')
         return (
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5">
             <BadgeEstado color={color} label={label} />
-            {esFiadoPendiente && (
-              <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 font-medium">
-                Fiado
-              </span>
-            )}
             {r.origen === 'movil' && (
               <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-500 font-medium">
                 App
-              </span>
-            )}
-            {/* Badge entregado — fiado móvil ya entregado pero pendiente de pago */}
-            {r.origen === 'movil' && r.es_fiado && r.entregado && r.estado?.toLowerCase().includes('pendiente') && (
-              <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-500/15 border border-green-500/30 text-green-600 font-medium">
-                Entregado
               </span>
             )}
           </div>
@@ -151,10 +139,10 @@ export default function Ventas() {
           // Móvil sin fiado pendiente → confirmar + registrar pago
           const esPedidoMovilPendiente = esPendiente && fila.origen === 'movil' && !fila.es_fiado
 
-          // Móvil con fiado pendiente y NO entregado aún → marcar entregado
+          // Móvil con fiado pendiente y NO entregado → marcar entregado
           const esFiadoMovilNoEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && !fila.entregado
 
-          // Móvil con fiado pendiente, ya entregado → registrar abono
+          // Móvil con fiado pendiente ya entregado → registrar abono
           const esFiadoMovilEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && fila.entregado
 
           return (<>
@@ -165,7 +153,7 @@ export default function Ventas() {
               <Download size={14} />
             </button>
 
-            {/* Confirmar entrega/recepción — móvil sin fiado */}
+            {/* Confirmar entrega — móvil sin fiado */}
             {esPedidoMovilPendiente && (
               <button
                 onClick={() => {
@@ -178,7 +166,7 @@ export default function Ventas() {
               </button>
             )}
 
-            {/* Marcar como entregado — móvil fiado, no entregado aún */}
+            {/* Marcar entregado — móvil fiado no entregado */}
             {esFiadoMovilNoEntregado && (
               <button
                 onClick={() => marcarEntregado.mutate({ id: fila.id })}
@@ -188,7 +176,7 @@ export default function Ventas() {
               </button>
             )}
 
-            {/* Registrar abono — fiado móvil ya entregado O fiado web */}
+            {/* Registrar abono — fiado ya entregado o fiado web */}
             {(esFiadoMovilEntregado || (fila.es_fiado && esPendiente && fila.origen !== 'movil')) && (
               <button onClick={() => abrirConPedido(fila.id)}
                 className="btn-ghost hover:text-primary" title="Registrar abono">

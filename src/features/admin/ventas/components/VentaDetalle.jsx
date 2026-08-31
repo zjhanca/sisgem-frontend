@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import Modal from '@shared/components/Modal'
-import { Download, Clock, Loader2, Package, Phone, CreditCard, FileText } from 'lucide-react'
+import { Download, Clock, Loader2, Package, Phone, CreditCard, FileText, Smartphone } from 'lucide-react'
 import { formatPrecio, formatFecha, formatFechaHora } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { ventasService } from '../services/ventasService'
@@ -21,10 +21,9 @@ function diasRestantes(fechaVenta) {
 }
 
 export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAnular, getBadge }) {
-  const venta = modalDetalle.venta
+  const venta  = modalDetalle.venta
   const cerrar = () => setModalDetalle({ abierto: false, venta: null })
 
-  // Usa es_fiado del pedido, no permite_fiado del cliente
   const esFiado = venta?.es_fiado && venta?.estado?.toLowerCase().includes('pendiente')
   const dias    = esFiado ? diasRestantes(venta?.fecha_pedido) : null
   const vencida = dias !== null && dias < 0
@@ -70,6 +69,41 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                   {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
                 </span>
               </div>
+
+              {/* Tipo de pedido */}
+              <div>
+                <p className="campo-label">Origen</p>
+                <div className="flex items-center gap-1">
+                  {venta.origen === 'movil'
+                    ? <><Smartphone size={11} className="text-blue-500" /><span className="text-blue-500 font-medium">App móvil</span></>
+                    : <span className="text-gray-500">Web</span>
+                  }
+                </div>
+              </div>
+
+              {/* Fiado */}
+              {venta.es_fiado && (
+                <div>
+                  <p className="campo-label">Tipo de venta</p>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 border border-amber-500/30 text-amber-500">
+                    Fiado
+                  </span>
+                </div>
+              )}
+
+              {/* Entrega — solo pedidos móviles fiados */}
+              {venta.origen === 'movil' && venta.es_fiado && (
+                <div>
+                  <p className="campo-label">Entrega</p>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    venta.entregado
+                      ? 'bg-green-500/15 border border-green-500/30 text-green-600'
+                      : 'bg-gray-100 border border-gray-200 text-gray-500'
+                  }`}>
+                    {venta.entregado ? '✓ Entregado' : 'Pendiente de entrega'}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Datos del cliente */}
@@ -95,7 +129,7 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
               </div>
             )}
 
-            {/* Fiado */}
+            {/* Aviso fiado pendiente */}
             {esFiado && (
               <div className={`flex items-start gap-2 p-3 rounded-lg border text-xs ${
                 vencida ? 'bg-red-500/10 border-red-400/30' : dias <= 3 ? 'bg-amber-500/10 border-amber-400/30' : 'bg-amber-500/5 border-amber-400/20'
