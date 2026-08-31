@@ -37,10 +37,15 @@ export function usePagos() {
       return acc
     }, {})
 
+  // Solo pedidos pendientes que necesitan pago manual:
+  // - Pedidos web normales
+  // - Pedidos móviles CON fiado (necesitan abonos)
+  // - Excluye pedidos móviles sin fiado (esos se completan desde Ventas)
   const pedidos = todosLosPedidos.filter(p => {
     const estadoNom = p.estado?.toLowerCase() || ''
     if (estadoNom.includes('anula')) return false
     if (estadoNom.includes('complet') || estadoNom.includes('paga')) return false
+    if (p.origen === 'movil' && !p.es_fiado) return false
     return true
   })
 
@@ -96,7 +101,7 @@ export function usePagos() {
   }
 
   const pedidoSel      = todosLosPedidos.find(p => p.id === +form.pedido_id)
-  const esFiado        = !!pedidoSel?.es_fiado   // ← usa es_fiado del pedido
+  const esFiado        = !!pedidoSel?.es_fiado
   const totalPedido    = pedidoSel?.total || 0
   const totalPagado    = pagadoPorPedido[+form.pedido_id] || 0
   const montoPendiente = Math.max(0, totalPedido - totalPagado)
