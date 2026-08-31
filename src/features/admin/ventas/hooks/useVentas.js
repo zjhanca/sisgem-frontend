@@ -38,14 +38,11 @@ export function useVentas() {
   const estadoPendiente = estados.find(e => e.nombre?.toLowerCase().includes('pendiente'))
 
   // ── Sub-hooks ──
-  const carrito = useCarritoProductos({
-    productos,
-    getBarcode: ventasService.getBarcode,
-  })
+  const carrito  = useCarritoProductos({ productos, getBarcode: ventasService.getBarcode })
   const fiado    = useFiadoCalculo({ clientes, form })
   const anulacion = useAnulacionVenta()
 
-  // ── Helpers carrito adaptados al form local ──
+  // ── Helpers carrito ──
   const buscarProducto  = texto => carrito.buscarProducto(texto, setForm)
   const buscarPorCodigo = cod   => carrito.buscarPorCodigo(cod, prod => carrito.agregarProducto(prod, form, setForm))
   const agregarProducto = prod  => { carrito.agregarProducto(prod, form, setForm) }
@@ -110,6 +107,26 @@ export function useVentas() {
     mutationFn: ({ id, estado_id }) => ventasService.cambiarEstado(id, { estado_id }),
     onSuccess: () => { qc.invalidateQueries(['pedidos']); toast.success('Estado actualizado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
+  })
+
+  // Completar pedido móvil — cambia estado Y registra el pago
+  const completarPedidoMovil = useMutation({
+    mutationFn: async ({ id, total, metodo_pago }) => {
+      if (estadoPagado) {
+        await ventasService.cambiarEstado(id, { estado_id: estadoPagado.id })
+      }
+      await ventasService.registrarPago({
+        pedido_id: id,
+        monto: total,
+        metodo: metodo_pago || 'efectivo',
+      })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries(['pedidos'])
+      qc.invalidateQueries(['pagos'])
+      toast.success('Pedido marcado como completado y pago registrado')
+    },
+    onError: err => toast.error(err.response?.data?.mensaje || 'Error al completar el pedido'),
   })
 
   // ── Handlers ──
@@ -198,6 +215,7 @@ export function useVentas() {
     ...anulacion,
     anular: anularMutation,
     cambiarEstado,
+    completarPedidoMovil,
     handleCrear,
     getBadge, descargarReporte,
     notaAnulacion, setNotaAnulacion, MINIMO_FIADO,

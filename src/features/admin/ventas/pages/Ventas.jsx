@@ -40,7 +40,7 @@ export default function Ventas() {
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, getBadge, estados, cambiarEstado,
+    totalVenta, handleCrear, anular, getBadge, estados, cambiarEstado, completarPedidoMovil,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     descargarReporte,
     clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
@@ -59,15 +59,13 @@ export default function Ventas() {
 
   const [confirmDescarga, setConfirmDescarga] = useState(null)
   const [modalReporte, setModalReporte]       = useState(false)
+  const [modalCompletarMovil, setModalCompletarMovil] = useState({ abierto: false, venta: null })
+  const [metodoCompletarMovil, setMetodoCompletarMovil] = useState('efectivo')
 
   const estadosVenta = estados.filter(e => {
     const n = e.nombre?.toLowerCase()
     return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula')
   })
-
-  const estadoCompletado = estados.find(e =>
-    e.nombre?.toLowerCase().includes('complet') || e.nombre?.toLowerCase().includes('paga')
-  )
 
   const columnas = [
     { key: 'cliente', label: 'Cliente' },
@@ -75,7 +73,8 @@ export default function Ventas() {
     { key: 'estado_id', label: 'Estado',
       render: r => {
         const { color, label } = getBadgeEstado(r.estado)
-        const esFiadoPendiente = r.permite_fiado && r.estado?.toLowerCase().includes('pendiente')
+        // Badge fiado solo si el pedido ES fiado (campo es_fiado)
+        const esFiadoPendiente = r.es_fiado && r.estado?.toLowerCase().includes('pendiente')
         return (
           <div className="flex items-center gap-1.5">
             <BadgeEstado color={color} label={label} />
@@ -140,10 +139,9 @@ export default function Ventas() {
           )}
         </>}
         acciones={fila => {
-          const esPendiente  = fila.estado?.toLowerCase().includes('pendiente')
-          const esAnulada    = fila.estado?.toLowerCase().includes('anula')
-          // Pedido móvil pendiente sin fiado → puede marcarse completado
-          const esPedidoMovilPendiente = esPendiente && fila.origen === 'movil' && !fila.permite_fiado
+          const esPendiente = fila.estado?.toLowerCase().includes('pendiente')
+          const esAnulada   = fila.estado?.toLowerCase().includes('anula')
+          const esPedidoMovilPendiente = esPendiente && fila.origen === 'movil' && !fila.es_fiado
 
           return (<>
             <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost">
@@ -153,18 +151,18 @@ export default function Ventas() {
               <Download size={14} />
             </button>
 
-            {/* Marcar como completado — pedidos móviles pendientes sin fiado */}
-            {esPedidoMovilPendiente && estadoCompletado && (
+            {/* Completar pedido móvil pendiente sin fiado */}
+            {esPedidoMovilPendiente && (
               <button
-                onClick={() => cambiarEstado.mutate({ id: fila.id, estado_id: estadoCompletado.id })}
+                onClick={() => { setModalCompletarMovil({ abierto: true, venta: fila }); setMetodoCompletarMovil('efectivo') }}
                 className="btn-ghost hover:text-primary"
-                title="Marcar como completado (cliente pagó al recoger/recibir)">
+                title="Marcar como completado">
                 <CheckCircle size={14} />
               </button>
             )}
 
-            {/* Registrar abono — solo fiados pendientes */}
-            {fila.permite_fiado && esPendiente && (
+            {/* Registrar abono — fiados pendientes */}
+            {fila.es_fiado && esPendiente && (
               <button onClick={() => abrirConPedido(fila.id)}
                 className="btn-ghost hover:text-primary" title="Registrar abono">
                 <CreditCard size={14} />
@@ -190,6 +188,56 @@ export default function Ventas() {
           </>)
         }}
       />
+
+      {/* Modal completar pedido móvil */}
+      {modalCompletarMovil.abierto && modalCompletarMovil.venta && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setModalCompletarMovil({ abierto: false, venta: null })} />
+          <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl border border-gray-200 shadow-xl p-5 space-y-4">
+            <h3 className="text-sm font-semibold">Confirmar entrega — Pedido #{modalCompletarMovil.venta.id}</h3>
+            <p className="text-xs text-gray-500">
+              Total: <strong className="text-primary">{formatPrecio(modalCompletarMovil.venta.total)}</strong>
+            </p>
+            <div>
+              <label className="campo-label">Método de pago recibido</label>
+              <div className="flex gap-2 mt-1">
+                {['efectivo', 'transferencia'].map(m => (
+                  <button key={m} type="button"
+                    onClick={() => setMetodoCompletarMovil(m)}
+                    className={`flex-1 py-2 text-xs rounded-lg border transition-all capitalize ${
+                      metodoCompletarMovil === m
+                        ? 'bg-primary text-white border-primary'
+                        : 'border-gray-200 text-gray-500 hover:border-primary/40'
+                    }`}>
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+              <button type="button"
+                onClick={() => setModalCompletarMovil({ abierto: false, venta: null })}
+                className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg">
+                Cancelar
+              </button>
+              <button type="button"
+                disabled={completarPedidoMovil.isPending}
+                onClick={() => {
+                  completarPedidoMovil.mutate({
+                    id:         modalCompletarMovil.venta.id,
+                    total:      modalCompletarMovil.venta.total,
+                    metodo_pago: metodoCompletarMovil,
+                  }, {
+                    onSuccess: () => setModalCompletarMovil({ abierto: false, venta: null })
+                  })
+                }}
+                className="btn-primary disabled:opacity-50">
+                {completarPedidoMovil.isPending ? 'Guardando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <VentaForm
         modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
