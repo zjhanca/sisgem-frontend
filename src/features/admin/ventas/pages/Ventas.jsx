@@ -65,7 +65,6 @@ export default function Ventas() {
     return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula')
   })
 
-  // Estado "completado/pagado" para marcar pedidos móviles
   const estadoCompletado = estados.find(e =>
     e.nombre?.toLowerCase().includes('complet') || e.nombre?.toLowerCase().includes('paga')
   )
@@ -85,13 +84,15 @@ export default function Ventas() {
                 Fiado
               </span>
             )}
+            {r.origen === 'movil' && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-500 font-medium">
+                App
+              </span>
+            )}
           </div>
         )
       }
     },
-    { key: 'tipo_venta', label: 'Tipo', render: r => (
-      <span className="text-xs text-gray-500 capitalize">{r.tipo_venta || 'mostrador'}</span>
-    )},
     { key: 'fecha_pedido', label: 'Fecha', render: r => formatFechaHora(r.fecha_pedido) },
   ]
 
@@ -139,11 +140,10 @@ export default function Ventas() {
           )}
         </>}
         acciones={fila => {
-          const esPendiente = fila.estado?.toLowerCase().includes('pendiente')
-          const esAnulada   = fila.estado?.toLowerCase().includes('anula')
-          const esCompletada = !esPendiente && !esAnulada
-          // Pedido móvil pendiente sin fiado — puede marcarse como completado
-          const esPedidoMovilPendiente = esPendiente && !fila.permite_fiado
+          const esPendiente  = fila.estado?.toLowerCase().includes('pendiente')
+          const esAnulada    = fila.estado?.toLowerCase().includes('anula')
+          // Pedido móvil pendiente sin fiado → puede marcarse completado
+          const esPedidoMovilPendiente = esPendiente && fila.origen === 'movil' && !fila.permite_fiado
 
           return (<>
             <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost">
