@@ -57,10 +57,10 @@ export default function Ventas() {
     creando: creandoPago,
   } = usePagos()
 
-  const [confirmDescarga, setConfirmDescarga] = useState(null)
-  const [modalReporte, setModalReporte]       = useState(false)
-  const [modalCompletarMovil, setModalCompletarMovil] = useState({ abierto: false, venta: null })
-  const [metodoCompletarMovil, setMetodoCompletarMovil] = useState('efectivo')
+  const [confirmDescarga, setConfirmDescarga]             = useState(null)
+  const [modalReporte, setModalReporte]                   = useState(false)
+  const [modalCompletarMovil, setModalCompletarMovil]     = useState({ abierto: false, venta: null })
+  const [metodoCompletarMovil, setMetodoCompletarMovil]   = useState('efectivo')
 
   const estadosVenta = estados.filter(e => {
     const n = e.nombre?.toLowerCase()
@@ -73,7 +73,6 @@ export default function Ventas() {
     { key: 'estado_id', label: 'Estado',
       render: r => {
         const { color, label } = getBadgeEstado(r.estado)
-        // Badge fiado solo si el pedido ES fiado (campo es_fiado)
         const esFiadoPendiente = r.es_fiado && r.estado?.toLowerCase().includes('pendiente')
         return (
           <div className="flex items-center gap-1.5">
@@ -141,6 +140,8 @@ export default function Ventas() {
         acciones={fila => {
           const esPendiente = fila.estado?.toLowerCase().includes('pendiente')
           const esAnulada   = fila.estado?.toLowerCase().includes('anula')
+
+          // Pedido móvil pendiente sin fiado → confirmar entrega/recepción
           const esPedidoMovilPendiente = esPendiente && fila.origen === 'movil' && !fila.es_fiado
 
           return (<>
@@ -151,17 +152,20 @@ export default function Ventas() {
               <Download size={14} />
             </button>
 
-            {/* Completar pedido móvil pendiente sin fiado */}
+            {/* Confirmar entrega/recepción — pedidos móviles sin fiado */}
             {esPedidoMovilPendiente && (
               <button
-                onClick={() => { setModalCompletarMovil({ abierto: true, venta: fila }); setMetodoCompletarMovil('efectivo') }}
+                onClick={() => {
+                  setModalCompletarMovil({ abierto: true, venta: fila })
+                  setMetodoCompletarMovil('efectivo')
+                }}
                 className="btn-ghost hover:text-primary"
-                title="Marcar como completado">
+                title={fila.tipo_venta === 'domicilio' ? 'Confirmar entrega' : 'Confirmar recepción'}>
                 <CheckCircle size={14} />
               </button>
             )}
 
-            {/* Registrar abono — fiados pendientes */}
+            {/* Registrar abono — pedidos móviles con fiado */}
             {fila.es_fiado && esPendiente && (
               <button onClick={() => abrirConPedido(fila.id)}
                 className="btn-ghost hover:text-primary" title="Registrar abono">
@@ -189,14 +193,23 @@ export default function Ventas() {
         }}
       />
 
-      {/* Modal completar pedido móvil */}
+      {/* Modal confirmar entrega/recepción pedido móvil */}
       {modalCompletarMovil.abierto && modalCompletarMovil.venta && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setModalCompletarMovil({ abierto: false, venta: null })} />
+          <div className="absolute inset-0 bg-black/50"
+            onClick={() => setModalCompletarMovil({ abierto: false, venta: null })} />
           <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl border border-gray-200 shadow-xl p-5 space-y-4">
-            <h3 className="text-sm font-semibold">Confirmar entrega — Pedido #{modalCompletarMovil.venta.id}</h3>
+            <h3 className="text-sm font-semibold">
+              Confirmar {modalCompletarMovil.venta.tipo_venta === 'domicilio' ? 'entrega' : 'recepción'} — Pedido #{modalCompletarMovil.venta.id}
+            </h3>
             <p className="text-xs text-gray-500">
-              Total: <strong className="text-primary">{formatPrecio(modalCompletarMovil.venta.total)}</strong>
+              El cliente {modalCompletarMovil.venta.tipo_venta === 'domicilio'
+                ? 'recibió el pedido a domicilio'
+                : 'recogió el pedido en la tienda'}.
+              Selecciona cómo pagó:
+            </p>
+            <p className="text-sm font-bold text-primary">
+              Total: {formatPrecio(modalCompletarMovil.venta.total)}
             </p>
             <div>
               <label className="campo-label">Método de pago recibido</label>
@@ -224,8 +237,8 @@ export default function Ventas() {
                 disabled={completarPedidoMovil.isPending}
                 onClick={() => {
                   completarPedidoMovil.mutate({
-                    id:         modalCompletarMovil.venta.id,
-                    total:      modalCompletarMovil.venta.total,
+                    id:          modalCompletarMovil.venta.id,
+                    total:       modalCompletarMovil.venta.total,
                     metodo_pago: metodoCompletarMovil,
                   }, {
                     onSuccess: () => setModalCompletarMovil({ abierto: false, venta: null })
