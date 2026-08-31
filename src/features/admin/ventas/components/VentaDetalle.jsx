@@ -55,10 +55,19 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                 <p className="campo-label">Cliente</p>
                 <p className="font-medium">{clienteInfo.nombre}</p>
               </div>
-              <div>
-                <p className="campo-label">Estado</p>
-                <span className={getBadge(venta.estado)}>{venta.estado}</span>
-              </div>
+                <div>
+                  <p className="campo-label">Estado</p>
+                  {(() => {
+                    const l = venta.estado?.toLowerCase() || ''
+                    const color = l.includes('anula') ? 'bg-gray-300' : l.includes('complet') || l.includes('paga') ? 'bg-primary' : 'bg-amber-500'
+                    const label = l.includes('anula') ? 'Anulado' : l.includes('complet') || l.includes('paga') ? 'Completado' : 'Pendiente'
+                    return (
+                      <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full text-white text-xs font-semibold ${color}`}>
+                        {label}
+                      </span>
+                    )
+                  })()}
+                </div>
               <div>
                 <p className="campo-label">Fecha</p>
                 <p>{formatFechaHora(venta.fecha_pedido)}</p>
