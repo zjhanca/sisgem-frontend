@@ -23,14 +23,16 @@ function diasRestantes(fechaVenta) {
 export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAnular, getBadge }) {
   const venta = modalDetalle.venta
   const cerrar = () => setModalDetalle({ abierto: false, venta: null })
-  const esFiado = venta?.permite_fiado && venta?.estado?.toLowerCase().includes('pendiente')
-  const dias = esFiado ? diasRestantes(venta?.fecha_pedido) : null
+
+  // Usa es_fiado del pedido, no permite_fiado del cliente
+  const esFiado = venta?.es_fiado && venta?.estado?.toLowerCase().includes('pendiente')
+  const dias    = esFiado ? diasRestantes(venta?.fecha_pedido) : null
   const vencida = dias !== null && dias < 0
 
   const { data: detalle, isLoading } = useQuery({
     queryKey: ['pedido-detalle', venta?.id],
-    queryFn: () => ventasService.getDetalle(venta.id),
-    enabled: !!venta?.id && modalDetalle.abierto,
+    queryFn:  () => ventasService.getDetalle(venta.id),
+    enabled:  !!venta?.id && modalDetalle.abierto,
   })
 
   const clienteInfo = {
@@ -46,8 +48,6 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo={`Venta #${venta?.id}`}>
       {venta && (
         <div className="flex flex-col" style={{ maxHeight: '80vh' }}>
-
-          {/* Contenido scrolleable */}
           <div className="overflow-y-auto flex-1 space-y-3 text-xs pr-1">
 
             {/* Info básica */}
@@ -153,7 +153,6 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                 </div>
               )}
             </div>
-
           </div>
 
           {/* Total fijo + acciones */}
@@ -170,7 +169,6 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
               </button>
             </div>
           </div>
-
         </div>
       )}
     </Modal>
