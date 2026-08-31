@@ -61,7 +61,8 @@ export default function PagoForm({
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-primary">#{p.id}</span>
                         <span className="text-light-text">{p.cliente}</span>
-                        {p.permite_fiado && <span className="badge-pendiente text-xs">Fiado</span>}
+                        {/* Badge fiado solo si el pedido es fiado */}
+                        {p.es_fiado && <span className="badge-pendiente text-xs">Fiado</span>}
                       </div>
                       <span className="text-primary font-medium shrink-0">{formatPrecio(p.total)}</span>
                     </button>
@@ -80,7 +81,7 @@ export default function PagoForm({
 
         {esFiado && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500">
-            <span className="font-medium">Cliente con fiado habilitado</span>
+            <span className="font-medium">Venta a crédito (Fiado)</span>
             <span className="text-amber-400/70">— sin límite de monto</span>
           </div>
         )}
@@ -116,7 +117,6 @@ export default function PagoForm({
                 </span>
               )}
             </div>
-            {/* monto siempre editable — readOnly solo cuando está completo para permitir copiar */}
             <input
               type="text"
               inputMode="numeric"

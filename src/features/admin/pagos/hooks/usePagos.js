@@ -18,14 +18,14 @@ export function usePagos() {
   const [modalAnular, setModalAnular]   = useState({ abierto: false, pago: null })
   const [form, setForm]       = useState(formVacio)
   const [errores, setErrores] = useState({})
-  const [filtroEstado, setFiltroEstado] = useState('')
-  const [filtroDesde, setFiltroDesde]   = useState('')
-  const [filtroHasta, setFiltroHasta]   = useState('')
+  const [filtroEstado, setFiltroEstado]     = useState('')
+  const [filtroDesde, setFiltroDesde]       = useState('')
+  const [filtroHasta, setFiltroHasta]       = useState('')
   const [filtroBusqueda, setFiltroBusqueda] = useState('')
   const [pedidoBusqueda, setPedidoBusqueda] = useState('')
   const [pedidoDropdown, setPedidoDropdown] = useState(false)
 
-  const { data: pagos = [] }          = useQuery({ queryKey: ['pagos'],   queryFn: pagosService.getAll })
+  const { data: pagos = [] }           = useQuery({ queryKey: ['pagos'],   queryFn: pagosService.getAll })
   const { data: todosLosPedidos = [] } = useQuery({ queryKey: ['pedidos'], queryFn: pagosService.getPedidos })
 
   const getFechaPago = p => p.fecha_pago || p.fecha || p.created_at || null
@@ -52,15 +52,15 @@ export function usePagos() {
       const key = pago.pedido_id
       if (!grupos.has(key)) {
         grupos.set(key, {
-          pedido_id: key,
-          cliente: pago.cliente || '—',
-          total_pedido: +pago.total_pedido || 0,
-          fecha_pedido: pago.fecha_pedido || null,
+          pedido_id:              key,
+          cliente:                pago.cliente || '—',
+          total_pedido:           +pago.total_pedido || 0,
+          fecha_pedido:           pago.fecha_pedido || null,
           fecha_limite_anulacion: pago.fecha_limite_anulacion || null,
-          venta_anulada: esAnulado(pago.estado_venta),
-          pagos: [],
-          total_pagado: 0,
-          ultima_fecha: null,
+          venta_anulada:          esAnulado(pago.estado_venta),
+          pagos:                  [],
+          total_pagado:           0,
+          ultima_fecha:           null,
         })
       }
       const grupo = grupos.get(key)
@@ -96,7 +96,7 @@ export function usePagos() {
   }
 
   const pedidoSel      = todosLosPedidos.find(p => p.id === +form.pedido_id)
-  const esFiado        = !!pedidoSel?.permite_fiado
+  const esFiado        = !!pedidoSel?.es_fiado   // ← usa es_fiado del pedido
   const totalPedido    = pedidoSel?.total || 0
   const totalPagado    = pagadoPorPedido[+form.pedido_id] || 0
   const montoPendiente = Math.max(0, totalPedido - totalPagado)
