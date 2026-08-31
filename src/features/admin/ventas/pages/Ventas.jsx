@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Eye, Download, Ban, Search, CreditCard } from 'lucide-react'
+import { Plus, Eye, Download, Ban, Search, CreditCard, CheckCircle } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import ReporteDescargaModal from '../components/ReporteDescargaModal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
@@ -16,7 +16,7 @@ const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLo
 const getBadgeEstado = nombre => {
   if (!nombre) return { color: 'bg-amber-500', label: 'Pendiente' }
   const l = nombre.toLowerCase()
-  if (l.includes('anula'))                         return { color: 'bg-gray-300', label: 'Anulado' }
+  if (l.includes('anula'))                         return { color: 'bg-gray-300', label: 'Anulado'    }
   if (l.includes('complet') || l.includes('paga')) return { color: 'bg-primary',  label: 'Completado' }
   return { color: 'bg-amber-500', label: 'Pendiente' }
 }
@@ -40,7 +40,7 @@ export default function Ventas() {
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, getBadge, estados,
+    totalVenta, handleCrear, anular, getBadge, estados, cambiarEstado,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     descargarReporte,
     clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
@@ -65,6 +65,11 @@ export default function Ventas() {
     return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula')
   })
 
+  // Estado "completado/pagado" para marcar pedidos móviles
+  const estadoCompletado = estados.find(e =>
+    e.nombre?.toLowerCase().includes('complet') || e.nombre?.toLowerCase().includes('paga')
+  )
+
   const columnas = [
     { key: 'cliente', label: 'Cliente' },
     { key: 'total',   label: 'Total',  render: r => formatPrecio(r.total) },
@@ -84,6 +89,9 @@ export default function Ventas() {
         )
       }
     },
+    { key: 'tipo_venta', label: 'Tipo', render: r => (
+      <span className="text-xs text-gray-500 capitalize">{r.tipo_venta || 'mostrador'}</span>
+    )},
     { key: 'fecha_pedido', label: 'Fecha', render: r => formatFechaHora(r.fecha_pedido) },
   ]
 
@@ -130,36 +138,57 @@ export default function Ventas() {
               className="btn-ghost text-xs text-red-400">Limpiar</button>
           )}
         </>}
-        acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost">
-            <Eye size={14} />
-          </button>
-          <button onClick={() => setConfirmDescarga({ tipo: 'comprobante', id: fila.id })} className="btn-ghost">
-            <Download size={14} />
-          </button>
-          {fila.permite_fiado && fila.estado?.toLowerCase().includes('pendiente') && (
-            <button onClick={() => abrirConPedido(fila.id)}
-              className="btn-ghost hover:text-primary" title="Registrar abono">
-              <CreditCard size={14} />
+        acciones={fila => {
+          const esPendiente = fila.estado?.toLowerCase().includes('pendiente')
+          const esAnulada   = fila.estado?.toLowerCase().includes('anula')
+          const esCompletada = !esPendiente && !esAnulada
+          // Pedido móvil pendiente sin fiado — puede marcarse como completado
+          const esPedidoMovilPendiente = esPendiente && !fila.permite_fiado
+
+          return (<>
+            <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost">
+              <Eye size={14} />
             </button>
-          )}
-          {(() => {
-            const esAnulada = fila.estado?.toLowerCase().includes('anula')
-            if (esAnulada) return null
-            if (!puedeAnular(fila)) return (
-              <button disabled title="Solo se puede anular dentro de las primeras 72 horas"
-                className="btn-ghost opacity-30 cursor-not-allowed"><Ban size={14} /></button>
-            )
-            const horas = horasRestantesAnulacion(fila)
-            return (
-              <button onClick={() => setModalAnular({ abierto: true, venta: fila })}
-                className="btn-ghost hover:text-red-400"
-                title={horas !== null ? `Anular (quedan ${horas}h)` : 'Anular'}>
-                <Ban size={14} />
+            <button onClick={() => setConfirmDescarga({ tipo: 'comprobante', id: fila.id })} className="btn-ghost">
+              <Download size={14} />
+            </button>
+
+            {/* Marcar como completado — pedidos móviles pendientes sin fiado */}
+            {esPedidoMovilPendiente && estadoCompletado && (
+              <button
+                onClick={() => cambiarEstado.mutate({ id: fila.id, estado_id: estadoCompletado.id })}
+                className="btn-ghost hover:text-primary"
+                title="Marcar como completado (cliente pagó al recoger/recibir)">
+                <CheckCircle size={14} />
               </button>
-            )
-          })()}
-        </>)}
+            )}
+
+            {/* Registrar abono — solo fiados pendientes */}
+            {fila.permite_fiado && esPendiente && (
+              <button onClick={() => abrirConPedido(fila.id)}
+                className="btn-ghost hover:text-primary" title="Registrar abono">
+                <CreditCard size={14} />
+              </button>
+            )}
+
+            {/* Anular */}
+            {(() => {
+              if (esAnulada) return null
+              if (!puedeAnular(fila)) return (
+                <button disabled title="Solo se puede anular dentro de las primeras 72 horas"
+                  className="btn-ghost opacity-30 cursor-not-allowed"><Ban size={14} /></button>
+              )
+              const horas = horasRestantesAnulacion(fila)
+              return (
+                <button onClick={() => setModalAnular({ abierto: true, venta: fila })}
+                  className="btn-ghost hover:text-red-400"
+                  title={horas !== null ? `Anular (quedan ${horas}h)` : 'Anular'}>
+                  <Ban size={14} />
+                </button>
+              )
+            })()}
+          </>)
+        }}
       />
 
       <VentaForm
@@ -176,7 +205,6 @@ export default function Ventas() {
         excedeCupoFiado={excedeCupoFiado} montoFiado={montoFiado} montoInmediato={montoInmediato}
         MINIMO_FIADO={MINIMO_FIADO}
       />
-
       <VentaDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         setModalAnular={setModalAnular} getBadge={getBadge} />
       <VentaAnular modalAnular={modalAnular} setModalAnular={setModalAnular}
