@@ -40,7 +40,8 @@ export default function Ventas() {
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
     setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, getBadge, estados, cambiarEstado, completarPedidoMovil,
+    totalVenta, handleCrear, anular, getBadge, estados, cambiarEstado,
+    completarPedidoMovil, marcarEntregado,
     getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     descargarReporte,
     clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
@@ -57,10 +58,10 @@ export default function Ventas() {
     creando: creandoPago,
   } = usePagos()
 
-  const [confirmDescarga, setConfirmDescarga]             = useState(null)
-  const [modalReporte, setModalReporte]                   = useState(false)
-  const [modalCompletarMovil, setModalCompletarMovil]     = useState({ abierto: false, venta: null })
-  const [metodoCompletarMovil, setMetodoCompletarMovil]   = useState('efectivo')
+  const [confirmDescarga, setConfirmDescarga]           = useState(null)
+  const [modalReporte, setModalReporte]                 = useState(false)
+  const [modalCompletarMovil, setModalCompletarMovil]   = useState({ abierto: false, venta: null })
+  const [metodoCompletarMovil, setMetodoCompletarMovil] = useState('efectivo')
 
   const estadosVenta = estados.filter(e => {
     const n = e.nombre?.toLowerCase()
@@ -69,13 +70,13 @@ export default function Ventas() {
 
   const columnas = [
     { key: 'cliente', label: 'Cliente' },
-    { key: 'total',   label: 'Total',  render: r => formatPrecio(r.total) },
+    { key: 'total',   label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado_id', label: 'Estado',
       render: r => {
         const { color, label } = getBadgeEstado(r.estado)
         const esFiadoPendiente = r.es_fiado && r.estado?.toLowerCase().includes('pendiente')
         return (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <BadgeEstado color={color} label={label} />
             {esFiadoPendiente && (
               <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 font-medium">
@@ -85,6 +86,12 @@ export default function Ventas() {
             {r.origen === 'movil' && (
               <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-500 font-medium">
                 App
+              </span>
+            )}
+            {/* Badge entregado — fiado móvil ya entregado pero pendiente de pago */}
+            {r.origen === 'movil' && r.es_fiado && r.entregado && r.estado?.toLowerCase().includes('pendiente') && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-500/15 border border-green-500/30 text-green-600 font-medium">
+                Entregado
               </span>
             )}
           </div>
@@ -141,8 +148,14 @@ export default function Ventas() {
           const esPendiente = fila.estado?.toLowerCase().includes('pendiente')
           const esAnulada   = fila.estado?.toLowerCase().includes('anula')
 
-          // Pedido móvil pendiente sin fiado → confirmar entrega/recepción
+          // Móvil sin fiado pendiente → confirmar + registrar pago
           const esPedidoMovilPendiente = esPendiente && fila.origen === 'movil' && !fila.es_fiado
+
+          // Móvil con fiado pendiente y NO entregado aún → marcar entregado
+          const esFiadoMovilNoEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && !fila.entregado
+
+          // Móvil con fiado pendiente, ya entregado → registrar abono
+          const esFiadoMovilEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && fila.entregado
 
           return (<>
             <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost">
@@ -152,7 +165,7 @@ export default function Ventas() {
               <Download size={14} />
             </button>
 
-            {/* Confirmar entrega/recepción — pedidos móviles sin fiado */}
+            {/* Confirmar entrega/recepción — móvil sin fiado */}
             {esPedidoMovilPendiente && (
               <button
                 onClick={() => {
@@ -165,8 +178,18 @@ export default function Ventas() {
               </button>
             )}
 
-            {/* Registrar abono — pedidos móviles con fiado */}
-            {fila.es_fiado && esPendiente && (
+            {/* Marcar como entregado — móvil fiado, no entregado aún */}
+            {esFiadoMovilNoEntregado && (
+              <button
+                onClick={() => marcarEntregado.mutate({ id: fila.id })}
+                className="btn-ghost hover:text-green-500"
+                title={fila.tipo_venta === 'domicilio' ? 'Confirmar entrega' : 'Confirmar recepción'}>
+                <CheckCircle size={14} />
+              </button>
+            )}
+
+            {/* Registrar abono — fiado móvil ya entregado O fiado web */}
+            {(esFiadoMovilEntregado || (fila.es_fiado && esPendiente && fila.origen !== 'movil')) && (
               <button onClick={() => abrirConPedido(fila.id)}
                 className="btn-ghost hover:text-primary" title="Registrar abono">
                 <CreditCard size={14} />
@@ -193,7 +216,7 @@ export default function Ventas() {
         }}
       />
 
-      {/* Modal confirmar entrega/recepción pedido móvil */}
+      {/* Modal confirmar entrega/recepción pedido móvil sin fiado */}
       {modalCompletarMovil.abierto && modalCompletarMovil.venta && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50"

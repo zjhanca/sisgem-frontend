@@ -109,24 +109,28 @@ export function useVentas() {
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
 
-  // Completar pedido móvil — cambia estado Y registra el pago
+  // Completar pedido móvil sin fiado — cambia estado Y registra pago
   const completarPedidoMovil = useMutation({
     mutationFn: async ({ id, total, metodo_pago }) => {
-      if (estadoPagado) {
-        await ventasService.cambiarEstado(id, { estado_id: estadoPagado.id })
-      }
-      await ventasService.registrarPago({
-        pedido_id: id,
-        monto: total,
-        metodo: metodo_pago || 'efectivo',
-      })
+      if (estadoPagado) await ventasService.cambiarEstado(id, { estado_id: estadoPagado.id })
+      await ventasService.registrarPago({ pedido_id: id, monto: total, metodo: metodo_pago || 'efectivo' })
     },
     onSuccess: () => {
       qc.invalidateQueries(['pedidos'])
       qc.invalidateQueries(['pagos'])
-      toast.success('Pedido marcado como completado y pago registrado')
+      toast.success('Pedido completado y pago registrado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al completar el pedido'),
+  })
+
+  // Marcar entregado — solo para fiados móviles, sin cambiar estado
+  const marcarEntregado = useMutation({
+    mutationFn: ({ id }) => ventasService.marcarEntregado(id),
+    onSuccess: () => {
+      qc.invalidateQueries(['pedidos'])
+      toast.success('Pedido marcado como entregado')
+    },
+    onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
 
   // ── Handlers ──
@@ -216,6 +220,7 @@ export function useVentas() {
     anular: anularMutation,
     cambiarEstado,
     completarPedidoMovil,
+    marcarEntregado,
     handleCrear,
     getBadge, descargarReporte,
     notaAnulacion, setNotaAnulacion, MINIMO_FIADO,
