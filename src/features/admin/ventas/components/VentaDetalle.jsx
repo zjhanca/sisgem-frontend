@@ -20,6 +20,21 @@ function diasRestantes(fechaVenta) {
   return Math.ceil((limite - hoy) / (1000 * 60 * 60 * 24))
 }
 
+function BadgeEstado({ estado }) {
+  const l = estado?.toLowerCase() || ''
+  const color = l.includes('anula') ? 'bg-gray-300'
+    : l.includes('complet') || l.includes('paga') ? 'bg-primary'
+    : 'bg-amber-500'
+  const label = l.includes('anula') ? 'Anulado'
+    : l.includes('complet') || l.includes('paga') ? 'Completado'
+    : 'Pendiente'
+  return (
+    <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full text-white text-xs font-semibold ${color}`}>
+      {label}
+    </span>
+  )
+}
+
 export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAnular, getBadge }) {
   const venta  = modalDetalle.venta
   const cerrar = () => setModalDetalle({ abierto: false, venta: null })
@@ -49,128 +64,115 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
         <div className="flex flex-col" style={{ maxHeight: '80vh' }}>
           <div className="overflow-y-auto flex-1 space-y-3 text-xs pr-1">
 
-            {/* Info básica */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="campo-label">Cliente</p>
-                <p className="font-medium">{clienteInfo.nombre}</p>
-              </div>
-                <div>
-                  <p className="campo-label">Estado</p>
-                  {(() => {
-                    const l = venta.estado?.toLowerCase() || ''
-                    const color = l.includes('anula') ? 'bg-gray-300' : l.includes('complet') || l.includes('paga') ? 'bg-primary' : 'bg-amber-500'
-                    const label = l.includes('anula') ? 'Anulado' : l.includes('complet') || l.includes('paga') ? 'Completado' : 'Pendiente'
-                    return (
-                      <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full text-white text-xs font-semibold ${color}`}>
-                        {label}
-                      </span>
-                    )
-                  })()}
-                </div>
-              <div>
-                <p className="campo-label">Fecha</p>
-                <p>{formatFechaHora(venta.fecha_pedido)}</p>
-              </div>
-              <div>
-                <p className="campo-label">Método de Pago</p>
-                <span className="capitalize font-medium">
-                  {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
-                </span>
-              </div>
+            {/* ── Fila 1: Estado + Fecha ── */}
+            <div className="flex items-center justify-between">
+              <BadgeEstado estado={venta.estado} />
+              <span className="text-gray-400">{formatFechaHora(venta.fecha_pedido)}</span>
+            </div>
 
-              {/* Tipo de pedido */}
-              <div>
-                <p className="campo-label">Origen</p>
-                <div className="flex items-center gap-1">
-                  {venta.origen === 'movil'
-                    ? <><Smartphone size={11} className="text-blue-500" /><span className="text-blue-500 font-medium">App móvil</span></>
-                    : <span className="text-gray-500">Web</span>
-                  }
+            {/* ── Fila 2: Cliente + badges de contexto ── */}
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="campo-label mb-0.5">Cliente</p>
+                  <p className="font-semibold text-sm">{clienteInfo.nombre}</p>
+                </div>
+                {/* Badges contexto alineados a la derecha */}
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  {venta.origen === 'movil' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/15 border border-blue-500/30 text-blue-500">
+                      <Smartphone size={10} /> App
+                    </span>
+                  )}
+                  {venta.es_fiado && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 border border-amber-500/30 text-amber-500">
+                      Fiado
+                    </span>
+                  )}
+                  {venta.origen === 'movil' && venta.es_fiado && (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      venta.entregado
+                        ? 'bg-green-500/15 border border-green-500/30 text-green-600'
+                        : 'bg-gray-100 border border-gray-200 text-gray-400'
+                    }`}>
+                      {venta.entregado ? '✓ Entregado' : 'Sin entregar'}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Fiado */}
-              {venta.es_fiado && (
-                <div>
-                  <p className="campo-label">Tipo de venta</p>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 border border-amber-500/30 text-amber-500">
-                    Fiado
-                  </span>
-                </div>
-              )}
-
-              {/* Entrega — solo pedidos móviles fiados */}
-              {venta.origen === 'movil' && venta.es_fiado && (
-                <div>
-                  <p className="campo-label">Entrega</p>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    venta.entregado
-                      ? 'bg-green-500/15 border border-green-500/30 text-green-600'
-                      : 'bg-gray-100 border border-gray-200 text-gray-500'
-                  }`}>
-                    {venta.entregado ? '✓ Entregado' : 'Pendiente de entrega'}
-                  </span>
+              {/* Datos de contacto en una sola fila */}
+              {(clienteInfo.telefono || clienteInfo.numero_documento) && (
+                <div className="flex flex-wrap gap-3 pt-1 border-t border-gray-200">
+                  {clienteInfo.telefono && (
+                    <div className="flex items-center gap-1.5 text-gray-500">
+                      <Phone size={11} className="text-gray-400 shrink-0" />
+                      <span>{clienteInfo.telefono}</span>
+                    </div>
+                  )}
+                  {clienteInfo.numero_documento && (
+                    <div className="flex items-center gap-1.5 text-gray-500">
+                      <CreditCard size={11} className="text-gray-400 shrink-0" />
+                      <span>{clienteInfo.tipo_documento || 'CC'}: {clienteInfo.numero_documento}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Datos del cliente */}
-            {(clienteInfo.telefono || clienteInfo.numero_documento) && (
-              <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 space-y-1.5">
-                <p className="campo-label flex items-center gap-1 mb-2">
-                  <FileText size={11} /> Datos del cliente
+            {/* ── Fila 3: Método de pago + Origen en una sola fila ── */}
+            <div className="flex items-center justify-between px-1">
+              <div>
+                <p className="campo-label">Método de pago</p>
+                <p className="font-medium capitalize">
+                  {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
                 </p>
-                {clienteInfo.telefono && (
-                  <div className="flex items-center gap-2">
-                    <Phone size={11} className="text-gray-400 shrink-0" />
-                    <span className="text-gray-600">{clienteInfo.telefono}</span>
-                  </div>
-                )}
-                {clienteInfo.numero_documento && (
-                  <div className="flex items-center gap-2">
-                    <CreditCard size={11} className="text-gray-400 shrink-0" />
-                    <span className="text-gray-600">
-                      {clienteInfo.tipo_documento || 'CC'}: {clienteInfo.numero_documento}
-                    </span>
-                  </div>
-                )}
               </div>
-            )}
+              <div className="text-right">
+                <p className="campo-label">Entrega</p>
+                <p className="font-medium capitalize">
+                  {venta.tipo_venta === 'domicilio' ? 'A domicilio' : 'En tienda'}
+                </p>
+              </div>
+            </div>
 
-            {/* Aviso fiado pendiente */}
+            {/* ── Aviso fiado pendiente ── */}
             {esFiado && (
-              <div className={`flex items-start gap-2 p-3 rounded-lg border text-xs ${
-                vencida ? 'bg-red-500/10 border-red-400/30' : dias <= 3 ? 'bg-amber-500/10 border-amber-400/30' : 'bg-amber-500/5 border-amber-400/20'
+              <div className={`flex items-start gap-2 p-3 rounded-lg border ${
+                vencida ? 'bg-red-500/10 border-red-400/30'
+                : dias <= 3 ? 'bg-amber-500/10 border-amber-400/30'
+                : 'bg-amber-500/5 border-amber-400/20'
               }`}>
                 <Clock size={14} className={`shrink-0 mt-0.5 ${vencida ? 'text-red-400' : 'text-amber-500'}`} />
                 <div className="flex-1">
                   <p className={`font-semibold ${vencida ? 'text-red-400' : 'text-amber-500'}`}>
                     {vencida ? 'Abono vencido' : 'Venta a crédito — Fiado'}
                   </p>
-                  <p className="text-gray-400 mt-0.5">
-                    Próximo abono: <span className={`font-medium ${vencida ? 'text-red-400' : 'text-amber-500'}`}>
-                      {proximoAbono(venta.fecha_pedido)}
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-gray-400">
+                      Próximo abono: <span className={`font-medium ${vencida ? 'text-red-400' : 'text-amber-500'}`}>
+                        {proximoAbono(venta.fecha_pedido)}
+                      </span>
                     </span>
-                  </p>
-                  <p className={`mt-0.5 ${vencida ? 'text-red-400' : dias <= 3 ? 'text-amber-400' : 'text-gray-400'}`}>
-                    {vencida
-                      ? `Vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
-                      : dias === 0 ? 'Vence hoy'
-                      : `Faltan ${dias} día${dias !== 1 ? 's' : ''}`}
-                  </p>
+                    <span className={vencida ? 'text-red-400' : dias <= 3 ? 'text-amber-400' : 'text-gray-400'}>
+                      {vencida
+                        ? `Vencido hace ${Math.abs(dias)}d`
+                        : dias === 0 ? 'Vence hoy'
+                        : `Faltan ${dias}d`}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Productos */}
+            {/* ── Productos ── */}
             <div className="pt-1 border-t border-gray-100">
               <p className="campo-label mb-1.5 flex items-center gap-1">
-                <Package size={11} /> Productos comprados
+                <Package size={11} /> Productos
               </p>
               {isLoading ? (
                 <div className="flex items-center justify-center py-4 text-gray-400">
-                  <Loader2 size={14} className="animate-spin mr-2" /> Cargando productos...
+                  <Loader2 size={14} className="animate-spin mr-2" /> Cargando...
                 </div>
               ) : productos.length === 0 ? (
                 <p className="text-center text-gray-400 py-3">Sin productos registrados</p>
@@ -198,19 +200,17 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
             </div>
           </div>
 
-          {/* Total fijo + acciones */}
+          {/* ── Total + acciones ── */}
           <div className="pt-3 mt-3 border-t border-gray-100 shrink-0 space-y-3">
             <div className="flex justify-between items-center px-1">
-              <span className="text-sm font-semibold text-light-text">Total</span>
+              <span className="text-sm font-semibold">Total</span>
               <span className="text-lg font-bold text-primary">{formatPrecio(venta.total)}</span>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => descargarPDF(`/reportes/pedido/${venta.id}`, `comprobante-${venta.id}.pdf`)}
-                className="btn-outline text-xs flex-1 justify-center">
-                <Download size={12} /> Comprobante
-              </button>
-            </div>
+            <button
+              onClick={() => descargarPDF(`/reportes/pedido/${venta.id}`, `comprobante-${venta.id}.pdf`)}
+              className="btn-outline text-xs w-full justify-center">
+              <Download size={12} /> Comprobante
+            </button>
           </div>
         </div>
       )}
