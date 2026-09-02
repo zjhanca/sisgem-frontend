@@ -4,7 +4,7 @@ import { pagosService } from '../services/pagosService'
 import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
-const formVacio = { pedido_id: '', monto: '', metodo: 'efectivo' }
+const formVacio = { cliente_id: '', monto: '', metodo: 'efectivo' }
 const MONTO_MINIMO_ABONO = 10000
 
 function esPagado(n)  { return n && (n.toLowerCase().includes('paga') || n.toLowerCase().includes('activ') || n.toLowerCase().includes('complet')) }
@@ -18,15 +18,16 @@ export function usePagos() {
   const [modalAnular, setModalAnular]   = useState({ abierto: false, pago: null })
   const [form, setForm]       = useState(formVacio)
   const [errores, setErrores] = useState({})
-  const [filtroEstado, setFiltroEstado]     = useState('')
-  const [filtroDesde, setFiltroDesde]       = useState('')
-  const [filtroHasta, setFiltroHasta]       = useState('')
-  const [filtroBusqueda, setFiltroBusqueda] = useState('')
-  const [pedidoBusqueda, setPedidoBusqueda] = useState('')
-  const [pedidoDropdown, setPedidoDropdown] = useState(false)
+  const [filtroEstado, setFiltroEstado]         = useState('')
+  const [filtroDesde, setFiltroDesde]           = useState('')
+  const [filtroHasta, setFiltroHasta]           = useState('')
+  const [filtroBusqueda, setFiltroBusqueda]     = useState('')
+  const [clienteBusqueda, setClienteBusqueda]   = useState('')
+  const [clienteDropdown, setClienteDropdown]   = useState(false)
 
-  const { data: pagos = [] }           = useQuery({ queryKey: ['pagos'],   queryFn: pagosService.getAll })
-  const { data: todosLosPedidos = [] } = useQuery({ queryKey: ['pedidos'], queryFn: pagosService.getPedidos })
+  const { data: pagos = [] }           = useQuery({ queryKey: ['pagos'],    queryFn: pagosService.getAll })
+  const { data: todosLosPedidos = [] } = useQuery({ queryKey: ['pedidos'],  queryFn: pagosService.getPedidos })
+  const { data: clientes = [] }        = useQuery({ queryKey: ['clientes'], queryFn: pagosService.getClientes })
 
   const getFechaPago = p => p.fecha_pago || p.fecha || p.created_at || null
 
@@ -37,10 +38,7 @@ export function usePagos() {
       return acc
     }, {})
 
-  // Solo pedidos pendientes que necesitan pago manual:
-  // - Pedidos web normales
-  // - Pedidos móviles CON fiado (necesitan abonos)
-  // - Excluye pedidos móviles sin fiado (esos se completan desde Ventas)
+  // Pedidos que necesitan pago manual
   const pedidos = todosLosPedidos.filter(p => {
     const estadoNom = p.estado?.toLowerCase() || ''
     if (estadoNom.includes('anula')) return false
@@ -50,6 +48,23 @@ export function usePagos() {
   })
 
   const pagadoPorPedido = pagadoPorPedidoCalc(todosLosPedidos, pagos)
+
+  // Deuda consolidada por cliente
+  const deudaPorCliente = useMemo(() => {
+    const mapa = {}
+    for (const p of pedidos) {
+      const cid = p.cliente_id
+      if (!cid) continue
+      const pagado    = pagadoPorPedido[p.id] || 0
+      const pendiente = Math.max(0, (p.total || 0) - pagado)
+      if (!mapa[cid]) {
+        mapa[cid] = { cliente_id: cid, cliente: p.cliente, total_deuda: 0, pedidos: [] }
+      }
+      mapa[cid].total_deuda += pendiente
+      mapa[cid].pedidos.push({ ...p, pendiente })
+    }
+    return mapa
+  }, [pedidos, pagadoPorPedido])
 
   const pagosAgrupados = useMemo(() => {
     const grupos = new Map()
@@ -100,27 +115,74 @@ export function usePagos() {
     return new Date() <= limite
   }
 
-  const pedidoSel      = todosLosPedidos.find(p => p.id === +form.pedido_id)
-  const esFiado        = !!pedidoSel?.es_fiado
-  const totalPedido    = pedidoSel?.total || 0
-  const totalPagado    = pagadoPorPedido[+form.pedido_id] || 0
-  const montoPendiente = Math.max(0, totalPedido - totalPagado)
-  const pagoCompleto   = totalPedido > 0 && montoPendiente === 0
+  // Cliente y su deuda seleccionados
+  const clienteSel     = clientes.find(c => c.id === +form.cliente_id) || null
+  const deudaCliente   = deudaPorCliente[+form.cliente_id] || null
+  const totalDeuda     = deudaCliente?.total_deuda || 0
+  const pagoCompleto   = !!form.cliente_id && totalDeuda === 0
+  const montoPendiente = totalDeuda
 
-  const abrirConPedido = pedido_id => {
-    setForm({ ...formVacio, pedido_id })
-    setPedidoBusqueda(''); setPedidoDropdown(false)
+  // Pedidos del cliente ordenados del más antiguo al más nuevo
+  const pedidosCliente = deudaCliente
+    ? [...deudaCliente.pedidos]
+        .filter(p => p.pendiente > 0)
+        .sort((a, b) => new Date(a.fecha_pedido) - new Date(b.fecha_pedido))
+    : []
+
+  // Clientes que tienen deuda, filtrados por búsqueda
+  const clientesConDeuda = clientes.filter(c => {
+    const d = deudaPorCliente[c.id]
+    return d && d.total_deuda > 0
+  })
+
+  const clientesFiltradosModal = clientesConDeuda.filter(c => {
+    if (!clienteBusqueda) return true
+    const t = clienteBusqueda.toLowerCase()
+    return `${c.nombre} ${c.apellido}`.toLowerCase().includes(t) ||
+           (c.numero_documento || '').toLowerCase().includes(t) ||
+           (c.email || '').toLowerCase().includes(t)
+  }).slice(0, 8)
+
+  // Abrir modal por cliente
+  const abrirConCliente = cliente_id => {
+    setForm({ ...formVacio, cliente_id: String(cliente_id) })
+    setClienteBusqueda('')
+    setClienteDropdown(false)
     setModalNuevo(true)
   }
 
+  // Compatibilidad con botón de Ventas — busca el cliente del pedido
+  const abrirConPedido = pedido_id => {
+    const pedido = todosLosPedidos.find(p => p.id === pedido_id)
+    if (pedido?.cliente_id) {
+      abrirConCliente(pedido.cliente_id)
+    } else {
+      setForm(formVacio)
+      setModalNuevo(true)
+    }
+  }
+
   const crear = useMutation({
-    mutationFn: data => pagosService.create(data),
-    onSuccess: () => {
-      qc.invalidateQueries(['pagos']); qc.invalidateQueries(['pedidos'])
-      setModalNuevo(false); setForm(formVacio); setPedidoBusqueda('')
-      toast.success('Pago registrado')
+    mutationFn: async data => {
+      // Distribuye el abono en los pedidos más antiguos primero
+      let montoRestante = +data.monto
+      for (const p of pedidosCliente) {
+        if (montoRestante <= 0) break
+        const abonar = Math.min(montoRestante, p.pendiente)
+        await pagosService.create({ pedido_id: p.id, monto: abonar, metodo: data.metodo })
+        montoRestante -= abonar
+      }
     },
-    onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
+    onSuccess: () => {
+      qc.invalidateQueries(['pagos'])
+      qc.invalidateQueries(['pedidos'])
+      qc.invalidateQueries(['clientes'])
+      setModalNuevo(false)
+      setForm(formVacio)
+      setClienteBusqueda('')
+      toast.success('Abono registrado correctamente')
+    },
+    onError: err => toast.error(err.response?.data?.mensaje || 'Error al registrar el abono'),
   })
 
   const anular = useMutation({
@@ -142,10 +204,10 @@ export function usePagos() {
     let num = +val
     if (isNaN(num)) return
     if (num < 0) num = 0
-    if (!esFiado && montoPendiente > 0 && num > montoPendiente) num = montoPendiente
+    if (totalDeuda > 0 && num > totalDeuda) num = totalDeuda
     setForm(f => ({ ...f, monto: String(num) }))
-    const cubreElPendiente = montoPendiente > 0 && num >= montoPendiente
-    if (num > 0 && num < MONTO_MINIMO_ABONO && !cubreElPendiente) {
+    const cubre = totalDeuda > 0 && num >= totalDeuda
+    if (num > 0 && num < MONTO_MINIMO_ABONO && !cubre) {
       setErrores(prev => ({
         ...prev,
         monto: `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
@@ -155,23 +217,18 @@ export function usePagos() {
     }
   }
 
-  const handlePedidoChange = pedido_id => {
-    setForm(f => ({ ...f, pedido_id, monto: '' }))
-    setErrores(prev => ({ ...prev, pedido_id: undefined, monto: undefined }))
-  }
-
   const validar = () => {
     const e = {}
-    if (!form.pedido_id) e.pedido_id = 'Selecciona un pedido'
+    if (!form.cliente_id) e.cliente_id = 'Selecciona un cliente'
     if (!form.monto || +form.monto <= 0) {
       e.monto = 'Monto inválido'
     } else {
-      const cubreElPendiente = montoPendiente > 0 && +form.monto >= montoPendiente
-      if (+form.monto < MONTO_MINIMO_ABONO && !cubreElPendiente) {
+      const cubre = totalDeuda > 0 && +form.monto >= totalDeuda
+      if (+form.monto < MONTO_MINIMO_ABONO && !cubre) {
         e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
       }
     }
-    if (pagoCompleto) e.monto = 'El pedido ya está completamente pagado'
+    if (pagoCompleto) e.monto = 'El cliente no tiene deuda pendiente'
     return e
   }
 
@@ -200,7 +257,7 @@ export function usePagos() {
   })
 
   const tipoPagoActual = form.monto && +form.monto > 0
-    ? (+form.monto >= montoPendiente ? 'total' : 'abono')
+    ? (+form.monto >= totalDeuda ? 'total' : 'abono')
     : null
 
   const verHistorial = pedido_id => setModalDetalle({ abierto: true, pedido_id })
@@ -221,20 +278,58 @@ export function usePagos() {
   }
 
   return {
-    pagosAgrupadosFiltrados, pedidos, pedidoSeleccionado: pedidoSel, form, errores,
-    modalNuevo, modalDetalle, modalAnular, grupoDetalle, verHistorial,
-    setModalNuevo, setModalDetalle, setModalAnular,
-    setForm, filtroEstado, setFiltroEstado,
+    // Lista principal
+    pagosAgrupadosFiltrados,
+    pedidos,
+    // Cliente
+    clienteSel,
+    clientesFiltradosModal,
+    clientesConDeuda,
+    clienteBusqueda,  setClienteBusqueda,
+    clienteDropdown,  setClienteDropdown,
+    deudaCliente,
+    deudaPorCliente,
+    totalDeuda,
+    pedidosCliente,
+    // Form
+    form, setForm, errores,
+    // Modales
+    modalNuevo, setModalNuevo,
+    modalDetalle, setModalDetalle,
+    modalAnular, setModalAnular,
+    grupoDetalle, verHistorial,
+    // Filtros
+    filtroEstado, setFiltroEstado,
     filtroDesde, setFiltroDesde,
     filtroHasta, setFiltroHasta,
     filtroBusqueda, setFiltroBusqueda,
-    totalPedido, totalPagado, montoPendiente, pagoCompleto, esFiado,
-    handleSubmit, handleMontoChange, handlePedidoChange,
-    anular, esPagado, esAbono, esAnulado, getFechaPago,
+    // Montos
+    totalPedido: totalDeuda,
+    totalPagado: 0,
+    montoPendiente,
+    pagoCompleto,
+    esFiado: true,
+    // Handlers
+    handleSubmit,
+    handleMontoChange,
+    handlePedidoChange: () => {},
+    // Mutations
+    anular,
+    // Utils
+    esPagado, esAbono, esAnulado, getFechaPago,
     puedeAnularPago, getLimiteAnulacionVenta,
-    pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
     getEstadoPago, tipoPagoActual,
-    abrirConPedido, descargarReporte,
-    creando: crear.isPending, anulando: anular.isPending,
+    // Acciones abrir modal
+    abrirConPedido,
+    abrirConCliente,
+    // Legacy compat con Ventas.jsx
+    pedidoSeleccionado: null,
+    pedidoBusqueda: clienteBusqueda,
+    setPedidoBusqueda: setClienteBusqueda,
+    pedidoDropdown: clienteDropdown,
+    setPedidoDropdown: setClienteDropdown,
+    descargarReporte,
+    creando: crear.isPending,
+    anulando: anular.isPending,
   }
 }

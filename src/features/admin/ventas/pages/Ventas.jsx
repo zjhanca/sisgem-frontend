@@ -50,10 +50,12 @@ export default function Ventas() {
 
   const {
     abrirConPedido,
-    pedidos, pedidoSeleccionado, form: formPago, setForm: setFormPago, errores: erroresPago,
-    totalPedido, totalPagado, montoPendiente, pagoCompleto, esFiado,
-    handleSubmit: handleSubmitPago, handleMontoChange, handlePedidoChange, tipoPagoActual,
-    pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
+    form: formPago, setForm: setFormPago, errores: erroresPago,
+    clienteSel, clientesFiltradosModal, deudaCliente, deudaPorCliente,
+    totalDeuda, pedidosCliente, pagoCompleto, montoPendiente: montoPendientePago,
+    clienteBusqueda: clienteBusquedaPago, setClienteBusqueda: setClienteBusquedaPago,
+    clienteDropdown, setClienteDropdown,
+    handleSubmit: handleSubmitPago, handleMontoChange, tipoPagoActual,
     modalNuevo: modalPago, setModalNuevo: setModalPago,
     creando: creandoPago,
   } = usePagos()
@@ -136,14 +138,9 @@ export default function Ventas() {
           const esPendiente = fila.estado?.toLowerCase().includes('pendiente')
           const esAnulada   = fila.estado?.toLowerCase().includes('anula')
 
-          // Móvil sin fiado pendiente → confirmar + registrar pago
-          const esPedidoMovilPendiente = esPendiente && fila.origen === 'movil' && !fila.es_fiado
-
-          // Móvil con fiado pendiente y NO entregado → marcar entregado
+          const esPedidoMovilPendiente  = esPendiente && fila.origen === 'movil' && !fila.es_fiado
           const esFiadoMovilNoEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && !fila.entregado
-
-          // Móvil con fiado pendiente ya entregado → registrar abono
-          const esFiadoMovilEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && fila.entregado
+          const esFiadoMovilEntregado   = esPendiente && fila.origen === 'movil' && fila.es_fiado && fila.entregado
 
           return (<>
             <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost">
@@ -153,7 +150,6 @@ export default function Ventas() {
               <Download size={14} />
             </button>
 
-            {/* Confirmar entrega — móvil sin fiado */}
             {esPedidoMovilPendiente && (
               <button
                 onClick={() => {
@@ -166,17 +162,15 @@ export default function Ventas() {
               </button>
             )}
 
-            {/* Marcar entregado — móvil fiado no entregado */}
             {esFiadoMovilNoEntregado && (
               <button
                 onClick={() => marcarEntregado.mutate({ id: fila.id })}
                 className="btn-ghost hover:text-green-500"
-                title={fila.tipo_venta === 'domicilio' ? 'Confirmar entrega' : 'Confirmar recepción'}>
+                title="Confirmar entrega">
                 <CheckCircle size={14} />
               </button>
             )}
 
-            {/* Registrar abono — fiado ya entregado o fiado web */}
             {(esFiadoMovilEntregado || (fila.es_fiado && esPendiente && fila.origen !== 'movil')) && (
               <button onClick={() => abrirConPedido(fila.id)}
                 className="btn-ghost hover:text-primary" title="Registrar abono">
@@ -184,7 +178,6 @@ export default function Ventas() {
               </button>
             )}
 
-            {/* Anular */}
             {(() => {
               if (esAnulada) return null
               if (!puedeAnular(fila)) return (
@@ -204,7 +197,7 @@ export default function Ventas() {
         }}
       />
 
-      {/* Modal confirmar entrega/recepción pedido móvil sin fiado */}
+      {/* Modal confirmar entrega pedido móvil sin fiado */}
       {modalCompletarMovil.abierto && modalCompletarMovil.venta && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50"
@@ -284,16 +277,20 @@ export default function Ventas() {
       <VentaConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
       <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
         descargarReporte={descargarReporte} nombreEntidad="ventas" />
+
+      {/* PagoForm — por cliente */}
       <PagoForm
         modalNuevo={modalPago} setModalNuevo={setModalPago}
         form={formPago} setForm={setFormPago} errores={erroresPago}
-        pedidos={pedidos} pedidoSeleccionado={pedidoSeleccionado}
-        totalPedido={totalPedido} totalPagado={totalPagado} montoPendiente={montoPendiente}
-        pagoCompleto={pagoCompleto} handleSubmit={handleSubmitPago}
-        handleMontoChange={handleMontoChange} handlePedidoChange={handlePedidoChange}
-        creando={creandoPago} tipoPagoActual={tipoPagoActual} esFiado={esFiado}
-        pedidoBusqueda={pedidoBusqueda} setPedidoBusqueda={setPedidoBusqueda}
-        pedidoDropdown={pedidoDropdown} setPedidoDropdown={setPedidoDropdown}
+        clienteSel={clienteSel}
+        clientesFiltradosModal={clientesFiltradosModal}
+        clienteBusqueda={clienteBusquedaPago} setClienteBusqueda={setClienteBusquedaPago}
+        clienteDropdown={clienteDropdown} setClienteDropdown={setClienteDropdown}
+        deudaCliente={deudaCliente} deudaPorCliente={deudaPorCliente}
+        totalDeuda={totalDeuda} pedidosCliente={pedidosCliente}
+        pagoCompleto={pagoCompleto} montoPendiente={montoPendientePago}
+        handleSubmit={handleSubmitPago} handleMontoChange={handleMontoChange}
+        creando={creandoPago} tipoPagoActual={tipoPagoActual}
       />
     </div>
   )

@@ -6,4 +6,5 @@ export const pagosService = {
   anular:         id   => api.patch(`/pagos/${id}/anular`),
   getPedidos:     ()   => api.get('/pedidos').then(r => r.data.datos),
   getEstadosPago: ()   => api.get('/estados?tipo=pago').then(r => r.data.datos),
+  getClientes:    ()   => api.get('/clientes').then(r => r.data.datos),
 }
