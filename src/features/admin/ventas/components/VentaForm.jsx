@@ -39,7 +39,7 @@ export default function VentaForm({
   const cerrarNuevoCliente = () => { cerrarModalCliente(); setModalNuevoCliente(false) }
 
   const permitefiado       = clienteSeleccionado?.permite_fiado
-  const sinCupo            = permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
+  const sinCupo            = form.tipo_pago === 'fiado' && permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
   const minimoInsuficiente = totalVenta < (MINIMO_FIADO || 10000)
 
   const totalPorProducto = {}
@@ -47,7 +47,6 @@ export default function VentaForm({
     totalPorProducto[p.producto_id] = (totalPorProducto[p.producto_id] || 0) + (+p.cantidad || 0)
 
   const handleSubmitVenta = e => {
-    console.log('click aceptar', { totalPorProducto, productos: form.productos, sinCupo })
     handleCrear(e)
   }
 
@@ -59,13 +58,17 @@ export default function VentaForm({
 
             {/* Banner tipo pago */}
             <div className={`flex items-center gap-2 p-3 rounded-xl border ${
-              form.tipo_pago === 'fiado' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-primary/10 border-primary/30'
+              form.tipo_pago === 'fiado'
+                ? 'bg-amber-500/10 border-amber-500/30'
+                : 'bg-primary/10 border-primary/30'
             }`}>
               {form.tipo_pago === 'fiado'
                 ? <Clock size={15} className="text-amber-500 shrink-0" />
                 : <CreditCard size={15} className="text-primary shrink-0" />}
               <div>
-                <p className={`text-xs font-semibold ${form.tipo_pago === 'fiado' ? 'text-amber-500' : 'text-primary'}`}>
+                <p className={`text-xs font-semibold ${
+                  form.tipo_pago === 'fiado' ? 'text-amber-500' : 'text-primary'
+                }`}>
                   {form.tipo_pago === 'fiado' ? 'Venta a Crédito (Fiado)' : 'Venta en Mostrador'}
                 </p>
                 <p className="text-xs text-gray-500">
@@ -126,7 +129,10 @@ export default function VentaForm({
               <div>
                 <label className="campo-label">Método de Pago</label>
                 <div className="flex gap-2">
-                  {[{ val: 'efectivo', label: 'Efectivo' }, { val: 'transferencia', label: 'Transferencia' }].map(m => (
+                  {[
+                    { val: 'efectivo',      label: 'Efectivo'      },
+                    { val: 'transferencia', label: 'Transferencia' },
+                  ].map(m => (
                     <button key={m.val} type="button"
                       onClick={() => setForm(f => ({ ...f, metodo_pago: m.val }))}
                       className={`flex-1 py-2 text-xs rounded-lg border transition-all ${
@@ -160,9 +166,11 @@ export default function VentaForm({
               className={`w-full btn-primary justify-center disabled:opacity-50 ${
                 form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''
               }`}>
-              {creando ? 'Registrando...' : form.tipo_pago === 'fiado'
-                ? (excedeCupoFiado ? 'Registrar Fiado Parcial' : 'Registrar Fiado')
-                : 'Aceptar'}
+              {creando
+                ? 'Registrando...'
+                : form.tipo_pago === 'fiado'
+                  ? (excedeCupoFiado ? 'Registrar Fiado Parcial' : 'Registrar Fiado')
+                  : 'Aceptar'}
             </button>
           </div>
         </form>
