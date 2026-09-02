@@ -2,9 +2,13 @@ import { useState, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
 import { Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
+import { useAuth } from '@shared/contexts/AuthContext'
 
 export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirModal }) {
-  const item = modalDetalle.item
+  const { esAdmin } = useAuth()
+  const puedeEditar = esAdmin()
+
+  const item   = modalDetalle.item
   const cerrar = () => setModalDetalle({ abierto: false, item: null })
   const [imgIdx, setImgIdx] = useState(0)
 
@@ -30,7 +34,7 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
       {item && (
         <div className="space-y-3">
 
-          {/* imagen + datos básicos */}
+          {/* Imagen + datos básicos */}
           <div className="flex gap-3">
             {imagenes.length > 0 ? (
               <div className="relative shrink-0 w-32 h-32 rounded-xl overflow-hidden bg-gray-100">
@@ -98,11 +102,14 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
             </div>
           )}
 
-          <div className="flex justify-end pt-2 border-t border-gray-100">
-            <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs">
-              <Edit2 size={12} /> Editar
-            </button>
-          </div>
+          {/* Botón editar — solo admin */}
+          {puedeEditar && (
+            <div className="flex justify-end pt-2 border-t border-gray-100">
+              <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs">
+                <Edit2 size={12} /> Editar
+              </button>
+            </div>
+          )}
         </div>
       )}
     </Modal>

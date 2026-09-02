@@ -5,6 +5,7 @@ import Modal from '@shared/components/Modal'
 import ReporteDescargaModal from '../components/ReporteDescargaModal'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { useOrdenes } from '../hooks/useOrdenes'
+import { useAuth } from '@shared/contexts/AuthContext'
 import OrdenForm            from '../components/OrdenForm'
 import OrdenDetalle         from '../components/OrdenDetalle'
 import OrdenConfirmDescarga from '../components/Ordenconfirmdescarga'
@@ -27,6 +28,9 @@ function BadgeEstado({ color, label, onClick, title }) {
 }
 
 export default function OrdCompra() {
+  const { esAdmin } = useAuth()
+  const puedeEditar = esAdmin()
+
   const {
     ordenesFiltradas, proveedores, productos, ordenesVencidas,
     modalNuevo, modalDetalle, modalEditar, modalAnular,
@@ -52,9 +56,9 @@ export default function OrdCompra() {
     categorias, marcas, verificandoCodigo, abrirModal: abrirModalProd,
   } = useProductos()
 
-  const [modalCrearProd, setModalCrearProd] = useState(false)
+  const [modalCrearProd, setModalCrearProd]   = useState(false)
   const [confirmDescarga, setConfirmDescarga] = useState(null)
-  const [modalReporte, setModalReporte] = useState(false)
+  const [modalReporte, setModalReporte]       = useState(false)
 
   const columnas = [
     { key: 'proveedor',    label: 'Proveedor' },
@@ -66,9 +70,10 @@ export default function OrdCompra() {
         const esAnulada    = r.estado?.toLowerCase().includes('anula')
         const esCompletada = r.estado?.toLowerCase().includes('complet')
         if (esAnulada)    return <BadgeEstado color="bg-gray-300" label="Anulado" />
-        if (esCompletada) return <BadgeEstado color="bg-primary" label="Completado" />
+        if (esCompletada) return <BadgeEstado color="bg-primary"  label="Completado" />
         return (
-          <BadgeEstado color="bg-amber-500" label="Pendiente" title="Clic para marcar como Completado"
+          <BadgeEstado color="bg-amber-500" label="Pendiente"
+            title="Clic para marcar como Completado"
             onClick={() => {
               const id = getEstadoId('activo') || getEstadoId('complet')
               if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
@@ -123,10 +128,12 @@ export default function OrdCompra() {
           const esAnulada    = getKeyEstado(fila.estado) === 'anulado'
           const esCompletada = getKeyEstado(fila.estado) === 'activo'
           return (<>
-            <button onClick={() => setModalDetalle({ abierto: true, orden: fila })} className="btn-ghost" title="Ver detalle">
+            <button onClick={() => setModalDetalle({ abierto: true, orden: fila })}
+              className="btn-ghost" title="Ver detalle">
               <Eye size={14} />
             </button>
-            {!esAnulada && !esCompletada && (
+            {/* Editar — solo admin y solo si no está anulada/completada */}
+            {puedeEditar && !esAnulada && !esCompletada && (
               <button onClick={() => abrirEditar(fila)} className="btn-ghost" title="Editar">
                 <Edit2 size={14} />
               </button>
@@ -134,8 +141,10 @@ export default function OrdCompra() {
             <button onClick={() => setConfirmDescarga({ tipo: 'orden', id: fila.id })} className="btn-ghost">
               <Download size={14} />
             </button>
-            {!esAnulada && (
-              <button onClick={() => setModalAnular({ abierto: true, orden: fila })} className="btn-ghost hover:text-red-400" title="Anular">
+            {/* Anular — solo admin */}
+            {puedeEditar && !esAnulada && (
+              <button onClick={() => setModalAnular({ abierto: true, orden: fila })}
+                className="btn-ghost hover:text-red-400" title="Anular">
                 <Ban size={14} />
               </button>
             )}
@@ -159,82 +168,90 @@ export default function OrdCompra() {
         setProdBusqueda={setProdBusqueda} setProdsFiltrados={setProdsFiltrados}
         totalOrden={totalOrden} handleCrear={handleCrear} creando={creando}
         handleFacturaChange={handleFacturaChange} facturaPreview={facturaPreview}
-        onCrearProducto={() => { abrirModalProd(); setModalCrearProd(true) }}
+        // Solo admin puede crear productos desde el formulario de orden
+        onCrearProducto={puedeEditar ? () => { abrirModalProd(); setModalCrearProd(true) } : null}
       />
 
       <OrdenDetalle
         modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         cambiarEstado={cambiarEstado} ESTADOS_ORDEN={ESTADOS_ORDEN}
         getEstadoId={getEstadoId} getKeyEstado={getKeyEstado}
-        abrirEditar={abrirEditar} setModalAnular={setModalAnular}
+        abrirEditar={puedeEditar ? abrirEditar : null}
+        setModalAnular={puedeEditar ? setModalAnular : null}
       />
 
-      {/* Modal editar */}
-      <Modal abierto={modalEditar.abierto} onCerrar={() => setModalEditar({ abierto: false, orden: null })} bloquearCierre
-        titulo={`Editar Orden #${modalEditar.orden?.id}`} ancho="max-w-lg">
-        {modalEditar.orden && (
-          <form onSubmit={handleEditar} className="space-y-3">
-            <div className="p-3 rounded-lg bg-gray-50 text-xs">
-              <span className="text-gray-400">Proveedor: </span>
-              <span className="font-medium">{modalEditar.orden.proveedor}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="campo-label">Fecha de Compra *</label>
-                <input type="date" value={formEditar.fecha_compra || ''}
-                  max={new Date().toISOString().split('T')[0]}
-                  onChange={e => setFormEditar(p => ({ ...p, fecha_compra: e.target.value }))}
-                  className="campo-input text-xs" />
+      {/* Modal editar — solo admin */}
+      {puedeEditar && (
+        <Modal abierto={modalEditar.abierto}
+          onCerrar={() => setModalEditar({ abierto: false, orden: null })} bloquearCierre
+          titulo={`Editar Orden #${modalEditar.orden?.id}`} ancho="max-w-lg">
+          {modalEditar.orden && (
+            <form onSubmit={handleEditar} className="space-y-3">
+              <div className="p-3 rounded-lg bg-gray-50 text-xs">
+                <span className="text-gray-400">Proveedor: </span>
+                <span className="font-medium">{modalEditar.orden.proveedor}</span>
               </div>
-              <div>
-                <label className="campo-label">Método de Pago</label>
-                <select value={formEditar.metodo_pago || 'Efectivo'}
-                  onChange={e => setFormEditar(p => ({ ...p, metodo_pago: e.target.value }))}
-                  className="campo-input text-xs">
-                  {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="campo-label">Fecha de Compra *</label>
+                  <input type="date" value={formEditar.fecha_compra || ''}
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={e => setFormEditar(p => ({ ...p, fecha_compra: e.target.value }))}
+                    className="campo-input text-xs" />
+                </div>
+                <div>
+                  <label className="campo-label">Método de Pago</label>
+                  <select value={formEditar.metodo_pago || 'Efectivo'}
+                    onChange={e => setFormEditar(p => ({ ...p, metodo_pago: e.target.value }))}
+                    className="campo-input text-xs">
+                    {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="campo-label">Notas</label>
+                  <textarea value={formEditar.notas || ''} rows={2}
+                    onChange={e => setFormEditar(p => ({ ...p, notas: e.target.value }))}
+                    className="campo-input resize-none" placeholder="Observaciones..." />
+                </div>
               </div>
-              <div className="col-span-2">
-                <label className="campo-label">Notas</label>
-                <textarea value={formEditar.notas || ''} rows={2}
-                  onChange={e => setFormEditar(p => ({ ...p, notas: e.target.value }))}
-                  className="campo-input resize-none" placeholder="Observaciones..." />
+              <div className="flex justify-end pt-2 border-t border-gray-100">
+                <button type="submit" disabled={editando} className="btn-primary disabled:opacity-50">
+                  {editando ? 'Guardando...' : 'Aceptar'}
+                </button>
               </div>
-            </div>
-            <div className="flex justify-end pt-2 border-t border-gray-100">
-              <button type="submit" disabled={editando} className="btn-primary disabled:opacity-50">
-                {editando ? 'Guardando...' : 'Aceptar'}
-              </button>
-            </div>
-          </form>
-        )}
-      </Modal>
+            </form>
+          )}
+        </Modal>
+      )}
 
-      {/* Modal anular */}
-      <Modal abierto={modalAnular.abierto} onCerrar={() => setModalAnular({ abierto: false, orden: null })} bloquearCierre
-        titulo="Confirmar Anulación" ancho="max-w-sm">
-        {modalAnular.orden && (
-          <div className="space-y-4">
-            <p className="text-sm">¿Anular la orden
-              <span className="font-medium text-primary"> #{modalAnular.orden.id}</span> de
-              <span className="text-primary"> {modalAnular.orden.proveedor}</span>?
-              Esta acción no se puede deshacer.
-            </p>
-            <div className="flex justify-end pt-2 border-t border-gray-100">
-              <button onClick={() => anular.mutate(modalAnular.orden.id)} disabled={anulando}
-                className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
-                {anulando ? 'Anulando...' : 'Aceptar'}
-              </button>
+      {/* Modal anular — solo admin */}
+      {puedeEditar && (
+        <Modal abierto={modalAnular.abierto}
+          onCerrar={() => setModalAnular({ abierto: false, orden: null })} bloquearCierre
+          titulo="Confirmar Anulación" ancho="max-w-sm">
+          {modalAnular.orden && (
+            <div className="space-y-4">
+              <p className="text-sm">¿Anular la orden
+                <span className="font-medium text-primary"> #{modalAnular.orden.id}</span> de
+                <span className="text-primary"> {modalAnular.orden.proveedor}</span>?
+                Esta acción no se puede deshacer.
+              </p>
+              <div className="flex justify-end pt-2 border-t border-gray-100">
+                <button onClick={() => anular.mutate(modalAnular.orden.id)} disabled={anulando}
+                  className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-lg disabled:opacity-50">
+                  {anulando ? 'Anulando...' : 'Aceptar'}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </Modal>
+          )}
+        </Modal>
+      )}
 
       <OrdenConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
       <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
         descargarReporte={descargarReporte} nombreEntidad="órdenes de compra" />
 
-      {modalCrearProd && (
+      {modalCrearProd && puedeEditar && (
         <ProductoForm
           modal={{ ...modalProd, abierto: true }}
           form={formProd} setForm={setFormProd} errores={erroresProd}

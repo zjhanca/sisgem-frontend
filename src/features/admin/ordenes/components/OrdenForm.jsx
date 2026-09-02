@@ -1,9 +1,126 @@
 import { useState } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Trash2, Upload, Pencil, Check, X } from 'lucide-react'
+import { Search, Scan, Plus, Trash2, ImageOff, Star, Loader2, CheckCircle2, Upload, Pencil, Check, X } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
-const METODOS_PAGO = ['Efectivo', 'Transferencia']
+function BuscadorSelect({ label, items, valorId, onSelect, placeholder }) {
+  const [busq, setBusq]       = useState('')
+  const [abierto, setAbierto] = useState(false)
+  const filtrados    = items.filter(i => !busq || i.nombre.toLowerCase().includes(busq.toLowerCase())).slice(0, 8)
+  const seleccionado = items.find(i => i.id === +valorId)
+
+  return (
+    <div>
+      <label className="campo-label">{label}</label>
+      <div className="relative">
+        <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400 pointer-events-none" />
+        <input
+          value={seleccionado ? seleccionado.nombre : busq}
+          onChange={e => { setBusq(e.target.value); onSelect(''); setAbierto(true) }}
+          onFocus={() => setAbierto(true)}
+          onBlur={() => setTimeout(() => setAbierto(false), 150)}
+          className="campo-input pl-8 text-xs" placeholder={placeholder} />
+        {seleccionado && (
+          <button type="button" onClick={() => { onSelect(''); setBusq(''); setAbierto(false) }}
+            className="absolute right-2 top-2 text-gray-400 hover:text-red-400 text-xs">✕</button>
+        )}
+        {abierto && filtrados.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-30 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+            {filtrados.map(i => (
+              <button key={i.id} type="button"
+                onMouseDown={e => { e.preventDefault(); onSelect(i.id); setBusq(''); setAbierto(false) }}
+                className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 text-light-text">
+                {i.nombre}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function GestorImagenes({ imagenes, onChange }) {
+  const [nuevaUrl, setNuevaUrl] = useState('')
+  const fileRef = React.useRef(null)
+
+  const agregar = () => {
+    const url = nuevaUrl.trim()
+    if (!url || imagenes.includes(url)) return
+    onChange([...imagenes, url]); setNuevaUrl('')
+  }
+
+  const handleFile = e => {
+    const files = Array.from(e.target.files)
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onload = ev => {
+        const base64 = ev.target.result
+        onChange(prev => imagenes.includes(base64) ? imagenes : [...imagenes, base64])
+      }
+      reader.readAsDataURL(file)
+    })
+    e.target.value = ''
+  }
+
+  const quitar        = idx => onChange(imagenes.filter((_, i) => i !== idx))
+  const hacerPrincipal = idx => {
+    const nueva = [...imagenes]
+    const [item] = nueva.splice(idx, 1)
+    nueva.unshift(item); onChange(nueva)
+  }
+
+  return (
+    <div className="space-y-2">
+      <button type="button" onClick={() => fileRef.current?.click()}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-200
+          text-xs text-gray-400 hover:border-primary/40 hover:text-primary transition-colors">
+        <Upload size={13} /> Subir imagen desde mis archivos
+      </button>
+      <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFile} />
+
+      <div className="flex gap-2">
+        <input value={nuevaUrl} onChange={e => setNuevaUrl(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); agregar() } }}
+          className="campo-input text-xs" placeholder="O pegar URL de imagen..." />
+        <button type="button" onClick={agregar} className="btn-outline shrink-0 px-2.5"><Plus size={14} /></button>
+      </div>
+
+      {imagenes.length > 0 ? (
+        <div className="grid grid-cols-3 gap-2">
+          {imagenes.map((url, i) => (
+            <div key={i} className={`relative group rounded-lg overflow-hidden border-2 transition-colors ${i === 0 ? 'border-primary' : 'border-gray-200'}`}>
+              <img src={url} alt="" className="w-full h-20 object-cover bg-gray-50"
+                onError={e => { e.target.src=''; e.target.parentElement.classList.add('bg-gray-100') }} />
+              {i === 0 && (
+                <div className="absolute top-1 left-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
+                  <Star size={9} /> Principal
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                {i !== 0 && (
+                  <button type="button" onClick={() => hacerPrincipal(i)}
+                    className="p-1 rounded bg-primary text-white hover:bg-primary/80" title="Hacer principal">
+                    <Star size={12} />
+                  </button>
+                )}
+                <button type="button" onClick={() => quitar(i)}
+                  className="p-1 rounded bg-red-500 text-white hover:bg-red-600">
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center gap-2 p-4 rounded-lg border-2 border-dashed border-gray-200 text-gray-400 text-xs">
+          <ImageOff size={14} /> Sin imágenes — sube un archivo o pega una URL
+        </div>
+      )}
+      <p className="campo-hint">La primera imagen es la principal.</p>
+    </div>
+  )
+}
 
 export default function OrdenForm({
   modalNuevo, setModalNuevo, form, setForm, itemForm, setItemForm,
@@ -88,7 +205,7 @@ export default function OrdenForm({
             <label className="campo-label">Método de Pago</label>
             <select value={form.metodo_pago} onChange={e => setForm(p => ({ ...p, metodo_pago: e.target.value }))}
               className="campo-input text-xs">
-              {METODOS_PAGO.map(m => <option key={m} value={m}>{m}</option>)}
+              {['Efectivo', 'Transferencia'].map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
         </div>
@@ -99,6 +216,7 @@ export default function OrdenForm({
             <p className="text-xs font-semibold">
               {modoEdicion ? '✏️ Editando producto' : 'Productos'}
             </p>
+            {/* Solo aparece si onCrearProducto no es null — admin */}
             {onCrearProducto && !modoEdicion && (
               <button type="button" onClick={onCrearProducto}
                 className="text-xs flex items-center gap-1 text-primary/70 hover:text-primary transition-colors">
