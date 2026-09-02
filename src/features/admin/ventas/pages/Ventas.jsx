@@ -16,14 +16,15 @@ const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLo
 const getBadgeEstado = nombre => {
   if (!nombre) return { color: 'bg-amber-500', label: 'Pendiente' }
   const l = nombre.toLowerCase()
-  if (l.includes('anula'))                         return { color: 'bg-gray-300', label: 'Anulado'    }
-  if (l.includes('complet') || l.includes('paga')) return { color: 'bg-primary',  label: 'Completado' }
+  if (l.includes('anula'))                          return { color: 'bg-gray-300',   label: 'Anulado'     }
+  if (l.includes('sin recoger'))                    return { color: 'bg-orange-500', label: 'Sin recoger' }
+  if (l.includes('complet') || l.includes('paga'))  return { color: 'bg-primary',    label: 'Completado'  }
   return { color: 'bg-amber-500', label: 'Pendiente' }
 }
 
 function BadgeEstado({ color, label }) {
   return (
-    <span className={`inline-flex items-center justify-center h-6 w-24 rounded-full text-white text-xs font-semibold ${color}`}>
+    <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full text-white text-xs font-semibold ${color}`}>
       {label}
     </span>
   )
@@ -67,7 +68,7 @@ export default function Ventas() {
 
   const estadosVenta = estados.filter(e => {
     const n = e.nombre?.toLowerCase()
-    return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula')
+    return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula') || n?.includes('sin recoger')
   })
 
   const columnas = [
@@ -135,8 +136,10 @@ export default function Ventas() {
           )}
         </>}
         acciones={fila => {
-          const esPendiente = fila.estado?.toLowerCase().includes('pendiente')
-          const esAnulada   = fila.estado?.toLowerCase().includes('anula')
+          const esPendiente    = fila.estado?.toLowerCase().includes('pendiente')
+          const esSinRecoger   = fila.estado?.toLowerCase().includes('sin recoger')
+          const esAnulada      = fila.estado?.toLowerCase().includes('anula')
+          const esActivaWeb    = esPendiente || esSinRecoger
 
           const esPedidoMovilPendiente  = esPendiente && fila.origen === 'movil' && !fila.es_fiado
           const esFiadoMovilNoEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && !fila.entregado
@@ -150,6 +153,7 @@ export default function Ventas() {
               <Download size={14} />
             </button>
 
+            {/* Confirmar entrega — móvil sin fiado pendiente */}
             {esPedidoMovilPendiente && (
               <button
                 onClick={() => {
@@ -162,6 +166,7 @@ export default function Ventas() {
               </button>
             )}
 
+            {/* Marcar entregado — móvil fiado no entregado */}
             {esFiadoMovilNoEntregado && (
               <button
                 onClick={() => marcarEntregado.mutate({ id: fila.id })}
@@ -171,6 +176,7 @@ export default function Ventas() {
               </button>
             )}
 
+            {/* Registrar abono — fiado ya entregado o fiado web */}
             {(esFiadoMovilEntregado || (fila.es_fiado && esPendiente && fila.origen !== 'movil')) && (
               <button onClick={() => abrirConPedido(fila.id)}
                 className="btn-ghost hover:text-primary" title="Registrar abono">
@@ -178,6 +184,7 @@ export default function Ventas() {
               </button>
             )}
 
+            {/* Anular */}
             {(() => {
               if (esAnulada) return null
               if (!puedeAnular(fila)) return (
@@ -278,7 +285,6 @@ export default function Ventas() {
       <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
         descargarReporte={descargarReporte} nombreEntidad="ventas" />
 
-      {/* PagoForm — por cliente */}
       <PagoForm
         modalNuevo={modalPago} setModalNuevo={setModalPago}
         form={formPago} setForm={setFormPago} errores={erroresPago}
