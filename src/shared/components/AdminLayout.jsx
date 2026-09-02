@@ -14,28 +14,28 @@ const MENU = [
     id: 'usuarios',
     label: 'Usuarios',
     items: [
-      { to: '/admin/roles',    label: 'Roles',    icon: Shield,       permiso: 'ver_roles'    },
-      { to: '/admin/usuarios', label: 'Usuarios', icon: Users,        permiso: 'ver_usuarios' },
+      { to: '/admin/roles',    label: 'Roles',    icon: Shield, permiso: 'ver_roles'    },
+      { to: '/admin/usuarios', label: 'Usuarios', icon: Users,  permiso: 'ver_usuarios' },
     ]
   },
   {
     id: 'compras',
     label: 'Compras',
     items: [
-      { to: '/admin/categorias', label: 'Categorías',        icon: Grid3X3,      permiso: 'ver_productos'   },
-      { to: '/admin/marcas',     label: 'Marcas',            icon: Tag,          permiso: 'ver_productos'   },
-      { to: '/admin/productos',  label: 'Productos',         icon: Package,      permiso: 'ver_productos'   },
-      { to: '/admin/proveedores',label: 'Proveedores',       icon: Building2,    permiso: 'ver_proveedores' },
-      { to: '/admin/ordenes',    label: 'Órdenes de Compra', icon: ClipboardList,permiso: 'ver_ordenes'     },
+      { to: '/admin/categorias',  label: 'Categorías',        icon: Grid3X3,       permiso: 'ver_categorias'  },
+      { to: '/admin/marcas',      label: 'Marcas',            icon: Tag,           permiso: 'ver_marcas'      },
+      { to: '/admin/productos',   label: 'Productos',         icon: Package,       permiso: 'ver_productos'   },
+      { to: '/admin/proveedores', label: 'Proveedores',       icon: Building2,     permiso: 'ver_proveedores' },
+      { to: '/admin/ordenes',     label: 'Órdenes de Compra', icon: ClipboardList, permiso: 'ver_ordenes'     },
     ]
   },
   {
     id: 'ventas',
     label: 'Ventas',
     items: [
-      { to: '/admin/clientes', label: 'Clientes', icon: Users,    permiso: 'ver_clientes' },
-      { to: '/admin/ventas',   label: 'Ventas',   icon: BarChart2,permiso: 'ver_ventas'   },
-      { to: '/admin/pagos',    label: 'Pagos',    icon: CreditCard,permiso: 'ver_pagos'   },
+      { to: '/admin/clientes', label: 'Clientes', icon: Users,      permiso: 'ver_clientes' },
+      { to: '/admin/ventas',   label: 'Ventas',   icon: BarChart2,  permiso: 'ver_ventas'   },
+      { to: '/admin/pagos',    label: 'Pagos',    icon: CreditCard, permiso: 'ver_pagos'    },
     ]
   },
 ]

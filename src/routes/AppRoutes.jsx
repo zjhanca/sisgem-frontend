@@ -71,9 +71,9 @@ export default function AppRoutes() {
           <Route path='ordenes'
             element={<RutaPermiso permiso='ver_ordenes'><OrdCompra /></RutaPermiso>} />
           <Route path='marcas'
-            element={<RutaPermiso permiso='ver_productos'><Marcas /></RutaPermiso>} />
+            element={<RutaPermiso permiso='ver_marcas'><Marcas /></RutaPermiso>} />
           <Route path='categorias'
-            element={<RutaPermiso permiso='ver_productos'><Categorias /></RutaPermiso>} />
+            element={<RutaPermiso permiso='ver_categorias'><Categorias /></RutaPermiso>} />
           <Route path='proveedores'
             element={<RutaPermiso permiso='ver_proveedores'><Proveedores /></RutaPermiso>} />
           <Route path='usuarios'
