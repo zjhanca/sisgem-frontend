@@ -24,7 +24,7 @@ const getBadgeEstado = nombre => {
 
 function BadgeEstado({ color, label }) {
   return (
-    <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full text-white text-xs font-semibold ${color}`}>
+    <span className={`inline-flex items-center justify-center h-6 px-3 min-w-24 rounded-full text-white text-xs font-semibold ${color}`}>
       {label}
     </span>
   )
@@ -74,7 +74,8 @@ export default function Ventas() {
   const columnas = [
     { key: 'cliente', label: 'Cliente' },
     { key: 'total',   label: 'Total', render: r => formatPrecio(r.total) },
-    { key: 'estado_id', label: 'Estado',
+    {
+      key: 'estado_id', label: 'Estado',
       render: r => {
         const { color, label } = getBadgeEstado(r.estado)
         return (
@@ -83,6 +84,11 @@ export default function Ventas() {
             {r.origen === 'movil' && (
               <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-500 font-medium">
                 App
+              </span>
+            )}
+            {r.es_fiado && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 font-medium">
+                Fiado
               </span>
             )}
           </div>
@@ -136,11 +142,9 @@ export default function Ventas() {
           )}
         </>}
         acciones={fila => {
-          const esPendiente    = fila.estado?.toLowerCase().includes('pendiente')
-          const esSinRecoger   = fila.estado?.toLowerCase().includes('sin recoger')
-          const esAnulada      = fila.estado?.toLowerCase().includes('anula')
-          const esActivaWeb    = esPendiente || esSinRecoger
-
+          const esPendiente          = fila.estado?.toLowerCase().includes('pendiente')
+          const esSinRecoger         = fila.estado?.toLowerCase().includes('sin recoger')
+          const esAnulada            = fila.estado?.toLowerCase().includes('anula')
           const esPedidoMovilPendiente  = esPendiente && fila.origen === 'movil' && !fila.es_fiado
           const esFiadoMovilNoEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && !fila.entregado
           const esFiadoMovilEntregado   = esPendiente && fila.origen === 'movil' && fila.es_fiado && fila.entregado
@@ -153,7 +157,6 @@ export default function Ventas() {
               <Download size={14} />
             </button>
 
-            {/* Confirmar entrega — móvil sin fiado pendiente */}
             {esPedidoMovilPendiente && (
               <button
                 onClick={() => {
@@ -166,7 +169,6 @@ export default function Ventas() {
               </button>
             )}
 
-            {/* Marcar entregado — móvil fiado no entregado */}
             {esFiadoMovilNoEntregado && (
               <button
                 onClick={() => marcarEntregado.mutate({ id: fila.id })}
@@ -176,7 +178,6 @@ export default function Ventas() {
               </button>
             )}
 
-            {/* Registrar abono — fiado ya entregado o fiado web */}
             {(esFiadoMovilEntregado || (fila.es_fiado && esPendiente && fila.origen !== 'movil')) && (
               <button onClick={() => abrirConPedido(fila.id)}
                 className="btn-ghost hover:text-primary" title="Registrar abono">
@@ -184,7 +185,6 @@ export default function Ventas() {
               </button>
             )}
 
-            {/* Anular */}
             {(() => {
               if (esAnulada) return null
               if (!puedeAnular(fila)) return (
