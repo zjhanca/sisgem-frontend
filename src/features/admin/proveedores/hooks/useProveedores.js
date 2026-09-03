@@ -81,7 +81,9 @@ export function useProveedores() {
       setVerificando(v => ({ ...v, documento: false }))
       setErrores(prev => ({
         ...prev,
-        documento: duplicado ? `Este documento ya está registrado (${duplicado.nombre})` : (prev.documento?.includes('registrado') ? '' : prev.documento)
+        documento: duplicado
+          ? `Este documento ya está registrado (${duplicado.nombre})`
+          : (prev.documento?.includes('registrado') ? '' : prev.documento)
       }))
     }, 400)
   }, [proveedores])
@@ -96,7 +98,9 @@ export function useProveedores() {
       setVerificando(v => ({ ...v, email: false }))
       setErrores(prev => ({
         ...prev,
-        email: duplicado ? `Este correo ya está registrado (${duplicado.nombre})` : (prev.email?.includes('registrado') ? '' : prev.email)
+        email: duplicado
+          ? `Este correo ya está registrado (${duplicado.nombre})`
+          : (prev.email?.includes('registrado') ? '' : prev.email)
       }))
     }, 400)
   }, [proveedores])
@@ -111,7 +115,9 @@ export function useProveedores() {
       setVerificando(v => ({ ...v, telefono: false }))
       setErrores(prev => ({
         ...prev,
-        telefono: duplicado ? `Este teléfono ya está registrado (${duplicado.nombre})` : (prev.telefono?.includes('registrado') ? '' : prev.telefono)
+        telefono: duplicado
+          ? `Este teléfono ya está registrado (${duplicado.nombre})`
+          : (prev.telefono?.includes('registrado') ? '' : prev.telefono)
       }))
     }, 400)
   }, [proveedores])
@@ -127,7 +133,9 @@ export function useProveedores() {
       setVerificando(v => ({ ...v, nombre: false }))
       setErrores(prev => ({
         ...prev,
-        nombre: duplicado ? 'Ya existe un proveedor con ese nombre' : (prev.nombre?.includes('existe') ? '' : prev.nombre)
+        nombre: duplicado
+          ? 'Ya existe un proveedor con ese nombre'
+          : (prev.nombre?.includes('existe') ? '' : prev.nombre)
       }))
     }, 300)
   }, [proveedores])
@@ -156,7 +164,14 @@ export function useProveedores() {
       setModalEliminar({ abierto: false, item: null })
       toast.success('Proveedor eliminado')
     },
-    onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar'),
+    onError: err => {
+      const msg = err.response?.data?.mensaje || ''
+      if (msg.toLowerCase().includes('product') || msg.toLowerCase().includes('orden') || msg.toLowerCase().includes('compra')) {
+        toast.error('No se puede eliminar, tiene compras relacionadas')
+      } else {
+        toast.error(msg || 'No se puede eliminar')
+      }
+    },
   })
 
   const abrirModal = (item = null) => {
@@ -189,8 +204,6 @@ export function useProveedores() {
 
     const nuevo = { ...form, [campo]: valor }
 
-    // Al cambiar tipo_persona: solo cambia tipo_documento y limpia documento
-    // NO borra nombre, contacto, telefono, email
     if (campo === 'tipo_persona') {
       nuevo.tipo_documento = valor === 'juridica' ? 'NIT' : 'CC'
       nuevo.documento = ''
@@ -199,7 +212,6 @@ export function useProveedores() {
       setVerificando(v => ({ ...v, documento: false }))
     }
 
-    // Al cambiar tipo_documento: limpia solo el documento
     if (campo === 'tipo_documento') {
       nuevo.documento = ''
       setErrores(prev => ({ ...prev, documento: '' }))
@@ -209,18 +221,15 @@ export function useProveedores() {
 
     setForm(nuevo)
 
-    // Validación sincrónica
     const err = validarCampo(campo, valor, nuevo.tipo_persona, nuevo.tipo_documento)
     setErrores(prev => ({ ...prev, [campo]: err }))
 
-    // Validaciones async — solo si no hay error de formato
     if (!err) {
       if (campo === 'documento')  verificarDoc(valor, nuevo.tipo_documento, modal.item?.id)
       if (campo === 'email')      verificarEmail(valor, modal.item?.id)
       if (campo === 'telefono')   verificarTelefono(valor, modal.item?.id)
       if (campo === 'nombre')     verificarNombre(valor, nuevo.tipo_persona, nuevo.tipo_documento, modal.item?.id)
     } else {
-      // Cancela timers si hay error de formato
       if (campo === 'documento') { clearTimeout(timerDoc.current);      setVerificando(v => ({ ...v, documento: false })) }
       if (campo === 'email')     { clearTimeout(timerEmail.current);    setVerificando(v => ({ ...v, email: false })) }
       if (campo === 'telefono')  { clearTimeout(timerTelefono.current); setVerificando(v => ({ ...v, telefono: false })) }
@@ -232,13 +241,11 @@ export function useProveedores() {
     e.preventDefault()
     const campos = ['nombre', 'documento', 'contacto', 'telefono', 'email']
 
-    // Errores sincrónicos
     const erroresSinc = {}
     campos.forEach(c => {
       erroresSinc[c] = validarCampo(c, form[c], form.tipo_persona, form.tipo_documento)
     })
 
-    // Merge con errores async existentes — los async tienen prioridad si el campo no tiene error sincrónico
     setErrores(prev => {
       const merged = { ...erroresSinc }
       campos.forEach(c => {
@@ -247,7 +254,6 @@ export function useProveedores() {
       return merged
     })
 
-    // Verificar todos los errores (sinc + async actuales)
     const todosErrores = { ...errores }
     campos.forEach(c => { if (erroresSinc[c]) todosErrores[c] = erroresSinc[c] })
     if (Object.values(todosErrores).some(Boolean)) return
