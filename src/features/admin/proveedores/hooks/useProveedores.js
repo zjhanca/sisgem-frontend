@@ -25,7 +25,7 @@ const validarDocumento = (valor, tipoDocumento) => {
   return ''
 }
 
-const validarCampo = (campo, valor, tipoPersona, tipoDocumento, proveedores, itemId) => {
+const validarCampo = (campo, valor, tipoPersona, tipoDocumento) => {
   switch (campo) {
     case 'nombre':
       if (!valor.trim()) return tipoPersona === 'natural'
@@ -33,12 +33,6 @@ const validarCampo = (campo, valor, tipoPersona, tipoDocumento, proveedores, ite
         : 'La razón social es obligatoria'
       if (valor.trim().length < 2) return 'Mínimo 2 caracteres'
       if (tipoPersona === 'natural' && !SOLO_LETRAS.test(valor)) return 'Solo se permiten letras'
-      if (proveedores) {
-        const dup = proveedores.find(p =>
-          p.nombre?.trim().toLowerCase() === valor.trim().toLowerCase() && p.id !== itemId
-        )
-        if (dup) return 'Ya existe un proveedor con ese nombre'
-      }
       return ''
     case 'documento':
       return validarDocumento(valor, tipoDocumento)
@@ -67,11 +61,15 @@ export function useProveedores() {
   const [form, setForm]       = useState(formVacio)
   const [errores, setErrores] = useState({})
   const [verificando, setVerificando] = useState({})
-  const timerDoc    = useRef(null)
-  const timerEmail  = useRef(null)
-  const timerNombre = useRef(null)
+  const timerDoc      = useRef(null)
+  const timerEmail    = useRef(null)
+  const timerNombre   = useRef(null)
+  const timerTelefono = useRef(null)
 
-  const { data: proveedores = [] } = useQuery({ queryKey: ['proveedores'], queryFn: proveedoresService.getAll })
+  const { data: proveedores = [] } = useQuery({
+    queryKey: ['proveedores'],
+    queryFn:  proveedoresService.getAll,
+  })
 
   const verificarDoc = useCallback((doc, tipoDocumento, itemId) => {
     clearTimeout(timerDoc.current)
@@ -81,9 +79,11 @@ export function useProveedores() {
         p.documento?.trim() === doc.trim() && p.id !== itemId
       )
       setVerificando(v => ({ ...v, documento: false }))
-      if (duplicado) setErrores(prev => ({
-        ...prev, documento: `Este documento ya está registrado (${duplicado.nombre})`
-      }))
+      if (duplicado) {
+        setErrores(prev => ({
+          ...prev, documento: `Este documento ya está registrado (${duplicado.nombre})`
+        }))
+      }
     }, 400)
   }, [proveedores])
 
@@ -95,9 +95,27 @@ export function useProveedores() {
         p.email?.toLowerCase() === email.toLowerCase() && p.id !== itemId
       )
       setVerificando(v => ({ ...v, email: false }))
-      if (duplicado) setErrores(prev => ({
-        ...prev, email: `Este correo ya está registrado (${duplicado.nombre})`
-      }))
+      if (duplicado) {
+        setErrores(prev => ({
+          ...prev, email: `Este correo ya está registrado (${duplicado.nombre})`
+        }))
+      }
+    }, 400)
+  }, [proveedores])
+
+  const verificarTelefono = useCallback((telefono, itemId) => {
+    clearTimeout(timerTelefono.current)
+    setVerificando(v => ({ ...v, telefono: true }))
+    timerTelefono.current = setTimeout(() => {
+      const duplicado = proveedores.find(p =>
+        p.telefono === telefono && p.id !== itemId
+      )
+      setVerificando(v => ({ ...v, telefono: false }))
+      if (duplicado) {
+        setErrores(prev => ({
+          ...prev, telefono: `Este teléfono ya está registrado (${duplicado.nombre})`
+        }))
+      }
     }, 400)
   }, [proveedores])
 
@@ -106,9 +124,13 @@ export function useProveedores() {
     clearTimeout(timerNombre.current)
     setVerificando(v => ({ ...v, nombre: true }))
     timerNombre.current = setTimeout(() => {
-      const err = validarCampo('nombre', nombre, tipoPersona, tipoDocumento, proveedores, itemId)
+      const duplicado = proveedores.find(p =>
+        p.nombre?.trim().toLowerCase() === nombre.trim().toLowerCase() && p.id !== itemId
+      )
       setVerificando(v => ({ ...v, nombre: false }))
-      setErrores(prev => ({ ...prev, nombre: err }))
+      if (duplicado) {
+        setErrores(prev => ({ ...prev, nombre: `Ya existe un proveedor con ese nombre` }))
+      }
     }, 300)
   }, [proveedores])
 
@@ -116,7 +138,11 @@ export function useProveedores() {
     mutationFn: data => modal.item
       ? proveedoresService.update(modal.item.id, data)
       : proveedoresService.create(data),
-    onSuccess: () => { qc.invalidateQueries(['proveedores']); cerrarModal(); toast.success('Proveedor guardado') },
+    onSuccess: () => {
+      qc.invalidateQueries(['proveedores'])
+      cerrarModal()
+      toast.success('Proveedor guardado')
+    },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar'),
   })
 
@@ -146,15 +172,14 @@ export function useProveedores() {
     clearTimeout(timerDoc.current)
     clearTimeout(timerEmail.current)
     clearTimeout(timerNombre.current)
+    clearTimeout(timerTelefono.current)
     setModal({ abierto: false, item: null })
     setErrores({})
     setVerificando({})
   }
 
   const handleChange = (campo, valor) => {
-    // Solo números en teléfono y documento
     if ((campo === 'telefono' || campo === 'documento') && valor && !/^\d*$/.test(valor)) return
-    // Máximo según tipo documento
     if (campo === 'documento') {
       const max = form.tipo_documento === 'NIT' ? 10
         : form.tipo_documento === 'CE' ? 7 : 10
@@ -166,32 +191,43 @@ export function useProveedores() {
 
     const nuevo = { ...form, [campo]: valor }
 
+    // Al cambiar tipo_persona: solo cambia el tipo_documento y limpia el documento
+    // NO borra nombre, contacto, telefono, email para no perder info
     if (campo === 'tipo_persona') {
       nuevo.tipo_documento = valor === 'juridica' ? 'NIT' : 'CC'
-      nuevo.nombre   = ''
-      nuevo.contacto = ''
-      nuevo.telefono = ''
-      nuevo.email    = ''
       nuevo.documento = ''
-      setErrores(prev => ({ ...prev, nombre: '', contacto: '', telefono: '', email: '', documento: '' }))
-      setVerificando({})
+      setErrores(prev => ({ ...prev, documento: '' }))
       clearTimeout(timerDoc.current)
-      clearTimeout(timerEmail.current)
-      clearTimeout(timerNombre.current)
+      setVerificando(v => ({ ...v, documento: false }))
     }
 
+    // Al cambiar tipo_documento: limpia solo el documento
     if (campo === 'tipo_documento') {
       nuevo.documento = ''
       setErrores(prev => ({ ...prev, documento: '' }))
+      clearTimeout(timerDoc.current)
+      setVerificando(v => ({ ...v, documento: false }))
     }
 
     setForm(nuevo)
-    const err = validarCampo(campo, valor, nuevo.tipo_persona, nuevo.tipo_documento, proveedores, modal.item?.id)
+
+    // Validación sincrónica del campo actual
+    const err = validarCampo(campo, valor, nuevo.tipo_persona, nuevo.tipo_documento)
     setErrores(prev => ({ ...prev, [campo]: err }))
 
-    if (campo === 'documento' && !err) verificarDoc(valor, nuevo.tipo_documento, modal.item?.id)
-    if (campo === 'email'     && !err) verificarEmail(valor, modal.item?.id)
-    if (campo === 'nombre'    && !err) verificarNombre(valor, nuevo.tipo_persona, nuevo.tipo_documento, modal.item?.id)
+    // Validaciones async — solo si no hay error de formato
+    if (!err) {
+      if (campo === 'documento')  verificarDoc(valor, nuevo.tipo_documento, modal.item?.id)
+      if (campo === 'email')      verificarEmail(valor, modal.item?.id)
+      if (campo === 'telefono')   verificarTelefono(valor, modal.item?.id)
+      if (campo === 'nombre')     verificarNombre(valor, nuevo.tipo_persona, nuevo.tipo_documento, modal.item?.id)
+    } else {
+      // Si hay error de formato, cancela timers async pendientes del campo
+      if (campo === 'documento') { clearTimeout(timerDoc.current);      setVerificando(v => ({ ...v, documento: false })) }
+      if (campo === 'email')     { clearTimeout(timerEmail.current);    setVerificando(v => ({ ...v, email: false })) }
+      if (campo === 'telefono')  { clearTimeout(timerTelefono.current); setVerificando(v => ({ ...v, telefono: false })) }
+      if (campo === 'nombre')    { clearTimeout(timerNombre.current);   setVerificando(v => ({ ...v, nombre: false })) }
+    }
   }
 
   const handleSubmit = e => {
@@ -199,11 +235,11 @@ export function useProveedores() {
     const campos = ['nombre', 'documento', 'contacto', 'telefono', 'email']
     const nuevosErrores = {}
     campos.forEach(c => {
-      nuevosErrores[c] = validarCampo(c, form[c], form.tipo_persona, form.tipo_documento, proveedores, modal.item?.id)
+      nuevosErrores[c] = validarCampo(c, form[c], form.tipo_persona, form.tipo_documento)
     })
     setErrores(nuevosErrores)
     if (Object.values(nuevosErrores).some(Boolean)) return
-    if (errores.documento || errores.email || errores.nombre) return
+    if (errores.documento || errores.email || errores.nombre || errores.telefono) return
     if (Object.values(verificando).some(Boolean)) { toast.error('Espera, verificando datos...'); return }
     guardar.mutate(form)
   }
