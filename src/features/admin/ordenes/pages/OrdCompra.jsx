@@ -67,18 +67,9 @@ export default function OrdCompra() {
     { key: 'total',        label: 'Total',  render: r => formatPrecio(r.total) },
     { key: 'estado', label: 'Estado',
       render: r => {
-        const esAnulada    = r.estado?.toLowerCase().includes('anula')
-        const esCompletada = r.estado?.toLowerCase().includes('complet')
-        if (esAnulada)    return <BadgeEstado color="bg-gray-300" label="Anulado" />
-        if (esCompletada) return <BadgeEstado color="bg-primary"  label="Completado" />
-        return (
-          <BadgeEstado color="bg-amber-500" label="Pendiente"
-            title="Clic para marcar como Completado"
-            onClick={() => {
-              const id = getEstadoId('activo') || getEstadoId('complet')
-              if (id) cambiarEstado.mutate({ id: r.id, estado_id: id })
-            }} />
-        )
+        const esAnulada = r.estado?.toLowerCase().includes('anula')
+        if (esAnulada) return <BadgeEstado color="bg-gray-300" label="Anulado" />
+        return <BadgeEstado color="bg-primary" label="Completado" />
       }
     },
   ]
