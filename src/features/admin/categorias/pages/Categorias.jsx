@@ -1,9 +1,8 @@
 ﻿import { useState } from 'react'
-import { Plus, Edit2, Eye, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { useCategorias } from '../hooks/useCategorias'
 import CategoriaForm          from '../components/CategoriaForm'
-import CategoriaDetalle       from '../components/CategoriaDetalle'
 import CategoriaEliminar      from '../components/CategoriaEliminar'
 import CategoriaConfirmEstado from '../components/Categoriaconfirmestado'
 import { formatFecha } from '@shared/utils/validaciones'
@@ -29,8 +28,8 @@ function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo =
 export default function Categorias() {
   const {
     categorias, form, errores, handleChange, handleSubmit,
-    modal, modalDetalle, modalEliminar,
-    setModalDetalle, setModalEliminar,
+    modal, modalEliminar,
+    setModalEliminar,
     abrirModal, cerrarModal,
     toggleEstado, eliminar,
     guardando, eliminando,
@@ -39,6 +38,13 @@ export default function Categorias() {
   const [confirmToggle, setConfirmToggle] = useState(null)
 
   const columnas = [
+    { key: 'icono', label: 'Ícono',
+      render: r => r.icono
+        ? <span className="text-xl">{r.icono}</span>
+        : <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-xs font-bold text-primary">
+            {r.nombre?.charAt(0).toUpperCase()}
+          </div>
+    },
     { key: 'nombre',      label: 'Nombre' },
     { key: 'descripcion', label: 'Descripción', render: r => r.descripcion || '—' },
     { key: 'created_at',  label: 'Creada', render: r => formatFecha(r.created_at) },
@@ -59,17 +65,19 @@ export default function Categorias() {
 
       <Tabla columnas={columnas} datos={categorias}
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost" title="Ver detalle"><Eye size={14} /></button>
-          <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar"><Edit2 size={14} /></button>
-          <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400" title="Eliminar"><Trash2 size={14} /></button>
+          <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar">
+            <Edit2 size={14} />
+          </button>
+          <button onClick={() => setModalEliminar({ abierto: true, item: fila })}
+            className="btn-ghost hover:text-red-400" title="Eliminar">
+            <Trash2 size={14} />
+          </button>
         </>)}
       />
 
       <CategoriaForm modal={modal} form={form} errores={errores}
         handleChange={handleChange} handleSubmit={handleSubmit}
         cerrarModal={cerrarModal} guardando={guardando} />
-      <CategoriaDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
-        abrirModal={abrirModal} toggleEstado={toggleEstado} />
       <CategoriaEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
         eliminar={eliminar} eliminando={eliminando} />
       <CategoriaConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle}
