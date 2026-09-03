@@ -40,7 +40,8 @@ export default function Categorias() {
   const columnas = [
     { key: 'icono', label: 'Ícono',
       render: r => r.icono
-        ? <span className="text-xl">{r.icono}</span>
+        ? <img src={r.icono} alt="" className="w-8 h-8 object-contain rounded"
+            onError={e => e.target.style.display='none'} />
         : <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-xs font-bold text-primary">
             {r.nombre?.charAt(0).toUpperCase()}
           </div>
