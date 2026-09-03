@@ -4,21 +4,26 @@ import { categoriasService } from '../services/categoriasService'
 import toast from 'react-hot-toast'
 
 const formVacio = { nombre: '', descripcion: '', icono: '' }
-
 const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/
 
-const validar = form => {
+const validar = (form, categorias, itemId) => {
   const e = {}
   if (!form.nombre.trim())                  e.nombre = 'El nombre es obligatorio'
   else if (form.nombre.trim().length < 2)   e.nombre = 'Mínimo 2 caracteres'
   else if (form.nombre.trim().length > 100) e.nombre = 'Máximo 100 caracteres'
   else if (!SOLO_LETRAS.test(form.nombre))  e.nombre = 'Solo se permiten letras'
+  else {
+    const dup = categorias.find(c =>
+      c.nombre.trim().toLowerCase() === form.nombre.trim().toLowerCase() &&
+      c.id !== itemId
+    )
+    if (dup) e.nombre = 'Ya existe una categoría con ese nombre'
+  }
   return e
 }
 
 export function useCategorias() {
   const qc = useQueryClient()
-
   const [modal, setModal]                 = useState({ abierto: false, item: null })
   const [modalDetalle, setModalDetalle]   = useState({ abierto: false, item: null })
   const [modalEliminar, setModalEliminar] = useState({ abierto: false, item: null })
@@ -75,13 +80,13 @@ export function useCategorias() {
     if (campo === 'nombre' && valor && !SOLO_LETRAS.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
-    const e = validar(nuevo)
+    const e = validar(nuevo, categorias, modal.item?.id)
     setErrores(prev => ({ ...prev, [campo]: e[campo] || '' }))
   }
 
   const handleSubmit = e => {
     e.preventDefault()
-    const e2 = validar(form)
+    const e2 = validar(form, categorias, modal.item?.id)
     if (Object.keys(e2).length) { setErrores(e2); return }
     guardar.mutate(form)
   }

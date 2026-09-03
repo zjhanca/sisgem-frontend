@@ -10,15 +10,21 @@ const formVacio = {
   telefono: '', email: '', direccion: ''
 }
 
-// letras (con acentos y ñ) y espacios únicamente
 const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/
 
-const validarCampo = (campo, valor, tipoPersona) => {
+const validarCampo = (campo, valor, tipoPersona, proveedores, itemId) => {
   switch (campo) {
     case 'nombre':
       if (!valor.trim()) return tipoPersona === 'natural' ? 'El nombre completo es obligatorio' : 'La razón social es obligatoria'
       if (valor.trim().length < 2) return 'Mínimo 2 caracteres'
       if (tipoPersona === 'natural' && !SOLO_LETRAS.test(valor)) return 'Solo se permiten letras'
+      // Validar nombre duplicado
+      if (proveedores) {
+        const dup = proveedores.find(p =>
+          p.nombre?.trim().toLowerCase() === valor.trim().toLowerCase() && p.id !== itemId
+        )
+        if (dup) return 'Ya existe un proveedor con ese nombre'
+      }
       return ''
     case 'documento':
       if (!valor.trim()) return 'El documento es obligatorio'
@@ -31,7 +37,14 @@ const validarCampo = (campo, valor, tipoPersona) => {
     case 'telefono':
       if (!valor) return ''
       if (!/^\d+$/.test(valor)) return 'Solo números'
-      if (valor.length !== 10) return 'Debe tener 10 dígitos'
+      if (valor.length < 7 || valor.length > 10) return 'El teléfono debe tener entre 7 y 10 dígitos'
+      return ''
+    // Razón social — solo jurídico
+    case 'razon_social':
+      if (tipoPersona === 'juridica') {
+        if (!valor?.trim()) return 'La razón social es obligatoria'
+        if (valor.trim().length < 3) return 'Mínimo 3 caracteres'
+      }
       return ''
     default: return ''
   }
@@ -47,6 +60,7 @@ export function useProveedores() {
   const [verificando, setVerificando] = useState({})
   const timerDoc   = useRef(null)
   const timerEmail = useRef(null)
+  const timerNombre = useRef(null)
 
   const { data: proveedores = [] } = useQuery({ queryKey: ['proveedores'], queryFn: proveedoresService.getAll })
 
@@ -76,15 +90,28 @@ export function useProveedores() {
     }, 400)
   }, [proveedores])
 
+  const verificarNombre = useCallback((nombre, tipoPersona, itemId) => {
+    if (!nombre || nombre.trim().length < 2) return
+    clearTimeout(timerNombre.current)
+    setVerificando(v => ({ ...v, nombre: true }))
+    timerNombre.current = setTimeout(() => {
+      const err = validarCampo('nombre', nombre, tipoPersona, proveedores, itemId)
+      setVerificando(v => ({ ...v, nombre: false }))
+      setErrores(prev => ({ ...prev, nombre: err }))
+    }, 300)
+  }, [proveedores])
+
   const guardar = useMutation({
     mutationFn: data => modal.item ? proveedoresService.update(modal.item.id, data) : proveedoresService.create(data),
     onSuccess: () => { qc.invalidateQueries(['proveedores']); cerrarModal(); toast.success('Proveedor guardado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar'),
   })
+
   const toggleEstado = useMutation({
     mutationFn: proveedoresService.toggleEstado,
     onSuccess: () => { qc.invalidateQueries(['proveedores']); toast.success('Estado actualizado') },
   })
+
   const eliminar = useMutation({
     mutationFn: proveedoresService.delete,
     onSuccess: () => { qc.invalidateQueries(['proveedores']); setModalEliminar({ abierto: false, item: null }); toast.success('Proveedor eliminado') },
@@ -97,9 +124,11 @@ export function useProveedores() {
     setVerificando({})
     setModal({ abierto: true, item })
   }
+
   const cerrarModal = () => {
     clearTimeout(timerDoc.current)
     clearTimeout(timerEmail.current)
+    clearTimeout(timerNombre.current)
     setModal({ abierto: false, item: null })
     setErrores({})
     setVerificando({})
@@ -107,36 +136,39 @@ export function useProveedores() {
 
   const handleChange = (campo, valor) => {
     if (campo === 'telefono' && valor && !/^\d*$/.test(valor)) return
+    // Máximo 10 dígitos en teléfono
+    if (campo === 'telefono' && valor.length > 10) return
     if (campo === 'contacto' && valor && !SOLO_LETRAS.test(valor)) return
     if (campo === 'nombre' && valor && form.tipo_persona === 'natural' && !SOLO_LETRAS.test(valor)) return
+
     const nuevo = { ...form, [campo]: valor }
     if (campo === 'tipo_persona') {
-      // jurídica solo puede tener NIT; natural solo CC o CE
       nuevo.tipo_documento = valor === 'juridica' ? 'NIT' : 'CC'
-      // al cambiar el tipo de persona, los campos de abajo (razón social/nombre,
-      // contacto, teléfono, correo) ya no aplican de la misma forma — se limpian
-      // para evitar mezclar datos entre un tipo y otro
-      nuevo.nombre = ''
+      nuevo.nombre   = ''
       nuevo.contacto = ''
       nuevo.telefono = ''
-      nuevo.email = ''
+      nuevo.email    = ''
       setErrores(prev => ({ ...prev, nombre: '', contacto: '', telefono: '', email: '' }))
       setVerificando({})
       clearTimeout(timerDoc.current)
       clearTimeout(timerEmail.current)
+      clearTimeout(timerNombre.current)
     }
     setForm(nuevo)
-    const err = validarCampo(campo, valor, nuevo.tipo_persona)
+    const err = validarCampo(campo, valor, nuevo.tipo_persona, proveedores, modal.item?.id)
     setErrores(prev => ({ ...prev, [campo]: err }))
     if (campo === 'documento' && !err) verificarDoc(valor, modal.item?.id)
     if (campo === 'email'     && !err) verificarEmail(valor, modal.item?.id)
+    if (campo === 'nombre'    && !err) verificarNombre(valor, nuevo.tipo_persona, modal.item?.id)
   }
 
   const handleSubmit = e => {
     e.preventDefault()
     const campos = ['nombre', 'documento', 'email', 'telefono']
     const nuevosErrores = {}
-    campos.forEach(c => { nuevosErrores[c] = validarCampo(c, form[c], form.tipo_persona) })
+    campos.forEach(c => {
+      nuevosErrores[c] = validarCampo(c, form[c], form.tipo_persona, proveedores, modal.item?.id)
+    })
     setErrores(nuevosErrores)
     if (Object.values(nuevosErrores).some(Boolean)) return
     if (errores.documento || errores.email) return
@@ -144,7 +176,6 @@ export function useProveedores() {
     guardar.mutate(form)
   }
 
-  // descarga el reporte de proveedores en PDF o Excel (listado completo)
   const descargarReporte = async ({ formato = 'pdf' } = {}) => {
     const ext = formato === 'excel' ? 'xlsx' : 'pdf'
     const url = `/reportes/proveedores?formato=${formato}`

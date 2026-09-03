@@ -2,15 +2,14 @@ import { useState, useCallback, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usuariosService } from '../services/usuariosService'
 import toast from 'react-hot-toast'
- 
+
 const formVacio = {
   nombre: '', apellido: '', email: '',
   telefono: '', rol_id: '', tipo_documento: 'CC', numero_documento: ''
 }
 
-// letras (con acentos y ñ) y espacios únicamente
 const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/
- 
+
 const validarCampo = (campo, valor, esEdicion) => {
   switch (campo) {
     case 'nombre':
@@ -33,18 +32,18 @@ const validarCampo = (campo, valor, esEdicion) => {
     case 'telefono':
       if (!valor) return ''
       if (!/^\d+$/.test(valor)) return 'Solo números'
-      if (valor.length !== 10) return 'Debe tener 10 dígitos'
+      if (valor.length < 7 || valor.length > 10) return 'El teléfono debe tener entre 7 y 10 dígitos'
       return ''
     case 'numero_documento':
       if (!valor) return ''
       if (!/^\d+$/.test(valor)) return 'Solo números'
-      if (valor.length < 5) return 'Mínimo 5 dígitos'
+      if (valor.length < 7 || valor.length > 10) return 'El documento debe tener entre 7 y 10 dígitos'
       return ''
     case 'rol_id': return !valor ? 'Selecciona un rol' : ''
     default: return ''
   }
 }
- 
+
 export function useUsuarios() {
   const qc = useQueryClient()
   const [modal, setModal]                 = useState({ abierto: false, item: null })
@@ -52,28 +51,25 @@ export function useUsuarios() {
   const [modalEliminar, setModalEliminar] = useState({ abierto: false, item: null })
   const [form, setForm]       = useState(formVacio)
   const [errores, setErrores] = useState({})
-  const [verificando, setVerificando] = useState({}) // estado async por campo
+  const [verificando, setVerificando] = useState({})
   const [filtroRol, setFiltroRol]       = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
- 
-  // debounce refs para validación async
+
   const timerEmail = useRef(null)
   const timerDoc   = useRef(null)
- 
+
   const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: usuariosService.getAll })
   const { data: roles = [] }    = useQuery({ queryKey: ['roles'],    queryFn: usuariosService.getRoles })
- 
-  const rolesCliente = roles.filter(r => r.nombre?.toLowerCase().includes('cliente')).map(r => r.id)
 
+  const rolesCliente = roles.filter(r => r.nombre?.toLowerCase().includes('cliente')).map(r => r.id)
   const usuariosFiltrados = usuarios.filter(u => {
-    if (rolesCliente.includes(u.rol_id)) return false // ocultar clientes
+    if (rolesCliente.includes(u.rol_id)) return false
     if (filtroRol    && u.rol_id !== +filtroRol)  return false
     if (filtroEstado === 'activo'   && !u.estado) return false
     if (filtroEstado === 'inactivo' &&  u.estado) return false
     return true
   })
- 
-  // verificar email duplicado contra lista local (evitar round-trip innecesario)
+
   const verificarEmailDuplicado = useCallback((email, itemId) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return
     clearTimeout(timerEmail.current)
@@ -84,10 +80,9 @@ export function useUsuarios() {
       if (existe) setErrores(p => ({ ...p, email: 'Este correo ya está registrado' }))
     }, 400)
   }, [usuarios])
- 
-  // verificar documento duplicado
+
   const verificarDocDuplicado = useCallback((doc, itemId) => {
-    if (!doc || doc.length < 5) return
+    if (!doc || doc.length < 7) return
     clearTimeout(timerDoc.current)
     setVerificando(v => ({ ...v, numero_documento: true }))
     timerDoc.current = setTimeout(() => {
@@ -96,32 +91,40 @@ export function useUsuarios() {
       if (existe) setErrores(p => ({ ...p, numero_documento: 'Este documento ya está registrado' }))
     }, 400)
   }, [usuarios])
- 
+
   const guardar = useMutation({
     mutationFn: data => modal.item ? usuariosService.update(modal.item.id, data) : usuariosService.create(data),
     onSuccess: () => { qc.invalidateQueries(['usuarios']); cerrarModal(); toast.success('Usuario guardado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar'),
   })
+
   const toggleEstado = useMutation({
     mutationFn: usuariosService.toggleEstado,
     onSuccess: () => { qc.invalidateQueries(['usuarios']); toast.success('Estado actualizado') },
   })
+
   const eliminar = useMutation({
     mutationFn: usuariosService.delete,
     onSuccess: () => { qc.invalidateQueries(['usuarios']); setModalEliminar({ abierto: false, item: null }); toast.success('Usuario eliminado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar'),
   })
- 
+
   const abrirModal = (item = null) => {
     setForm(item ? {
-      nombre: item.nombre, apellido: item.apellido, email: item.email,
-      password: '', telefono: item.telefono || '', rol_id: item.rol_id,
-      tipo_documento: item.tipo_documento || 'CC', numero_documento: item.numero_documento || ''
+      nombre:           item.nombre,
+      apellido:         item.apellido,
+      email:            item.email,
+      password:         '',
+      telefono:         item.telefono         || '',
+      rol_id:           item.rol_id,
+      tipo_documento:   item.tipo_documento   || 'CC',
+      numero_documento: item.numero_documento || '',
     } : formVacio)
     setErrores({})
     setVerificando({})
     setModal({ abierto: true, item })
   }
+
   const cerrarModal = () => {
     setModal({ abierto: false, item: null })
     setErrores({})
@@ -129,20 +132,20 @@ export function useUsuarios() {
     clearTimeout(timerEmail.current)
     clearTimeout(timerDoc.current)
   }
- 
+
   const handleChange = (campo, valor) => {
     if ((campo === 'telefono' || campo === 'numero_documento') && valor && !/^\d*$/.test(valor)) return
+    // Máximo 10 dígitos en teléfono y documento
+    if ((campo === 'telefono' || campo === 'numero_documento') && valor.length > 10) return
     if ((campo === 'nombre' || campo === 'apellido') && valor && !SOLO_LETRAS.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
     const err = validarCampo(campo, valor, !!modal.item)
     setErrores(prev => ({ ...prev, [campo]: err }))
- 
-    // validaciones async con debounce
-    if (campo === 'email' && !err) verificarEmailDuplicado(valor, modal.item?.id)
+    if (campo === 'email'            && !err) verificarEmailDuplicado(valor, modal.item?.id)
     if (campo === 'numero_documento' && !err) verificarDocDuplicado(valor, modal.item?.id)
   }
- 
+
   const handleSubmit = e => {
     e.preventDefault()
     const campos = ['nombre', 'apellido', 'email', 'telefono', 'numero_documento', 'rol_id']
@@ -155,9 +158,10 @@ export function useUsuarios() {
     if (modal.item && !data.password) delete data.password
     guardar.mutate(data)
   }
- 
+
   return {
-    usuarios: usuariosFiltrados, usuariosTodos: usuarios, roles, form, errores, verificando,
+    usuarios: usuariosFiltrados, usuariosTodos: usuarios, roles,
+    form, errores, verificando,
     modal, modalDetalle, modalEliminar,
     setModalDetalle, setModalEliminar,
     filtroRol, setFiltroRol, filtroEstado, setFiltroEstado,

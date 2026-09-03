@@ -12,9 +12,17 @@ const formVacio = {
 
 const capitalizarPalabras = str => str.replace(/(^|\s)\S/g, letra => letra.toUpperCase())
 
-const validar = form => {
+const validar = (form, productos, itemId) => {
   const e = {}
-  if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio'
+  if (!form.nombre.trim()) {
+    e.nombre = 'El nombre es obligatorio'
+  } else {
+    const dup = productos.find(p =>
+      p.nombre.trim().toLowerCase() === form.nombre.trim().toLowerCase() &&
+      p.id !== itemId
+    )
+    if (dup) e.nombre = 'Ya existe un producto con ese nombre'
+  }
   return e
 }
 
@@ -26,7 +34,8 @@ export function useProductos() {
   const [form, setForm]                   = useState(formVacio)
   const [errores, setErrores]             = useState({})
   const [verificandoCodigo, setVerificandoCodigo] = useState(false)
-  const timerCodigo = useRef(null)
+  const timerCodigo  = useRef(null)
+  const timerNombre  = useRef(null)
 
   const { data: productos = [] }   = useQuery({ queryKey: ['productos'],   queryFn: productosService.getAll })
   const { data: categorias = [] }  = useQuery({ queryKey: ['categorias'],  queryFn: productosService.getCategorias })
@@ -51,6 +60,14 @@ export function useProductos() {
         codigo_barras: duplicado ? `Esta referencia ya está asignada a "${duplicado.nombre}"` : ''
       }))
     }, 400)
+  }, [productos])
+
+  const verificarNombre = useCallback((nombre, itemId) => {
+    clearTimeout(timerNombre.current)
+    timerNombre.current = setTimeout(() => {
+      const e = validar({ nombre }, productos, itemId)
+      setErrores(prev => ({ ...prev, nombre: e.nombre || '' }))
+    }, 300)
   }, [productos])
 
   const guardar = useMutation({
@@ -102,7 +119,7 @@ export function useProductos() {
       setForm({
         nombre:        item.nombre,
         descripcion:   item.descripcion || '',
-        precio:        item.precio,      // solo lectura en el form
+        precio:        item.precio,
         stock:         item.stock,
         categoria_id:  item.categoria_id || '',
         proveedor_id:  item.proveedor_id || '',
@@ -124,14 +141,15 @@ export function useProductos() {
     if (campo === 'nombre') valor = capitalizarPalabras(valor)
     const nuevo = { ...form, [campo]: valor }
     setForm(nuevo)
-    const e = validar(nuevo)
+    const e = validar(nuevo, productos, modal.item?.id)
     setErrores(prev => ({ ...prev, [campo]: e[campo] || '' }))
+    if (campo === 'nombre')        verificarNombre(valor, modal.item?.id)
     if (campo === 'codigo_barras') verificarCodigo(valor, modal.item?.id)
   }
 
   const handleSubmit = e => {
     e.preventDefault()
-    const e2 = validar(form)
+    const e2 = validar(form, productos, modal.item?.id)
     if (Object.keys(e2).length) { setErrores(e2); return }
     if (errores.codigo_barras) return
     if (verificandoCodigo) return
