@@ -79,11 +79,10 @@ export function useProveedores() {
         p.documento?.trim() === doc.trim() && p.id !== itemId
       )
       setVerificando(v => ({ ...v, documento: false }))
-      if (duplicado) {
-        setErrores(prev => ({
-          ...prev, documento: `Este documento ya está registrado (${duplicado.nombre})`
-        }))
-      }
+      setErrores(prev => ({
+        ...prev,
+        documento: duplicado ? `Este documento ya está registrado (${duplicado.nombre})` : (prev.documento?.includes('registrado') ? '' : prev.documento)
+      }))
     }, 400)
   }, [proveedores])
 
@@ -95,11 +94,10 @@ export function useProveedores() {
         p.email?.toLowerCase() === email.toLowerCase() && p.id !== itemId
       )
       setVerificando(v => ({ ...v, email: false }))
-      if (duplicado) {
-        setErrores(prev => ({
-          ...prev, email: `Este correo ya está registrado (${duplicado.nombre})`
-        }))
-      }
+      setErrores(prev => ({
+        ...prev,
+        email: duplicado ? `Este correo ya está registrado (${duplicado.nombre})` : (prev.email?.includes('registrado') ? '' : prev.email)
+      }))
     }, 400)
   }, [proveedores])
 
@@ -111,11 +109,10 @@ export function useProveedores() {
         p.telefono === telefono && p.id !== itemId
       )
       setVerificando(v => ({ ...v, telefono: false }))
-      if (duplicado) {
-        setErrores(prev => ({
-          ...prev, telefono: `Este teléfono ya está registrado (${duplicado.nombre})`
-        }))
-      }
+      setErrores(prev => ({
+        ...prev,
+        telefono: duplicado ? `Este teléfono ya está registrado (${duplicado.nombre})` : (prev.telefono?.includes('registrado') ? '' : prev.telefono)
+      }))
     }, 400)
   }, [proveedores])
 
@@ -128,9 +125,10 @@ export function useProveedores() {
         p.nombre?.trim().toLowerCase() === nombre.trim().toLowerCase() && p.id !== itemId
       )
       setVerificando(v => ({ ...v, nombre: false }))
-      if (duplicado) {
-        setErrores(prev => ({ ...prev, nombre: `Ya existe un proveedor con ese nombre` }))
-      }
+      setErrores(prev => ({
+        ...prev,
+        nombre: duplicado ? 'Ya existe un proveedor con ese nombre' : (prev.nombre?.includes('existe') ? '' : prev.nombre)
+      }))
     }, 300)
   }, [proveedores])
 
@@ -191,8 +189,8 @@ export function useProveedores() {
 
     const nuevo = { ...form, [campo]: valor }
 
-    // Al cambiar tipo_persona: solo cambia el tipo_documento y limpia el documento
-    // NO borra nombre, contacto, telefono, email para no perder info
+    // Al cambiar tipo_persona: solo cambia tipo_documento y limpia documento
+    // NO borra nombre, contacto, telefono, email
     if (campo === 'tipo_persona') {
       nuevo.tipo_documento = valor === 'juridica' ? 'NIT' : 'CC'
       nuevo.documento = ''
@@ -211,7 +209,7 @@ export function useProveedores() {
 
     setForm(nuevo)
 
-    // Validación sincrónica del campo actual
+    // Validación sincrónica
     const err = validarCampo(campo, valor, nuevo.tipo_persona, nuevo.tipo_documento)
     setErrores(prev => ({ ...prev, [campo]: err }))
 
@@ -222,7 +220,7 @@ export function useProveedores() {
       if (campo === 'telefono')   verificarTelefono(valor, modal.item?.id)
       if (campo === 'nombre')     verificarNombre(valor, nuevo.tipo_persona, nuevo.tipo_documento, modal.item?.id)
     } else {
-      // Si hay error de formato, cancela timers async pendientes del campo
+      // Cancela timers si hay error de formato
       if (campo === 'documento') { clearTimeout(timerDoc.current);      setVerificando(v => ({ ...v, documento: false })) }
       if (campo === 'email')     { clearTimeout(timerEmail.current);    setVerificando(v => ({ ...v, email: false })) }
       if (campo === 'telefono')  { clearTimeout(timerTelefono.current); setVerificando(v => ({ ...v, telefono: false })) }
@@ -233,13 +231,26 @@ export function useProveedores() {
   const handleSubmit = e => {
     e.preventDefault()
     const campos = ['nombre', 'documento', 'contacto', 'telefono', 'email']
-    const nuevosErrores = {}
+
+    // Errores sincrónicos
+    const erroresSinc = {}
     campos.forEach(c => {
-      nuevosErrores[c] = validarCampo(c, form[c], form.tipo_persona, form.tipo_documento)
+      erroresSinc[c] = validarCampo(c, form[c], form.tipo_persona, form.tipo_documento)
     })
-    setErrores(nuevosErrores)
-    if (Object.values(nuevosErrores).some(Boolean)) return
-    if (errores.documento || errores.email || errores.nombre || errores.telefono) return
+
+    // Merge con errores async existentes — los async tienen prioridad si el campo no tiene error sincrónico
+    setErrores(prev => {
+      const merged = { ...erroresSinc }
+      campos.forEach(c => {
+        if (!merged[c] && prev[c]) merged[c] = prev[c]
+      })
+      return merged
+    })
+
+    // Verificar todos los errores (sinc + async actuales)
+    const todosErrores = { ...errores }
+    campos.forEach(c => { if (erroresSinc[c]) todosErrores[c] = erroresSinc[c] })
+    if (Object.values(todosErrores).some(Boolean)) return
     if (Object.values(verificando).some(Boolean)) { toast.error('Espera, verificando datos...'); return }
     guardar.mutate(form)
   }
