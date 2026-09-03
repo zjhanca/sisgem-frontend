@@ -10,23 +10,54 @@ export default function RolForm({
   togglePermiso, toggleModulo, seleccionarTodos, limpiarTodos,
   handleNombreChange,
 }) {
+  const nombreValido = form.nombre.trim().length > 0 && !errores.nombre
+
+  const handleTabClick = (id) => {
+    // No permite ir a permisos si el nombre no es válido
+    if (id === 'permisos' && !nombreValido) {
+      if (!form.nombre.trim()) {
+        // Dispara el error visualmente
+        handleNombreChange('')
+      }
+      return
+    }
+    setTab(id)
+  }
+
   return (
     <Modal abierto={modal.abierto} onCerrar={cerrarModal} bloquearCierre
       titulo={modal.item ? `Editar Rol — ${modal.item.nombre}` : 'Nuevo Rol'} ancho="max-w-2xl">
+
+      {/* Tabs */}
       <div className="flex gap-1 mb-4 p-1 bg-gray-50 rounded-xl">
-        {[{ id:'info', label:'Información', icon:Edit2 }, { id:'permisos', label:'Permisos', icon:Shield }].map(t => (
-          <button key={t.id} type="button" onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-medium transition-all ${
-              tab === t.id ? 'bg-primary text-white shadow-sm' : 'text-gray-500 hover:text-primary'
-            }`}>
-            <t.icon size={13} /> {t.label}
-            {t.id === 'permisos' && permisosSeleccionados.length > 0 && (
-              <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${tab==='permisos' ? 'bg-white/20' : 'bg-primary/15 text-primary'}`}>
-                {permisosSeleccionados.length}
-              </span>
-            )}
-          </button>
-        ))}
+        {[
+          { id: 'info',     label: 'Información', icon: Edit2   },
+          { id: 'permisos', label: 'Permisos',    icon: Shield  },
+        ].map(t => {
+          const bloqueado = t.id === 'permisos' && !nombreValido
+          return (
+            <button key={t.id} type="button"
+              onClick={() => handleTabClick(t.id)}
+              title={bloqueado ? 'Ingresa un nombre válido primero' : ''}
+              className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-medium transition-all ${
+                tab === t.id
+                  ? 'bg-primary text-white shadow-sm'
+                  : bloqueado
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-500 hover:text-primary'
+              }`}>
+              <t.icon size={13} />
+              {t.label}
+              {t.id === 'permisos' && permisosSeleccionados.length > 0 && (
+                <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
+                  tab === 'permisos' ? 'bg-white/20' : 'bg-primary/15 text-primary'
+                }`}>
+                  {permisosSeleccionados.length}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -34,19 +65,22 @@ export default function RolForm({
           <div className="space-y-3">
             <div>
               <label className="campo-label">Nombre del Rol *</label>
-              <input value={form.nombre} onChange={e => handleNombreChange(e.target.value)}
+              <input value={form.nombre}
+                onChange={e => handleNombreChange(e.target.value)}
                 className={`campo-input ${errores.nombre ? 'border-red-400' : ''}`}
                 placeholder="Nombre del rol" />
               {errores.nombre && <p className="campo-error">{errores.nombre}</p>}
             </div>
             <div>
               <label className="campo-label">Descripción</label>
-              <textarea value={form.descripcion} onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))}
-                rows={2} className="campo-input resize-none" placeholder="Descripción del rol..." maxLength={150} />
+              <textarea value={form.descripcion}
+                onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))}
+                rows={2} className="campo-input resize-none"
+                placeholder="Descripción del rol..." maxLength={150} />
               <p className="campo-hint text-right">{(form.descripcion || '').length}/150</p>
             </div>
             <div className="p-3 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-600">
-              💡 Al continuar deberás seleccionar al menos un permiso para este rol.
+              Al continuar deberás seleccionar al menos un permiso para este rol.
             </div>
           </div>
         )}
@@ -54,7 +88,9 @@ export default function RolForm({
         {tab === 'permisos' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500">{permisosSeleccionados.length} de {todosPermisos.length} permisos</p>
+              <p className="text-xs text-gray-500">
+                {permisosSeleccionados.length} de {todosPermisos.length} permisos
+              </p>
               <div className="flex gap-2">
                 <button type="button" onClick={seleccionarTodos} className="text-xs text-primary hover:underline">Todos</button>
                 <span className="text-gray-300">|</span>
@@ -70,15 +106,21 @@ export default function RolForm({
                       <span className="text-xs font-semibold capitalize">{modulo}</span>
                       <button type="button" onClick={() => toggleModulo(perms)}
                         className={`text-xs px-2 py-0.5 rounded border transition-colors ${
-                          todosSelec ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-500 hover:border-primary/40'
+                          todosSelec
+                            ? 'bg-primary text-white border-primary'
+                            : 'border-gray-200 text-gray-500 hover:border-primary/40'
                         }`}>
                         {todosSelec ? 'Quitar' : 'Todos'}
                       </button>
                     </div>
                     <div className="grid grid-cols-2 gap-px bg-gray-100">
                       {perms.map(p => (
-                        <label key={p.id} className="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer bg-white hover:bg-primary/5 transition-colors">
-                          <input type="checkbox" checked={permisosSeleccionados.includes(p.id)} onChange={() => togglePermiso(p.id)} className="accent-primary shrink-0" />
+                        <label key={p.id}
+                          className="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer bg-white hover:bg-primary/5 transition-colors">
+                          <input type="checkbox"
+                            checked={permisosSeleccionados.includes(p.id)}
+                            onChange={() => togglePermiso(p.id)}
+                            className="accent-primary shrink-0" />
                           <span>{capitalizar(p.nombre.replace(/_/g, ' '))}</span>
                         </label>
                       ))}
@@ -91,7 +133,9 @@ export default function RolForm({
         )}
 
         <div className="flex justify-end pt-3 mt-3 border-t border-gray-100">
-          <button type="submit" disabled={guardando || !!errores.nombre} className="btn-primary disabled:opacity-50">
+          <button type="submit"
+            disabled={guardando || !!errores.nombre || !form.nombre.trim()}
+            className="btn-primary disabled:opacity-50">
             {guardando ? 'Guardando...' : tab === 'info' ? 'Siguiente: Permisos →' : 'Aceptar'}
           </button>
         </div>
