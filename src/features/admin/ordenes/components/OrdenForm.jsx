@@ -152,7 +152,7 @@ export default function OrdenForm({
 
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre
-      titulo="Nueva Orden de Compra" ancho="max-w-2xl">
+      titulo="Nueva Compra" ancho="max-w-2xl">
       <form onSubmit={handleCrear} className="space-y-3">
 
         {/* Proveedor */}

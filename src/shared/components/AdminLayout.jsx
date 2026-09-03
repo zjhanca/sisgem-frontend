@@ -26,7 +26,7 @@ const MENU = [
       { to: '/admin/marcas',      label: 'Marcas',            icon: Tag,           permiso: 'ver_marcas'      },
       { to: '/admin/productos',   label: 'Productos',         icon: Package,       permiso: 'ver_productos'   },
       { to: '/admin/proveedores', label: 'Proveedores',       icon: Building2,     permiso: 'ver_proveedores' },
-      { to: '/admin/ordenes',     label: 'Órdenes de Compra', icon: ClipboardList, permiso: 'ver_ordenes'     },
+      { to: '/admin/ordenes',     label: 'Compras', icon: ClipboardList, permiso: 'ver_ordenes'     },
     ]
   },
   {

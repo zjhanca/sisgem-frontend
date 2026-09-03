@@ -86,7 +86,7 @@ export default function OrdCompra() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Órdenes de Compra</h1>
+        <h1 className="page-title">Compras</h1>
         <div className="flex gap-2">
           <button onClick={() => setModalReporte(true)} className="btn-outline">
             <Download size={14} /> Reporte
@@ -111,10 +111,6 @@ export default function OrdCompra() {
 
       <Tabla columnas={columnas} datos={ordenesFiltradas}
         filtros={<>
-          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-44 text-xs">
-            <option value="">Todos los estados</option>
-            {ESTADOS_ORDEN.map(e => <option key={e.key} value={e.key}>{e.label}</option>)}
-          </select>
           <select value={filtroProveedor} onChange={e => setFiltroProveedor(e.target.value)} className="campo-input w-44 text-xs">
             <option value="">Todos los proveedores</option>
             {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}

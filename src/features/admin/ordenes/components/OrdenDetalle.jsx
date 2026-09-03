@@ -83,7 +83,7 @@ export default function OrdenDetalle({
   return (
     <>
       <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
-        titulo={`Orden #${orden?.id}`} ancho="max-w-lg">
+        titulo={`Compra #${orden?.id}`} ancho="max-w-lg">
         {orden && (
           <div className="space-y-3 overflow-y-auto max-h-[75vh]">
             <div className="grid grid-cols-2 gap-3 text-xs">

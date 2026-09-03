@@ -5,17 +5,17 @@ import { useAuth } from '@shared/contexts/AuthContext'
 import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
+// Sin estado pendiente — las órdenes siempre se crean como completadas
 const ESTADOS_ORDEN = [
-  { key: 'pendiente', label: 'Pendiente', color: 'yellow' },
-  { key: 'activo',    label: 'Activo',    color: 'blue'   },
-  { key: 'anulado',   label: 'Anulado',   color: 'gray'   },
+  { key: 'activo',  label: 'Completado', color: 'blue' },
+  { key: 'anulado', label: 'Anulado',    color: 'gray' },
 ]
 
 const formVacio = {
   proveedor_id: '', productos: [],
   fecha_compra: new Date().toISOString().split('T')[0],
   metodo_pago: 'Efectivo',
-  estado: 'pendiente',
+  estado: 'activo', // siempre completado al crear
   fecha_limite_pago: '',
   notas: '',
 }
@@ -26,22 +26,22 @@ export function useOrdenes() {
   const qc = useQueryClient()
   const { usuario } = useAuth()
 
-  const [modalNuevo, setModalNuevo]         = useState(false)
-  const [modalEditar, setModalEditar]       = useState({ abierto: false, orden: null })
-  const [modalDetalle, setModalDetalle]     = useState({ abierto: false, orden: null })
-  const [modalAnular, setModalAnular]       = useState({ abierto: false, orden: null })
-  const [filtroEstado, setFiltroEstado]     = useState('')
+  const [modalNuevo, setModalNuevo]           = useState(false)
+  const [modalEditar, setModalEditar]         = useState({ abierto: false, orden: null })
+  const [modalDetalle, setModalDetalle]       = useState({ abierto: false, orden: null })
+  const [modalAnular, setModalAnular]         = useState({ abierto: false, orden: null })
+  const [filtroEstado, setFiltroEstado]       = useState('')
   const [filtroProveedor, setFiltroProveedor] = useState('')
   const [form, setForm]             = useState(formVacio)
   const [formEditar, setFormEditar] = useState({})
   const [itemForm, setItemForm]     = useState(itemVacio)
-  const [itemEditando, setItemEditando] = useState(null) // índice del item en edición
-  const [facturaFile, setFacturaFile]       = useState(null)
-  const [facturaPreview, setFacturaPreview] = useState('')
-  const [prodBusqueda, setProdBusqueda]     = useState('')
-  const [prodsFiltrados, setProdsFiltrados] = useState([])
-  const [provBusqueda, setProvBusqueda]     = useState('')
-  const [provsFiltrados, setProvsFiltrados] = useState([])
+  const [itemEditando, setItemEditando]       = useState(null)
+  const [facturaFile, setFacturaFile]         = useState(null)
+  const [facturaPreview, setFacturaPreview]   = useState('')
+  const [prodBusqueda, setProdBusqueda]       = useState('')
+  const [prodsFiltrados, setProdsFiltrados]   = useState([])
+  const [provBusqueda, setProvBusqueda]       = useState('')
+  const [provsFiltrados, setProvsFiltrados]   = useState([])
   const [provSeleccionado, setProvSeleccionado] = useState(null)
 
   const { data: ordenes = [] }     = useQuery({ queryKey: ['ordenes'],        queryFn: ordenesService.getAll })
@@ -50,25 +50,19 @@ export function useOrdenes() {
   const { data: estadosBD = [] }   = useQuery({ queryKey: ['estados-compra'], queryFn: ordenesService.getEstados })
 
   const getKeyEstado = nombre => {
-    if (!nombre) return 'pendiente'
+    if (!nombre) return 'activo'
     const n = nombre.toLowerCase()
     if (n.includes('anula') || n.includes('cancel')) return 'anulado'
-    if (n.includes('activo') || n.includes('complet') || n.includes('transito') || n.includes('recibi')) return 'activo'
-    return 'pendiente'
+    // pendiente ahora también se muestra como activo/completado
+    return 'activo'
   }
 
-  const ordenesConEstado = ordenes.map(o => {
-    if (getKeyEstado(o.estado) === 'pendiente' && o.fecha_limite_pago) {
-      if (new Date(o.fecha_limite_pago) < new Date()) return { ...o, _vencida: true }
-    }
-    return o
-  })
+  const ordenesConEstado = ordenes.map(o => ({ ...o }))
 
   const getEstadoId = key => {
     const mapa = {
-      pendiente: ['pendiente'],
-      activo:    ['activo', 'complet', 'transito', 'recibi'],
-      anulado:   ['anulado', 'anula', 'cancel'],
+      activo:  ['activo', 'complet', 'transito', 'recibi', 'pendiente'],
+      anulado: ['anulado', 'anula', 'cancel'],
     }
     return estadosBD.find(e => mapa[key]?.some(k => e.nombre?.toLowerCase().includes(k)))?.id
   }
@@ -89,7 +83,7 @@ export function useOrdenes() {
       formData.append('proveedor_id',      data.proveedor_id)
       formData.append('fecha_compra',      data.fecha_compra)
       formData.append('metodo_pago',       data.metodo_pago)
-      formData.append('estado',            data.estado)
+      formData.append('estado',            'activo') // siempre completado
       formData.append('fecha_limite_pago', data.fecha_limite_pago || '')
       formData.append('notas',             data.notas || '')
       formData.append('registrado_por',    usuario?.id || '')
@@ -99,11 +93,12 @@ export function useOrdenes() {
     },
     onSuccess: () => {
       qc.invalidateQueries(['ordenes'])
-      setModalNuevo(false); setForm(formVacio)
+      setModalNuevo(false)
+      setForm(formVacio)
       setProvBusqueda(''); setProvSeleccionado(null)
       setFacturaFile(null); setFacturaPreview('')
       setItemForm(itemVacio); setItemEditando(null)
-      toast.success('Orden creada')
+      toast.success('Compra registrada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
@@ -113,7 +108,7 @@ export function useOrdenes() {
     onSuccess: () => {
       qc.invalidateQueries(['ordenes'])
       setModalEditar({ abierto: false, orden: null })
-      toast.success('Orden actualizada')
+      toast.success('Compra actualizada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al actualizar'),
   })
@@ -124,7 +119,7 @@ export function useOrdenes() {
       qc.invalidateQueries(['ordenes'])
       setModalAnular({ abierto: false, orden: null })
       setModalDetalle({ abierto: false, orden: null })
-      toast.success('Orden anulada')
+      toast.success('Compra anulada')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'No se puede anular'),
   })
@@ -132,7 +127,8 @@ export function useOrdenes() {
   const cambiarEstado = useMutation({
     mutationFn: ({ id, estado_id }) => ordenesService.cambiarEstado(id, { estado_id }),
     onSuccess: () => {
-      qc.invalidateQueries(['ordenes']); qc.invalidateQueries(['productos'])
+      qc.invalidateQueries(['ordenes'])
+      qc.invalidateQueries(['productos'])
       toast.success('Estado actualizado')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
@@ -141,11 +137,14 @@ export function useOrdenes() {
   const handleFacturaChange = e => {
     const file = e.target.files[0]
     if (!file) return
-    setFacturaFile(file); setFacturaPreview(file.name)
+    setFacturaFile(file)
+    setFacturaPreview(file.name)
   }
 
   const buscarProveedor = texto => {
-    setProvBusqueda(texto); setForm(p => ({ ...p, proveedor_id: '' })); setProvSeleccionado(null)
+    setProvBusqueda(texto)
+    setForm(p => ({ ...p, proveedor_id: '' }))
+    setProvSeleccionado(null)
     const t = texto.toLowerCase()
     setProvsFiltrados(proveedores.filter(p => !t || p.nombre.toLowerCase().includes(t)))
   }
@@ -155,7 +154,8 @@ export function useOrdenes() {
     if (!texto) { setProdsFiltrados([]); return }
     const t = texto.toLowerCase()
     setProdsFiltrados(productos.filter(p =>
-      p.nombre.toLowerCase().includes(t) || (p.codigo_barras && p.codigo_barras.includes(t))
+      p.nombre.toLowerCase().includes(t) ||
+      (p.codigo_barras && p.codigo_barras.includes(t))
     ).slice(0, 8))
   }
 
@@ -189,7 +189,6 @@ export function useOrdenes() {
       toast.error(`El precio de venta no puede bajar del actual ($${precioActual.toLocaleString('es-CO')})`)
       return false
     }
-    // Verificar duplicado (ignorando el índice que se está editando)
     const duplicado = form.productos.find((p, i) => p.producto_id === +item.producto_id && i !== ignorarIdx)
     if (duplicado) { toast.error('Producto ya agregado'); return false }
     return true
@@ -206,10 +205,10 @@ export function useOrdenes() {
       cantidad:       +itemForm.cantidad,
     }]}))
     setItemForm(itemVacio)
-    setProdBusqueda(''); setProdsFiltrados([])
+    setProdBusqueda('')
+    setProdsFiltrados([])
   }
 
-  // Carga un item existente en el formulario para editarlo
   const iniciarEdicionItem = idx => {
     const item = form.productos[idx]
     if (!item) return
@@ -224,7 +223,6 @@ export function useOrdenes() {
     setProdBusqueda(prod?.nombre || '')
   }
 
-  // Guarda los cambios del item en edición
   const guardarEdicionItem = () => {
     if (!validarItem(itemForm, itemEditando)) return
     setForm(p => ({
@@ -242,13 +240,15 @@ export function useOrdenes() {
     }))
     setItemForm(itemVacio)
     setItemEditando(null)
-    setProdBusqueda(''); setProdsFiltrados([])
+    setProdBusqueda('')
+    setProdsFiltrados([])
   }
 
   const cancelarEdicionItem = () => {
     setItemEditando(null)
     setItemForm(itemVacio)
-    setProdBusqueda(''); setProdsFiltrados([])
+    setProdBusqueda('')
+    setProdsFiltrados([])
   }
 
   const quitarItem = idx => {
@@ -277,12 +277,13 @@ export function useOrdenes() {
   }
 
   const ordenesFiltradas = ordenesConEstado.filter(o => {
-    if (filtroEstado && getKeyEstado(o.estado) !== filtroEstado && !(filtroEstado === 'vencida' && o._vencida)) return false
+    // filtroEstado solo puede ser 'activo' o 'anulado' ahora
+    if (filtroEstado && getKeyEstado(o.estado) !== filtroEstado) return false
     if (filtroProveedor && o.proveedor_id !== +filtroProveedor) return false
     return true
   })
 
-  const ordenesVencidas = ordenesConEstado.filter(o => o._vencida).length
+  const ordenesVencidas = 0 // ya no hay vencidas sin estado pendiente
 
   const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
     const nombres = { normal: 'general', rango: 'personalizado' }
