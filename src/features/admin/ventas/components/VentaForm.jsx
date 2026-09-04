@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import Modal from '@shared/components/Modal'
-import { CreditCard, Clock } from 'lucide-react'
+import { CreditCard, Clock, PackagePlus } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 import ClienteForm      from '@features/admin/clientes/components/ClienteForm'
 import { useClientes }  from '@features/admin/clientes/hooks/useClientes'
-import BuscadorProducto    from './BuscadorProducto'
-import ListaProductosVenta from './ListaProductosVenta'
-import SelectorCliente     from './SelectorCliente'
-import PanelFiado          from './PanelFiado'
+import ListaProductosVenta  from './ListaProductosVenta'
+import SelectorCliente      from './SelectorCliente'
+import PanelFiado           from './PanelFiado'
+import ModalBuscadorProducto from './ModalBuscadorProducto'
 
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
@@ -17,7 +17,8 @@ export default function VentaForm({
   clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
   MINIMO_FIADO,
 }) {
-  const [modalNuevoCliente, setModalNuevoCliente] = useState(false)
+  const [modalNuevoCliente, setModalNuevoCliente]   = useState(false)
+  const [modalBuscador, setModalBuscador]           = useState(false)
 
   const {
     form: formCliente, errores: erroresCliente, modal: modalCliente,
@@ -46,13 +47,9 @@ export default function VentaForm({
   for (const p of form.productos)
     totalPorProducto[p.producto_id] = (totalPorProducto[p.producto_id] || 0) + (+p.cantidad || 0)
 
-  const handleSubmitVenta = e => {
-    handleCrear(e)
-  }
-
   return (
     <>
-      <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Nueva Venta — Mostrador" ancho="max-w-xl">
+      <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Nueva Venta — Mostrador" ancho="max-w-lg">
         <form className="flex flex-col" style={{ maxHeight: '80vh' }}>
           <div className="overflow-y-auto flex-1 space-y-4 pr-1">
 
@@ -81,15 +78,28 @@ export default function VentaForm({
 
             {/* Productos */}
             <div className="p-3 rounded-xl border border-gray-200 space-y-2">
-              <p className="text-xs font-semibold">Productos</p>
-              <BuscadorProducto
-                prodBusqueda={prodBusqueda}
-                prodsFiltrados={prodsFiltrados}
-                buscarProducto={buscarProducto}
-                buscarPorCodigo={buscarPorCodigo}
-                agregarProducto={agregarProducto}
-              />
-              {form.productos.length > 0 && (
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold">
+                  Productos {form.productos.length > 0 && `(${form.productos.length})`}
+                </p>
+                <button type="button"
+                  onClick={() => setModalBuscador(true)}
+                  className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors
+                    px-2.5 py-1 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10">
+                  <PackagePlus size={13} />
+                  Agregar producto
+                </button>
+              </div>
+
+              {form.productos.length === 0 ? (
+                <button type="button" onClick={() => setModalBuscador(true)}
+                  className="w-full py-6 rounded-lg border-2 border-dashed border-gray-200
+                    text-xs text-gray-400 hover:border-primary/40 hover:text-primary transition-colors
+                    flex flex-col items-center gap-1">
+                  <PackagePlus size={20} className="opacity-40" />
+                  Toca para agregar productos
+                </button>
+              ) : (
                 <ListaProductosVenta
                   productos={form.productos}
                   totalPorProducto={totalPorProducto}
@@ -156,7 +166,7 @@ export default function VentaForm({
             </div>
             <button
               type="button"
-              onClick={handleSubmitVenta}
+              onClick={handleCrear}
               disabled={
                 creando ||
                 Object.values(totalPorProducto).length === 0 ||
@@ -175,6 +185,17 @@ export default function VentaForm({
           </div>
         </form>
       </Modal>
+
+      {/* Modal buscador productos */}
+      <ModalBuscadorProducto
+        abierto={modalBuscador}
+        onCerrar={() => setModalBuscador(false)}
+        prodBusqueda={prodBusqueda}
+        prodsFiltrados={prodsFiltrados}
+        buscarProducto={buscarProducto}
+        buscarPorCodigo={buscarPorCodigo}
+        agregarProducto={agregarProducto}
+      />
 
       <ClienteForm
         verificando={verificandoCliente}

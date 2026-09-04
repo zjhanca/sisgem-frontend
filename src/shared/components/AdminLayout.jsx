@@ -34,9 +34,9 @@ const MENU = [
     label: 'Ventas',
     items: [
       { to: '/admin/clientes', label: 'Clientes',    icon: Users,      permiso: 'ver_clientes' },
-      { to: '/admin/cartera', label: 'Cartera', icon: CreditCard, permiso: 'ver_pagos' },
       { to: '/admin/ventas',   label: 'Ventas',      icon: BarChart2,  permiso: 'ver_ventas'   },
       { to: '/admin/pedidos',  label: 'Pedidos', icon: ShoppingBag,permiso: 'ver_pedidos'  },
+      { to: '/admin/cartera', label: 'Cartera', icon: CreditCard, permiso: 'ver_pagos' },
       { to: '/admin/pagos',    label: 'Pagos',       icon: CreditCard, permiso: 'ver_pagos'    },
     ]
   },
