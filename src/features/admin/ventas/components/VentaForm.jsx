@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import Modal from '@shared/components/Modal'
-import { CreditCard, Clock, PackagePlus } from 'lucide-react'
+import { CreditCard, Clock, PackagePlus, Trash2 } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
-import ClienteForm          from '@features/admin/clientes/components/ClienteForm'
-import { useClientes }      from '@features/admin/clientes/hooks/useClientes'
-import ListaProductosVenta  from './ListaProductosVenta'
-import SelectorCliente      from './SelectorCliente'
-import PanelFiado           from './PanelFiado'
+import ClienteForm           from '@features/admin/clientes/components/ClienteForm'
+import { useClientes }       from '@features/admin/clientes/hooks/useClientes'
+import SelectorCliente       from './SelectorCliente'
+import PanelFiado            from './PanelFiado'
 import ModalBuscadorProducto from './ModalBuscadorProducto'
 
 export default function VentaForm({
@@ -49,7 +48,8 @@ export default function VentaForm({
 
   return (
     <>
-      <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Nueva Venta — Mostrador" ancho="max-w-lg">
+      <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre
+        titulo="Nueva Venta — Mostrador" ancho="max-w-md">
         <form className="flex flex-col" style={{ maxHeight: '80vh' }}>
           <div className="overflow-y-auto flex-1 space-y-4 pr-1">
 
@@ -70,8 +70,8 @@ export default function VentaForm({
                 </p>
                 <p className="text-xs text-gray-500">
                   {form.tipo_pago === 'fiado'
-                    ? 'El cliente pagará después — quedará como pendiente'
-                    : 'Se registrará automáticamente como pagada'}
+                    ? 'El cliente pagará después'
+                    : 'Se registra como pagada automáticamente'}
                 </p>
               </div>
             </div>
@@ -79,33 +79,52 @@ export default function VentaForm({
             {/* Productos */}
             <div className="p-3 rounded-xl border border-gray-200 space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold">
-                  Productos {form.productos.length > 0 && `(${form.productos.length})`}
+                <p className="text-xs font-semibold text-gray-600">
+                  Productos {form.productos.length > 0 && (
+                    <span className="ml-1 text-primary font-bold">({form.productos.length})</span>
+                  )}
                 </p>
-                <button type="button"
-                  onClick={() => setModalBuscador(true)}
-                  className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors
-                    px-2.5 py-1 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10">
-                  <PackagePlus size={13} />
-                  Agregar producto
+                <button type="button" onClick={() => setModalBuscador(true)}
+                  className="flex items-center gap-1.5 text-xs text-primary
+                    px-2.5 py-1 rounded-lg border border-primary/30 bg-primary/5
+                    hover:bg-primary/10 transition-colors">
+                  <PackagePlus size={13} /> Agregar
                 </button>
               </div>
 
               {form.productos.length === 0 ? (
                 <button type="button" onClick={() => setModalBuscador(true)}
-                  className="w-full py-6 rounded-lg border-2 border-dashed border-gray-200
-                    text-xs text-gray-400 hover:border-primary/40 hover:text-primary transition-colors
-                    flex flex-col items-center gap-1">
-                  <PackagePlus size={20} className="opacity-40" />
+                  className="w-full py-5 rounded-lg border-2 border-dashed border-gray-200
+                    text-xs text-gray-400 hover:border-primary/40 hover:text-primary
+                    transition-colors flex flex-col items-center gap-1">
+                  <PackagePlus size={18} className="opacity-40" />
                   Toca para agregar productos
                 </button>
               ) : (
-                <ListaProductosVenta
-                  productos={form.productos}
-                  totalPorProducto={totalPorProducto}
-                  cambiarCantidad={cambiarCantidad}
-                  quitarProducto={quitarProducto}
-                />
+                // Lista compacta — solo resumen, la edición es en el modal
+                <div className="space-y-1 max-h-36 overflow-y-auto">
+                  {form.productos.map((p, idx) => (
+                    <div key={`${p.producto_id}-${idx}`}
+                      className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg bg-gray-50">
+                      <span className="flex-1 truncate font-medium">{p.nombre}</span>
+                      <div className="flex items-center gap-2 shrink-0 ml-2">
+                        <span className="text-gray-400">×{p.cantidad}</span>
+                        <span className="text-primary font-semibold">
+                          {formatPrecio(p.precio_unitario * (+p.cantidad || 0))}
+                        </span>
+                        <button type="button" onClick={() => quitarProducto(idx)}
+                          className="text-gray-300 hover:text-red-400 transition-colors">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Editar cantidades */}
+                  <button type="button" onClick={() => setModalBuscador(true)}
+                    className="w-full text-xs text-primary/60 hover:text-primary py-1 transition-colors">
+                    Editar cantidades →
+                  </button>
+                </div>
               )}
             </div>
 
@@ -139,18 +158,15 @@ export default function VentaForm({
               <div>
                 <label className="campo-label">Método de Pago</label>
                 <div className="flex gap-2">
-                  {[
-                    { val: 'efectivo',      label: 'Efectivo'      },
-                    { val: 'transferencia', label: 'Transferencia' },
-                  ].map(m => (
-                    <button key={m.val} type="button"
-                      onClick={() => setForm(f => ({ ...f, metodo_pago: m.val }))}
-                      className={`flex-1 py-2 text-xs rounded-lg border transition-all ${
-                        form.metodo_pago === m.val
+                  {['efectivo', 'transferencia'].map(m => (
+                    <button key={m} type="button"
+                      onClick={() => setForm(f => ({ ...f, metodo_pago: m }))}
+                      className={`flex-1 py-2 text-xs rounded-lg border transition-all capitalize ${
+                        form.metodo_pago === m
                           ? 'bg-primary text-white border-primary'
                           : 'border-gray-200 text-gray-500 hover:border-primary/40'
                       }`}>
-                      {m.label}
+                      {m}
                     </button>
                   ))}
                 </div>
@@ -161,15 +177,13 @@ export default function VentaForm({
           {/* Total + Submit */}
           <div className="pt-3 mt-3 border-t border-gray-100 space-y-3 shrink-0">
             <div className="flex justify-between items-center px-1">
-              <span className="text-sm font-semibold text-light-text">Total</span>
+              <span className="text-sm font-semibold">Total</span>
               <span className="text-lg font-bold text-primary">{formatPrecio(totalVenta)}</span>
             </div>
-            <button
-              type="button"
-              onClick={handleCrear}
+            <button type="button" onClick={handleCrear}
               disabled={
                 creando ||
-                Object.values(totalPorProducto).length === 0 ||
+                form.productos.length === 0 ||
                 form.productos.some(p => !p.cantidad || +p.cantidad < 1) ||
                 sinCupo
               }
@@ -186,7 +200,6 @@ export default function VentaForm({
         </form>
       </Modal>
 
-      {/* Modal buscador productos */}
       <ModalBuscadorProducto
         abierto={modalBuscador}
         onCerrar={() => setModalBuscador(false)}

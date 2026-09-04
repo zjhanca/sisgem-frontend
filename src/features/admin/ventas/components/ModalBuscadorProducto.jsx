@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, X, Plus, Minus, ShoppingCart, Scan } from 'lucide-react'
+import { Search, Scan, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function ModalBuscadorProducto({
@@ -10,123 +10,119 @@ export default function ModalBuscadorProducto({
 }) {
   const codigoRef = useRef(null)
   const nombreRef = useRef(null)
-  const [modoActivo, setModoActivo] = useState('codigo') // 'codigo' | 'nombre'
+  const [modo, setModo] = useState('codigo')
 
   useEffect(() => {
     if (abierto) {
       buscarProducto('')
-      setTimeout(() => codigoRef.current?.focus(), 100)
+      setTimeout(() => codigoRef.current?.focus(), 80)
     }
   }, [abierto])
 
   useEffect(() => {
-    const handler = e => { if (e.key === 'Escape' && abierto) onCerrar() }
+    const handler = e => {
+      if (!abierto) return
+      if (e.key === 'Escape') { onCerrar(); return }
+      if (e.key === 'Enter' && document.activeElement === codigoRef.current) return
+      if (e.key === 'Enter' && document.activeElement === nombreRef.current) return
+    }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [abierto, onCerrar])
 
   if (!abierto) return null
 
-  const indiceEnCarrito = pid =>
-    form.productos.findIndex(p => p.producto_id === pid)
-
-  const cantidadEnCarrito = pid => {
-    const idx = indiceEnCarrito(pid)
-    return idx >= 0 ? +form.productos[idx].cantidad || 0 : 0
-  }
+  const indice    = pid => form.productos.findIndex(p => p.producto_id === pid)
+  const cantidad  = pid => { const i = indice(pid); return i >= 0 ? +form.productos[i].cantidad || 0 : 0 }
 
   const sumar = p => {
-    const idx = indiceEnCarrito(p.id)
-    if (idx >= 0) cambiarCantidad(idx, +form.productos[idx].cantidad + 1)
+    const i = indice(p.id)
+    if (i >= 0) cambiarCantidad(i, +form.productos[i].cantidad + 1)
     else agregarProducto(p)
   }
 
   const restar = p => {
-    const idx = indiceEnCarrito(p.id)
-    if (idx < 0) return
-    const cant = +form.productos[idx].cantidad || 0
-    if (cant <= 1) quitarProducto(idx)
-    else cambiarCantidad(idx, cant - 1)
+    const i = indice(p.id)
+    if (i < 0) return
+    const cant = +form.productos[i].cantidad || 0
+    if (cant <= 1) quitarProducto(i)
+    else cambiarCantidad(i, cant - 1)
   }
 
   const handleCodigoKeyDown = e => {
-    if (e.key === 'Enter' && e.target.value.trim()) {
-      buscarPorCodigo(e.target.value.trim())
-      e.target.value = ''
-      e.target.select()
+    if (e.key === 'Enter') {
+      const val = e.target.value.trim()
+      if (val) {
+        buscarPorCodigo(val)
+        e.target.value = ''
+        e.target.focus()
+      }
     }
   }
 
   const handleNombreKeyDown = e => {
-    if (e.key === 'Enter' && prodsFiltrados.length === 1) {
-      sumar(prodsFiltrados[0])
-      buscarProducto('')
-      nombreRef.current?.select()
+    if (e.key === 'Enter') {
+      if (prodsFiltrados.length === 1) {
+        sumar(prodsFiltrados[0])
+        buscarProducto('')
+        nombreRef.current?.focus()
+      }
     }
   }
 
   const totalItems = form.productos.reduce((s, p) => s + (+p.cantidad || 0), 0)
-  const totalVenta = form.productos.reduce(
-    (s, p) => s + p.precio_unitario * (+p.cantidad || 0), 0
-  )
-
-  const mostrarResultados = prodBusqueda.length > 0 && modoActivo === 'nombre'
-  const mostrarCarrito    = !mostrarResultados && form.productos.length > 0
+  const totalVenta = form.productos.reduce((s, p) => s + p.precio_unitario * (+p.cantidad || 0), 0)
+  const hayResultados = modo === 'nombre' && prodBusqueda.length > 0
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onCerrar} />
       <div className="relative z-10 w-full max-w-lg bg-white rounded-t-2xl sm:rounded-2xl
-        border border-gray-200 shadow-xl flex flex-col" style={{ maxHeight: '88vh' }}>
+        shadow-xl flex flex-col border border-gray-200" style={{ maxHeight: '88vh' }}>
 
-        {/* Tabs modo */}
-        <div className="flex border-b border-gray-100 shrink-0">
-          <button type="button"
-            onClick={() => { setModoActivo('codigo'); buscarProducto(''); setTimeout(() => codigoRef.current?.focus(), 50) }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors ${
-              modoActivo === 'codigo'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-400 hover:text-gray-600'
-            }`}>
-            <Scan size={13} /> Código / Pistola
-          </button>
-          <button type="button"
-            onClick={() => { setModoActivo('nombre'); setTimeout(() => nombreRef.current?.focus(), 50) }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors ${
-              modoActivo === 'nombre'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-400 hover:text-gray-600'
-            }`}>
-            <Search size={13} /> Buscar por nombre
-          </button>
-          <button type="button" onClick={onCerrar}
-            className="px-4 text-gray-400 hover:text-gray-600">
-            <X size={16} />
-          </button>
+        {/* Tabs */}
+        <div className="flex shrink-0 border-b border-gray-100">
+          {[
+            { key: 'codigo', label: 'Código / Pistola', icon: Scan },
+            { key: 'nombre', label: 'Buscar nombre',    icon: Search },
+          ].map(t => (
+            <button key={t.key} type="button"
+              onClick={() => {
+                setModo(t.key)
+                buscarProducto('')
+                setTimeout(() => (t.key === 'codigo' ? codigoRef : nombreRef).current?.focus(), 50)
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors border-b-2 ${
+                modo === t.key ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}>
+              <t.icon size={13} /> {t.label}
+            </button>
+          ))}
         </div>
 
         {/* Input código */}
-        {modoActivo === 'codigo' && (
+        {modo === 'codigo' && (
           <div className="px-4 py-3 border-b border-gray-100 shrink-0">
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-primary/30
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-primary/40
               bg-primary/5 focus-within:border-primary transition-colors">
               <Scan size={16} className="text-primary shrink-0" />
               <input
                 ref={codigoRef}
-                placeholder="Escanea o escribe el código y presiona Enter..."
-                className="flex-1 text-sm outline-none bg-transparent text-light-text placeholder:text-gray-400"
+                placeholder="Escanea o escribe el código + Enter"
+                className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400"
+                onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
                 onKeyDown={handleCodigoKeyDown} />
             </div>
             <p className="text-xs text-gray-400 mt-1.5 text-center">
-              La pistola escanea directo aquí · también puedes escribir el código manualmente
+              Apunta la pistola aquí · o escribe el código manualmente
             </p>
           </div>
         )}
 
         {/* Input nombre */}
-        {modoActivo === 'nombre' && (
+        {modo === 'nombre' && (
           <div className="px-4 py-3 border-b border-gray-100 shrink-0">
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-primary/30
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-primary/40
               bg-primary/5 focus-within:border-primary transition-colors">
               <Search size={16} className="text-primary shrink-0" />
               <input
@@ -134,26 +130,27 @@ export default function ModalBuscadorProducto({
                 value={prodBusqueda}
                 onChange={e => buscarProducto(e.target.value)}
                 onKeyDown={handleNombreKeyDown}
-                placeholder="Nombre del producto... (Enter si hay 1 resultado)"
-                className="flex-1 text-sm outline-none bg-transparent text-light-text placeholder:text-gray-400" />
+                placeholder="Nombre del producto... Enter si hay 1 resultado"
+                className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400" />
               {prodBusqueda && (
-                <button type="button" onClick={() => { buscarProducto(''); nombreRef.current?.focus() }}>
-                  <X size={14} className="text-gray-400 hover:text-gray-600" />
+                <button type="button" onClick={() => { buscarProducto(''); nombreRef.current?.focus() }}
+                  className="text-gray-400 hover:text-red-400">
+                  <Trash2 size={13} />
                 </button>
               )}
             </div>
           </div>
         )}
 
-        {/* Resultados búsqueda por nombre */}
-        {mostrarResultados && (
+        {/* Resultados búsqueda nombre */}
+        {hayResultados && (
           <div className="flex-1 overflow-y-auto">
             {prodsFiltrados.length === 0 ? (
               <div className="py-10 text-center text-xs text-gray-400">
                 Sin resultados para "{prodBusqueda}"
               </div>
             ) : prodsFiltrados.map(p => {
-              const cant = cantidadEnCarrito(p.id)
+              const cant = cantidad(p.id)
               return (
                 <div key={p.id}
                   className="flex items-center justify-between px-4 py-3
@@ -200,8 +197,8 @@ export default function ModalBuscadorProducto({
           </div>
         )}
 
-        {/* Carrito cuando no hay búsqueda */}
-        {mostrarCarrito && (
+        {/* Carrito */}
+        {!hayResultados && form.productos.length > 0 && (
           <div className="flex-1 overflow-y-auto">
             <p className="px-4 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
               Productos en esta venta
@@ -224,8 +221,7 @@ export default function ModalBuscadorProducto({
                         flex items-center justify-center transition-colors">
                       <Minus size={13} className="text-gray-600" />
                     </button>
-                    <input
-                      type="text" inputMode="numeric"
+                    <input type="text" inputMode="numeric"
                       value={p.cantidad}
                       onChange={e => {
                         const v = e.target.value
@@ -242,7 +238,7 @@ export default function ModalBuscadorProducto({
                   </div>
                   <button type="button" onClick={() => quitarProducto(idx)}
                     className="text-gray-300 hover:text-red-400 transition-colors ml-1">
-                    <X size={14} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
@@ -251,13 +247,11 @@ export default function ModalBuscadorProducto({
         )}
 
         {/* Vacío */}
-        {!mostrarResultados && !mostrarCarrito && (
+        {!hayResultados && form.productos.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center py-10 text-gray-400">
             <ShoppingCart size={36} className="mb-3 opacity-30" />
             <p className="text-xs">
-              {modoActivo === 'codigo'
-                ? 'Escanea o escribe el código del producto'
-                : 'Escribe el nombre del producto'}
+              {modo === 'codigo' ? 'Escanea o escribe el código del producto' : 'Escribe el nombre del producto'}
             </p>
             <p className="text-xs mt-1 text-gray-300">Presiona Esc para cerrar</p>
           </div>
@@ -276,8 +270,7 @@ export default function ModalBuscadorProducto({
               <p className="text-xs text-gray-400">Sin productos aún</p>
             )}
           </div>
-          <button type="button" onClick={onCerrar}
-            className="btn-primary px-6">
+          <button type="button" onClick={onCerrar} className="btn-primary px-6">
             {totalItems > 0 ? 'Listo ✓' : 'Cerrar'}
           </button>
         </div>
