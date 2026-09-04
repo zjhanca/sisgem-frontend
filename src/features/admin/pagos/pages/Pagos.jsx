@@ -1,10 +1,9 @@
 ﻿import { useState } from 'react'
-import { Plus, Eye, Download, Search, CreditCard } from 'lucide-react'
+import { Eye, Download, Search } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import ReporteDescargaModal from '../components/ReporteDescargaModal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { usePagos } from '../hooks/usePagos'
-import PagoForm            from '../components/PagoForm'
 import PagoDetalle         from '../components/PagoDetalle'
 import PagoAnular          from '../components/PagoAnular'
 import PagoConfirmDescarga from '../components/Pagoconfirmdescarga'
@@ -22,22 +21,17 @@ const maxFechaHoy = () => new Date().toISOString().slice(0, 16)
 export default function Pagos() {
   const {
     pagosAgrupadosFiltrados,
-    form, setForm, errores,
-    modalNuevo, modalDetalle, modalAnular, grupoDetalle, verHistorial,
-    setModalNuevo, setModalDetalle, setModalAnular,
+    modalDetalle, modalAnular, grupoDetalle, verHistorial,
+    setModalDetalle, setModalAnular,
     filtroEstado, setFiltroEstado,
     filtroDesde, setFiltroDesde,
     filtroHasta, setFiltroHasta,
     filtroBusqueda, setFiltroBusqueda,
-    clienteSel, clientesFiltradosModal, deudaCliente, deudaPorCliente,
-    totalDeuda, pedidosCliente, pagoCompleto, montoPendiente,
-    clienteBusqueda, setClienteBusqueda,
-    clienteDropdown, setClienteDropdown,
-    handleSubmit, handleMontoChange, tipoPagoActual,
-    anular, esAnulado, getFechaPago,
+    esAnulado, getFechaPago,
     puedeAnularPago, getLimiteAnulacionVenta,
-    getEstadoPago, abrirConPedido,
-    descargarReporte, creando, anulando,
+    getEstadoPago,
+    anular, anulando,
+    descargarReporte,
   } = usePagos()
 
   const [confirmDescarga, setConfirmDescarga] = useState(null)
@@ -46,31 +40,28 @@ export default function Pagos() {
   const hayFiltros = filtroEstado || filtroDesde || filtroHasta || filtroBusqueda
 
   const columnas = [
-    { key: 'cliente', label: 'Cliente', render: r => r.cliente || '—' },
+    { key: 'cliente',      label: 'Cliente',
+      render: r => r.cliente || '—' },
     { key: 'total_pagado', label: 'Pagado',
       render: r => <span className="text-light-text font-medium">{formatPrecio(r.total_pagado)}</span> },
-    { key: 'saldo_pendiente', label: 'Pendiente/Estado',
+    { key: 'saldo_pendiente', label: 'Estado',
       render: r => r.venta_anulada
-        ? <BadgeEstado color="bg-gray-300" label="Anulado" />
+        ? <BadgeEstado color="bg-gray-300"    label="Anulado"  />
         : r.completo
-          ? <BadgeEstado color="bg-primary" label="Completo" />
+          ? <BadgeEstado color="bg-primary"   label="Completo" />
           : <BadgeEstado color="bg-amber-500" label={formatPrecio(r.saldo_pendiente)} />
     },
-    { key: 'ultima_fecha', label: 'Último movimiento', render: r => formatFechaHora(r.ultima_fecha) || '—' },
+    { key: 'ultima_fecha', label: 'Último movimiento',
+      render: r => formatFechaHora(r.ultima_fecha) || '—' },
   ]
 
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Pagos</h1>
-        <div className="flex gap-2">
-          <button onClick={() => setModalReporte(true)} className="btn-outline">
-            <Download size={14} /> Reporte
-          </button>
-          <button onClick={() => setModalNuevo(true)} className="btn-primary">
-            <Plus size={14} /> Nuevo
-          </button>
-        </div>
+        <button onClick={() => setModalReporte(true)} className="btn-outline">
+          <Download size={14} /> Reporte
+        </button>
       </div>
 
       <Tabla columnas={columnas} datos={pagosAgrupadosFiltrados} sinBusqueda
@@ -80,61 +71,47 @@ export default function Pagos() {
             <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
               placeholder="Buscar por # o cliente..."
               className="pl-8 pr-3 py-1.5 text-sm rounded-lg border
-                bg-light-bg dark:bg-dark-bg/60
-                border-gray-200 dark:border-dark-border
-                text-light-text dark:text-dark-text
-                placeholder:text-gray-400/60
+                bg-light-bg dark:bg-dark-bg/60 border-gray-200 dark:border-dark-border
+                text-light-text dark:text-dark-text placeholder:text-gray-400/60
                 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
                 transition-all duration-150 w-52" />
           </div>
-          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-36 text-xs">
+          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}
+            className="campo-input w-36 text-xs">
             <option value="">Todos</option>
             <option value="pagado">Completados</option>
             <option value="abono">Con saldo</option>
             <option value="anulado">Anulados</option>
           </select>
           <input type="datetime-local" value={filtroDesde} max={maxFechaHoy()}
-            onChange={e => setFiltroDesde(e.target.value)} className="campo-input w-44 text-xs" title="Desde" />
+            onChange={e => setFiltroDesde(e.target.value)}
+            className="campo-input w-44 text-xs" title="Desde" />
           <input type="datetime-local" value={filtroHasta} max={maxFechaHoy()}
-            onChange={e => setFiltroHasta(e.target.value)} className="campo-input w-44 text-xs" title="Hasta" />
+            onChange={e => setFiltroHasta(e.target.value)}
+            className="campo-input w-44 text-xs" title="Hasta" />
           {hayFiltros && (
             <button onClick={() => { setFiltroEstado(''); setFiltroDesde(''); setFiltroHasta(''); setFiltroBusqueda('') }}
               className="btn-ghost text-xs text-red-400">Limpiar</button>
           )}
         </>}
         acciones={fila => (<>
-          <button onClick={() => verHistorial(fila.pedido_id)} className="btn-ghost" title="Ver historial">
+          <button onClick={() => verHistorial(fila.pedido_id)}
+            className="btn-ghost" title="Ver historial">
             <Eye size={14} />
           </button>
-          <button onClick={() => setConfirmDescarga({ tipo: 'pago', id: fila.pedido_id })} className="btn-ghost">
+          <button onClick={() => setConfirmDescarga({ tipo: 'pago', id: fila.pedido_id })}
+            className="btn-ghost">
             <Download size={14} />
           </button>
-          {!fila.completo && !fila.venta_anulada && (
-            <button onClick={() => abrirConPedido(fila.pedido_id)}
-              className="btn-ghost hover:text-primary" title="Registrar abono">
-              <CreditCard size={14} />
-            </button>
-          )}
         </>)}
       />
 
-      <PagoForm
-        modalNuevo={modalNuevo} setModalNuevo={setModalNuevo}
-        form={form} setForm={setForm} errores={errores}
-        clienteSel={clienteSel}
-        clientesFiltradosModal={clientesFiltradosModal}
-        clienteBusqueda={clienteBusqueda} setClienteBusqueda={setClienteBusqueda}
-        clienteDropdown={clienteDropdown} setClienteDropdown={setClienteDropdown}
-        deudaCliente={deudaCliente} deudaPorCliente={deudaPorCliente}
-        totalDeuda={totalDeuda} pedidosCliente={pedidosCliente}
-        pagoCompleto={pagoCompleto} montoPendiente={montoPendiente}
-        handleSubmit={handleSubmit} handleMontoChange={handleMontoChange}
-        creando={creando} tipoPagoActual={tipoPagoActual}
-      />
-      <PagoDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
-        grupoDetalle={grupoDetalle} setModalAnular={setModalAnular} esAnulado={esAnulado}
-        getEstadoPago={getEstadoPago} getFechaPago={getFechaPago}
-        puedeAnularPago={puedeAnularPago} getLimiteAnulacionVenta={getLimiteAnulacionVenta} />
+      <PagoDetalle
+        modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
+        grupoDetalle={grupoDetalle} setModalAnular={setModalAnular}
+        esAnulado={esAnulado} getEstadoPago={getEstadoPago}
+        getFechaPago={getFechaPago} puedeAnularPago={puedeAnularPago}
+        getLimiteAnulacionVenta={getLimiteAnulacionVenta} />
       <PagoAnular modalAnular={modalAnular} setModalAnular={setModalAnular}
         anular={anular} anulando={anulando} />
       <PagoConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
