@@ -35,7 +35,7 @@ export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirMod
               : 'bg-light-bg dark:bg-dark-bg border-gray-200 dark:border-dark-border'
           }`}>
             <div className="flex items-center justify-between mb-1">
-              <p className="campo-label mb-0">Fiado</p>
+              <p className="campo-label mb-0">Crédito</p>
               <span className={item.permite_fiado ? 'badge-activo' : 'text-xs text-gray-400'}>
                 {item.permite_fiado ? 'Habilitado' : 'No habilitado'}
               </span>

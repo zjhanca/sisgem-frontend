@@ -66,7 +66,7 @@ export default function VentaForm({
                 <p className={`text-xs font-semibold ${
                   form.tipo_pago === 'fiado' ? 'text-amber-500' : 'text-primary'
                 }`}>
-                  {form.tipo_pago === 'fiado' ? 'Venta a Crédito (Fiado)' : 'Venta en Mostrador'}
+                  {form.tipo_pago === 'fiado' ? 'Venta a Crédito' : 'Venta en Mostrador'}
                 </p>
                 <p className="text-xs text-gray-500">
                   {form.tipo_pago === 'fiado'
@@ -154,7 +154,7 @@ export default function VentaForm({
             />
 
             {/* Método de pago */}
-            {form.tipo_pago !== 'fiado' && (
+            {form.tipo_pago !== 'Crédito' && (
               <div>
                 <label className="campo-label">Método de Pago</label>
                 <div className="flex gap-2">
@@ -188,12 +188,12 @@ export default function VentaForm({
                 sinCupo
               }
               className={`w-full btn-primary justify-center disabled:opacity-50 ${
-                form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''
+                form.tipo_pago === 'Crédito' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''
               }`}>
               {creando
                 ? 'Registrando...'
-                : form.tipo_pago === 'fiado'
-                  ? (excedeCupoFiado ? 'Registrar Fiado Parcial' : 'Registrar Fiado')
+                : form.tipo_pago === 'Crédito'
+                  ? (excedeCupoFiado ? 'Registrar Crédito Parcial' : 'Registrar Crédito')
                   : 'Aceptar'}
             </button>
           </div>

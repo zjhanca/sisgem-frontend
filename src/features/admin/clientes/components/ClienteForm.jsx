@@ -102,7 +102,7 @@ export default function ClienteForm({ modal, form, errores, verificando = {}, ha
         <div className={`p-3.5 rounded-xl border border-gray-200 space-y-3 transition-opacity duration-200 ${bloqueado ? 'opacity-40 pointer-events-none select-none' : ''}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-light-text">Habilitar Fiado</p>
+              <p className="text-sm font-medium text-light-text">Habilitar Crédito</p>
               <p className="text-xs text-gray-400 mt-0.5">Permite compras a crédito</p>
             </div>
             <button type="button" disabled={bloqueado}
