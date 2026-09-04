@@ -1,79 +1,86 @@
 import Modal from '@shared/components/Modal'
-import { Download, MapPin } from 'lucide-react'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
-import { descargarPDF } from '@shared/utils/reportes'
-import DomicilioEstado  from './DomicilioEstado'
-import DomicilioAsignar from './DomicilioAsignar'
- 
+import { CheckCircle, Store } from 'lucide-react'
+
 export default function PedidoDetalle({
-  modalDetalle, setModalDetalle, estados, domDetalle,
-  cambiarEstado, cambiarEstadoDom, asignarDomicilio, anular,
-  ESTADOS_DOM, getKeyEstadoDom, getEstadoDomId,
-  formDomDetalle, setFormDomDetalle, handleAsignarDomDetalle,
-  tarifas, dirsDetalle, puedeAnular, anulando, asignando,
+  modalDetalle, setModalDetalle,
+  getColorEstado, getLabelEstado,
+  onConfirmarEntrega,
 }) {
   const pedido = modalDetalle.pedido
   const cerrar = () => setModalDetalle({ abierto: false, pedido: null })
- 
+
+  if (!pedido) return null
+
+  const estado      = pedido.estado || ''
+  const esPendiente = estado.toLowerCase().includes('pendiente')
+  const esAnulado   = estado.toLowerCase().includes('anula')
+  const esEntregado = estado.toLowerCase().includes('complet') || estado.toLowerCase().includes('paga')
+  const esSinRecoger = estado.toLowerCase().includes('sin recoger')
+
   return (
-    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} titulo={`Pedido #${pedido?.id}`} ancho="max-w-lg">
-      {pedido && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div><p className="campo-label">Cliente</p><p className="font-medium">{pedido.cliente}</p></div>
-            <div><p className="campo-label">Tipo</p>
-              <span className="badge-activo">{pedido.tipo_venta === 'domicilio' ? 'Domicilio' : 'Mostrador'}</span>
-            </div>
-            <div><p className="campo-label">Total</p><p className="text-primary font-bold text-sm">{formatPrecio(pedido.total)}</p></div>
-            <div><p className="campo-label">Fecha</p><p>{formatFechaHora(pedido.fecha_pedido)}</p></div>
+    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
+      titulo={`Pedido #${pedido.id}`} ancho="max-w-md">
+      <div className="space-y-4">
+
+        {/* Badge estado */}
+        <div className="flex items-center justify-between">
+          <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full text-white text-xs font-semibold ${getColorEstado(estado)}`}>
+            {getLabelEstado(estado)}
+          </span>
+          <span className="text-xs text-gray-400">{formatFechaHora(pedido.fecha_pedido)}</span>
+        </div>
+
+        {/* Aviso sin recoger */}
+        {esSinRecoger && (
+          <div className="p-3 rounded-lg bg-orange-50 border border-orange-200 text-xs text-orange-600">
+            El cliente no recogió el pedido en las 6 horas establecidas.
           </div>
- 
-          <div className="pt-2 border-t border-gray-200 dark:border-dark-border">
-            <p className="campo-label mb-1">Estado del Pedido</p>
-            <div className="flex flex-wrap gap-1">
-              {estados.map(e => (
-                <button key={e.id} type="button"
-                  onClick={() => cambiarEstado.mutate({ id: pedido.id, estado_id: e.id })}
-                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${pedido.estado_id===e.id ? 'bg-primary text-dark-bg border-primary' : 'border-gray-200 dark:border-dark-border text-gray-500 hover:border-primary/40'}`}>
-                  {e.nombre}
-                </button>
-              ))}
-            </div>
+        )}
+
+        {/* Info cliente */}
+        <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-1 text-sm">
+          <div className="flex justify-between">
+            <span className="text-gray-500 text-xs">Cliente</span>
+            <span className="font-medium text-xs">{pedido.cliente || 'Sin nombre'}</span>
           </div>
- 
-          {pedido.tipo_venta === 'domicilio' && (
-            <div className="pt-2 border-t border-gray-200 dark:border-dark-border">
-              <div className="flex items-center gap-2 mb-2"><MapPin size={13} className="text-blue-500" /><p className="campo-label">Domicilio</p></div>
-              {domDetalle ? (
-                <DomicilioEstado
-                  domDetalle={domDetalle} ESTADOS_DOM={ESTADOS_DOM}
-                  getKeyEstadoDom={getKeyEstadoDom} getEstadoDomId={getEstadoDomId}
-                  cambiarEstadoDom={cambiarEstadoDom}
-                />
-              ) : (
-                <DomicilioAsignar
-                  formDomDetalle={formDomDetalle} setFormDomDetalle={setFormDomDetalle}
-                  dirsDetalle={dirsDetalle} tarifas={tarifas}
-                  clienteDetallId={pedido.cliente_id_ref}
-                  handleAsignarDomDetalle={handleAsignarDomDetalle}
-                  asignando={asignando}
-                />
-              )}
+          <div className="flex justify-between">
+            <span className="text-gray-500 text-xs">Tipo entrega</span>
+            <span className="flex items-center gap-1 text-xs font-medium">
+              <Store size={11} /> Recoger en tienda
+            </span>
+          </div>
+          {pedido.es_fiado && (
+            <div className="flex justify-between">
+              <span className="text-gray-500 text-xs">Modalidad</span>
+              <span className="text-xs font-medium text-amber-500">Fiado / Crédito</span>
             </div>
           )}
- 
-          <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => descargarPDF(`/reportes/pedido/${pedido.id}`, `comprobante-${pedido.id}.pdf`)}
-              className="btn-outline text-xs"><Download size={12} /> Comprobante</button>
-            {puedeAnular(pedido) && (
-              <button onClick={() => anular.mutate(pedido.id)} disabled={anulando}
-                className="px-3 py-1.5 text-xs border border-red-400/40 text-red-400 rounded-lg hover:bg-red-400/10">
-                {anulando ? 'Anulando...' : 'Anular Pedido'}
-              </button>
-            )}
+          <div className="flex justify-between pt-1 border-t border-gray-200">
+            <span className="text-gray-500 text-xs">Total</span>
+            <span className="font-bold text-primary">{formatPrecio(pedido.total)}</span>
           </div>
         </div>
-      )}
+
+        {/* Botón confirmar entrega */}
+        {(esPendiente || esSinRecoger) && !esAnulado && (
+          <button
+            onClick={() => { cerrar(); onConfirmarEntrega(pedido) }}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
+              bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
+            <CheckCircle size={16} />
+            Confirmar entrega al cliente
+          </button>
+        )}
+
+        {esEntregado && (
+          <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl
+            bg-primary/10 text-primary text-sm font-semibold">
+            <CheckCircle size={16} />
+            Entregado
+          </div>
+        )}
+      </div>
     </Modal>
   )
 }

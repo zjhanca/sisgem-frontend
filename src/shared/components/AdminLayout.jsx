@@ -6,7 +6,7 @@ import {
   LayoutDashboard, BarChart2,
   Package, Tag, Grid3X3, Users, Shield,
   Building2, ClipboardList, CreditCard, Menu, X,
-  LogOut, ChevronDown, ChevronRight, KeyRound,
+  LogOut, ChevronDown, ChevronRight, KeyRound, ShoppingBag,
 } from 'lucide-react'
 
 const MENU = [
@@ -22,20 +22,21 @@ const MENU = [
     id: 'compras',
     label: 'Compras',
     items: [
-      { to: '/admin/categorias',  label: 'Categorías',        icon: Grid3X3,       permiso: 'ver_categorias'  },
-      { to: '/admin/marcas',      label: 'Marcas',            icon: Tag,           permiso: 'ver_marcas'      },
-      { to: '/admin/productos',   label: 'Productos',         icon: Package,       permiso: 'ver_productos'   },
-      { to: '/admin/proveedores', label: 'Proveedores',       icon: Building2,     permiso: 'ver_proveedores' },
-      { to: '/admin/ordenes',     label: 'Compras', icon: ClipboardList, permiso: 'ver_ordenes'     },
+      { to: '/admin/categorias',  label: 'Categorías', icon: Grid3X3,       permiso: 'ver_categorias'  },
+      { to: '/admin/marcas',      label: 'Marcas',     icon: Tag,           permiso: 'ver_marcas'      },
+      { to: '/admin/productos',   label: 'Productos',  icon: Package,       permiso: 'ver_productos'   },
+      { to: '/admin/proveedores', label: 'Proveedores',icon: Building2,     permiso: 'ver_proveedores' },
+      { to: '/admin/ordenes',     label: 'Compras',    icon: ClipboardList, permiso: 'ver_ordenes'     },
     ]
   },
   {
     id: 'ventas',
     label: 'Ventas',
     items: [
-      { to: '/admin/clientes', label: 'Clientes', icon: Users,      permiso: 'ver_clientes' },
-      { to: '/admin/ventas',   label: 'Ventas',   icon: BarChart2,  permiso: 'ver_ventas'   },
-      { to: '/admin/pagos',    label: 'Pagos',    icon: CreditCard, permiso: 'ver_pagos'    },
+      { to: '/admin/clientes', label: 'Clientes',    icon: Users,      permiso: 'ver_clientes' },
+      { to: '/admin/ventas',   label: 'Ventas',      icon: BarChart2,  permiso: 'ver_ventas'   },
+      { to: '/admin/pedidos',  label: 'Pedidos App', icon: ShoppingBag,permiso: 'ver_pedidos'  },
+      { to: '/admin/pagos',    label: 'Pagos',       icon: CreditCard, permiso: 'ver_pagos'    },
     ]
   },
 ]
