@@ -16,9 +16,9 @@ const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLo
 const getBadgeEstado = nombre => {
   if (!nombre) return { color: 'bg-amber-500', label: 'Pendiente' }
   const l = nombre.toLowerCase()
-  if (l.includes('anula'))                          return { color: 'bg-gray-300',   label: 'Anulado'     }
-  if (l.includes('sin recoger'))                    return { color: 'bg-orange-500', label: 'Sin recoger' }
-  if (l.includes('complet') || l.includes('paga'))  return { color: 'bg-primary',    label: 'Completado'  }
+  if (l.includes('anula'))                          return { color: 'bg-gray-300',   label: 'Anulado'    }
+  if (l.includes('sin recoger'))                    return { color: 'bg-orange-500', label: 'Sin recoger'}
+  if (l.includes('complet') || l.includes('paga'))  return { color: 'bg-primary',    label: 'Completado' }
   return { color: 'bg-amber-500', label: 'Pendiente' }
 }
 
@@ -61,9 +61,9 @@ export default function Ventas() {
     creando: creandoPago,
   } = usePagos()
 
-  const [confirmDescarga, setConfirmDescarga]           = useState(null)
-  const [modalReporte, setModalReporte]                 = useState(false)
-  const [modalCompletarMovil, setModalCompletarMovil]   = useState({ abierto: false, venta: null })
+  const [confirmDescarga, setConfirmDescarga]         = useState(null)
+  const [modalReporte, setModalReporte]               = useState(false)
+  const [modalCompletarMovil, setModalCompletarMovil] = useState({ abierto: false, venta: null })
   const [metodoCompletarMovil, setMetodoCompletarMovil] = useState('efectivo')
 
   const estadosVenta = estados.filter(e => {
@@ -88,7 +88,7 @@ export default function Ventas() {
             )}
             {r.es_fiado && (
               <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 font-medium">
-                Fiado
+                Crédito
               </span>
             )}
           </div>
@@ -119,18 +119,14 @@ export default function Ventas() {
             <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
               placeholder="Buscar..."
               className="pl-8 pr-3 py-1.5 text-sm rounded-lg border
-                bg-light-bg dark:bg-dark-bg/60
-                border-gray-200 dark:border-dark-border
-                text-light-text dark:text-dark-text
-                placeholder:text-gray-400/60
+                bg-light-bg dark:bg-dark-bg/60 border-gray-200 dark:border-dark-border
+                text-light-text dark:text-dark-text placeholder:text-gray-400/60
                 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
                 transition-all duration-150 w-52" />
           </div>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-40 text-xs">
             <option value="">Todos los estados</option>
-            {estadosVenta.map(e => (
-              <option key={e.id} value={e.id}>{capitalizar(e.nombre)}</option>
-            ))}
+            {estadosVenta.map(e => <option key={e.id} value={e.id}>{capitalizar(e.nombre)}</option>)}
           </select>
           <input type="datetime-local" value={filtroDesde} max={maxFechaHoy()}
             onChange={e => setFiltroDesde(e.target.value)} className="campo-input w-44 text-xs" title="Desde" />
@@ -142,13 +138,11 @@ export default function Ventas() {
           )}
         </>}
         acciones={fila => {
-          const esPendiente          = fila.estado?.toLowerCase().includes('pendiente')
-          const esSinRecoger         = fila.estado?.toLowerCase().includes('sin recoger')
-          const esAnulada            = fila.estado?.toLowerCase().includes('anula')
+          const esPendiente             = fila.estado?.toLowerCase().includes('pendiente')
+          const esAnulada               = fila.estado?.toLowerCase().includes('anula')
           const esPedidoMovilPendiente  = esPendiente && fila.origen === 'movil' && !fila.es_fiado
           const esFiadoMovilNoEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && !fila.entregado
           const esFiadoMovilEntregado   = esPendiente && fila.origen === 'movil' && fila.es_fiado && fila.entregado
-
           return (<>
             <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost">
               <Eye size={14} />
@@ -156,35 +150,26 @@ export default function Ventas() {
             <button onClick={() => setConfirmDescarga({ tipo: 'comprobante', id: fila.id })} className="btn-ghost">
               <Download size={14} />
             </button>
-
             {esPedidoMovilPendiente && (
               <button
-                onClick={() => {
-                  setModalCompletarMovil({ abierto: true, venta: fila })
-                  setMetodoCompletarMovil('efectivo')
-                }}
+                onClick={() => { setModalCompletarMovil({ abierto: true, venta: fila }); setMetodoCompletarMovil('efectivo') }}
                 className="btn-ghost hover:text-primary"
                 title={fila.tipo_venta === 'domicilio' ? 'Confirmar entrega' : 'Confirmar recepción'}>
                 <CheckCircle size={14} />
               </button>
             )}
-
             {esFiadoMovilNoEntregado && (
-              <button
-                onClick={() => marcarEntregado.mutate({ id: fila.id })}
-                className="btn-ghost hover:text-green-500"
-                title="Confirmar entrega">
+              <button onClick={() => marcarEntregado.mutate({ id: fila.id })}
+                className="btn-ghost hover:text-green-500" title="Confirmar entrega">
                 <CheckCircle size={14} />
               </button>
             )}
-
             {(esFiadoMovilEntregado || (fila.es_fiado && esPendiente && fila.origen !== 'movil')) && (
               <button onClick={() => abrirConPedido(fila.id)}
                 className="btn-ghost hover:text-primary" title="Registrar abono">
                 <CreditCard size={14} />
               </button>
             )}
-
             {(() => {
               if (esAnulada) return null
               if (!puedeAnular(fila)) return (
@@ -204,7 +189,7 @@ export default function Ventas() {
         }}
       />
 
-      {/* Modal confirmar entrega pedido móvil sin fiado */}
+      {/* Modal confirmar entrega pedido móvil sin crédito */}
       {modalCompletarMovil.abierto && modalCompletarMovil.venta && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50"
@@ -226,8 +211,7 @@ export default function Ventas() {
               <label className="campo-label">Método de pago recibido</label>
               <div className="flex gap-2 mt-1">
                 {['efectivo', 'transferencia'].map(m => (
-                  <button key={m} type="button"
-                    onClick={() => setMetodoCompletarMovil(m)}
+                  <button key={m} type="button" onClick={() => setMetodoCompletarMovil(m)}
                     className={`flex-1 py-2 text-xs rounded-lg border transition-all capitalize ${
                       metodoCompletarMovil === m
                         ? 'bg-primary text-white border-primary'
@@ -239,22 +223,16 @@ export default function Ventas() {
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button type="button"
-                onClick={() => setModalCompletarMovil({ abierto: false, venta: null })}
+              <button type="button" onClick={() => setModalCompletarMovil({ abierto: false, venta: null })}
                 className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg">
                 Cancelar
               </button>
-              <button type="button"
-                disabled={completarPedidoMovil.isPending}
-                onClick={() => {
-                  completarPedidoMovil.mutate({
-                    id:          modalCompletarMovil.venta.id,
-                    total:       modalCompletarMovil.venta.total,
-                    metodo_pago: metodoCompletarMovil,
-                  }, {
-                    onSuccess: () => setModalCompletarMovil({ abierto: false, venta: null })
-                  })
-                }}
+              <button type="button" disabled={completarPedidoMovil.isPending}
+                onClick={() => completarPedidoMovil.mutate({
+                  id: modalCompletarMovil.venta.id,
+                  total: modalCompletarMovil.venta.total,
+                  metodo_pago: metodoCompletarMovil,
+                }, { onSuccess: () => setModalCompletarMovil({ abierto: false, venta: null }) })}
                 className="btn-primary disabled:opacity-50">
                 {completarPedidoMovil.isPending ? 'Guardando...' : 'Confirmar'}
               </button>
@@ -284,7 +262,6 @@ export default function Ventas() {
       <VentaConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
       <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
         descargarReporte={descargarReporte} nombreEntidad="ventas" />
-
       <PagoForm
         modalNuevo={modalPago} setModalNuevo={setModalPago}
         form={formPago} setForm={setFormPago} errores={erroresPago}

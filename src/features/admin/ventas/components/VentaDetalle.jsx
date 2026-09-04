@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import Modal from '@shared/components/Modal'
-import { Download, Clock, Loader2, Package, Phone, CreditCard, FileText, Smartphone } from 'lucide-react'
+import { Download, Clock, Loader2, Package, Phone, CreditCard, Smartphone } from 'lucide-react'
 import { formatPrecio, formatFecha, formatFechaHora } from '@shared/utils/validaciones'
 import { descargarPDF } from '@shared/utils/reportes'
 import { ventasService } from '../services/ventasService'
@@ -14,14 +14,14 @@ function proximoAbono(fechaVenta) {
 
 function diasRestantes(fechaVenta) {
   if (!fechaVenta) return null
-  const hoy = new Date()
+  const hoy    = new Date()
   const limite = new Date(fechaVenta)
   limite.setDate(limite.getDate() + 15)
   return Math.ceil((limite - hoy) / (1000 * 60 * 60 * 24))
 }
 
 function BadgeEstado({ estado }) {
-  const l = estado?.toLowerCase() || ''
+  const l     = estado?.toLowerCase() || ''
   const color = l.includes('anula') ? 'bg-gray-300'
     : l.includes('complet') || l.includes('paga') ? 'bg-primary'
     : 'bg-amber-500'
@@ -39,9 +39,9 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
   const venta  = modalDetalle.venta
   const cerrar = () => setModalDetalle({ abierto: false, venta: null })
 
-  const esFiado = venta?.es_fiado && venta?.estado?.toLowerCase().includes('pendiente')
-  const dias    = esFiado ? diasRestantes(venta?.fecha_pedido) : null
-  const vencida = dias !== null && dias < 0
+  const esCredito = venta?.es_fiado && venta?.estado?.toLowerCase().includes('pendiente')
+  const dias      = esCredito ? diasRestantes(venta?.fecha_pedido) : null
+  const vencida   = dias !== null && dias < 0
 
   const { data: detalle, isLoading } = useQuery({
     queryKey: ['pedido-detalle', venta?.id],
@@ -64,20 +64,19 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
         <div className="flex flex-col" style={{ maxHeight: '80vh' }}>
           <div className="overflow-y-auto flex-1 space-y-3 text-xs pr-1">
 
-            {/* ── Fila 1: Estado + Fecha ── */}
+            {/* Estado + Fecha */}
             <div className="flex items-center justify-between">
               <BadgeEstado estado={venta.estado} />
               <span className="text-gray-400">{formatFechaHora(venta.fecha_pedido)}</span>
             </div>
 
-            {/* ── Fila 2: Cliente + badges de contexto ── */}
+            {/* Cliente */}
             <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="campo-label mb-0.5">Cliente</p>
                   <p className="font-semibold text-sm">{clienteInfo.nombre}</p>
                 </div>
-                {/* Badges contexto alineados a la derecha */}
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   {venta.origen === 'movil' && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/15 border border-blue-500/30 text-blue-500">
@@ -86,7 +85,7 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                   )}
                   {venta.es_fiado && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 border border-amber-500/30 text-amber-500">
-                      Fiado
+                      Crédito
                     </span>
                   )}
                   {venta.origen === 'movil' && venta.es_fiado && (
@@ -100,8 +99,6 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                   )}
                 </div>
               </div>
-
-              {/* Datos de contacto en una sola fila */}
               {(clienteInfo.telefono || clienteInfo.numero_documento) && (
                 <div className="flex flex-wrap gap-3 pt-1 border-t border-gray-200">
                   {clienteInfo.telefono && (
@@ -120,13 +117,11 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
               )}
             </div>
 
-            {/* ── Fila 3: Método de pago + Origen en una sola fila ── */}
+            {/* Método de pago + Entrega */}
             <div className="flex items-center justify-between px-1">
               <div>
                 <p className="campo-label">Método de pago</p>
-                <p className="font-medium capitalize">
-                  {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
-                </p>
+                <p className="font-medium capitalize">{detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}</p>
               </div>
               <div className="text-right">
                 <p className="campo-label">Entrega</p>
@@ -136,8 +131,8 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
               </div>
             </div>
 
-            {/* ── Aviso fiado pendiente ── */}
-            {esFiado && (
+            {/* Aviso crédito pendiente */}
+            {esCredito && (
               <div className={`flex items-start gap-2 p-3 rounded-lg border ${
                 vencida ? 'bg-red-500/10 border-red-400/30'
                 : dias <= 3 ? 'bg-amber-500/10 border-amber-400/30'
@@ -146,17 +141,17 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                 <Clock size={14} className={`shrink-0 mt-0.5 ${vencida ? 'text-red-400' : 'text-amber-500'}`} />
                 <div className="flex-1">
                   <p className={`font-semibold ${vencida ? 'text-red-400' : 'text-amber-500'}`}>
-                    {vencida ? 'Abono vencido' : 'Venta a crédito — Fiado'}
+                    {vencida ? 'Abono vencido' : 'Venta a crédito'}
                   </p>
                   <div className="flex items-center justify-between mt-0.5">
                     <span className="text-gray-400">
-                      Próximo abono: <span className={`font-medium ${vencida ? 'text-red-400' : 'text-amber-500'}`}>
+                      Próximo abono:{' '}
+                      <span className={`font-medium ${vencida ? 'text-red-400' : 'text-amber-500'}`}>
                         {proximoAbono(venta.fecha_pedido)}
                       </span>
                     </span>
                     <span className={vencida ? 'text-red-400' : dias <= 3 ? 'text-amber-400' : 'text-gray-400'}>
-                      {vencida
-                        ? `Vencido hace ${Math.abs(dias)}d`
+                      {vencida ? `Vencido hace ${Math.abs(dias)}d`
                         : dias === 0 ? 'Vence hoy'
                         : `Faltan ${dias}d`}
                     </span>
@@ -165,7 +160,7 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
               </div>
             )}
 
-            {/* ── Productos ── */}
+            {/* Productos */}
             <div className="pt-1 border-t border-gray-100">
               <p className="campo-label mb-1.5 flex items-center gap-1">
                 <Package size={11} /> Productos
@@ -200,7 +195,7 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
             </div>
           </div>
 
-          {/* ── Total + acciones ── */}
+          {/* Total + acciones */}
           <div className="pt-3 mt-3 border-t border-gray-100 shrink-0 space-y-3">
             <div className="flex justify-between items-center px-1">
               <span className="text-sm font-semibold">Total</span>

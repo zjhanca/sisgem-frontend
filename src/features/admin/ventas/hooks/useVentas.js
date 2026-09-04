@@ -36,19 +36,15 @@ export function useVentas() {
   const estadoPagado    = estados.find(e => e.nombre?.toLowerCase().includes('paga') || e.nombre?.toLowerCase().includes('complet'))
   const estadoPendiente = estados.find(e => e.nombre?.toLowerCase().includes('pendiente'))
 
-  const carrito  = useCarritoProductos({ productos, getBarcode: ventasService.getBarcode })
-  const fiado    = useFiadoCalculo({ clientes, form })
+  const carrito   = useCarritoProductos({ productos, getBarcode: ventasService.getBarcode })
+  const fiado     = useFiadoCalculo({ clientes, form })
   const anulacion = useAnulacionVenta()
 
-  // ── Helpers carrito — más ágiles ──
   const buscarProducto  = texto => carrito.buscarProducto(texto, setForm)
-
-  // buscarPorCodigo ahora usa lista local primero — sin esperar API
-  const buscarPorCodigo = cod => carrito.buscarPorCodigo(cod, null, form, setForm)
-
+  const buscarPorCodigo = cod   => carrito.buscarPorCodigo(cod, null, form, setForm)
   const agregarProducto = prod  => carrito.agregarProducto(prod, form, setForm)
   const cambiarCantidad = (idx, val) => carrito.cambiarCantidad(idx, val, form, setForm)
-  const quitarProducto  = idx => carrito.quitarProducto(idx, setForm)
+  const quitarProducto  = idx  => carrito.quitarProducto(idx, setForm)
 
   const clientesFiltrados = clientes
     .filter(c => !clienteBusqueda ||
@@ -83,7 +79,7 @@ export function useVentas() {
       setClienteBusqueda('')
       toast.success(
         vars._tipo_pago === 'fiado'
-          ? (vars._monto_inmediato > 0 ? 'Venta registrada — fiado parcial' : 'Venta registrada como fiado')
+          ? (vars._monto_inmediato > 0 ? 'Venta registrada — crédito parcial' : 'Venta registrada a crédito')
           : 'Venta registrada ✓'
       )
     },
@@ -125,10 +121,7 @@ export function useVentas() {
 
   const marcarEntregado = useMutation({
     mutationFn: ({ id }) => ventasService.marcarEntregado(id),
-    onSuccess: () => {
-      qc.invalidateQueries(['pedidos'])
-      toast.success('Pedido marcado como entregado')
-    },
+    onSuccess: () => { qc.invalidateQueries(['pedidos']); toast.success('Pedido marcado como entregado') },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
 
@@ -153,7 +146,7 @@ export function useVentas() {
       toast.error(`El mínimo para ventas a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}`); return
     }
     if (form.tipo_pago === 'fiado' && form.cliente_id && fiado.cupoFiadoDisponible != null && fiado.cupoFiadoDisponible <= 0) {
-      toast.error('Este cliente no tiene cupo de fiado disponible'); return
+      toast.error('Este cliente no tiene cupo de crédito disponible'); return
     }
     crearVenta.mutate({
       cliente_id:             form.tipo_cliente === 'registrado' ? form.cliente_id : null,
@@ -187,13 +180,13 @@ export function useVentas() {
 
   const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
     const nombres = { normal: 'general', rango: 'personalizado' }
-    const ext = formato === 'excel' ? 'xlsx' : 'pdf'
-    const params = new URLSearchParams({ formato })
+    const ext     = formato === 'excel' ? 'xlsx' : 'pdf'
+    const params  = new URLSearchParams({ formato })
     if (tipo === 'rango') {
       if (desde) params.set('desde', desde)
       if (hasta) params.set('hasta', hasta)
     }
-    const url = `/reportes/ventas?${params.toString()}`
+    const url           = `/reportes/ventas?${params.toString()}`
     const nombreArchivo = `reporte-ventas-${nombres[tipo] || tipo}.${ext}`
     if (formato === 'excel') await descargarExcel(url, nombreArchivo)
     else await descargarPDF(url, nombreArchivo)

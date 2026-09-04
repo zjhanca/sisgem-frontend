@@ -9,11 +9,12 @@ export default function PanelFiado({
 
   return (
     <div className="space-y-2">
-      {/* Barra cupo fiado */}
+
+      {/* Barra cupo crédito */}
       {form.tipo_pago === 'fiado' && cupoFiadoDisponible != null && (
         <div className="space-y-1">
           <div className="flex justify-between text-xs">
-            <span className="text-gray-400">Cupo fiado disponible</span>
+            <span className="text-gray-400">Cupo de crédito disponible</span>
             <span className={excedeCupoFiado ? 'text-amber-600 font-semibold' : 'text-primary font-semibold'}>
               ${totalVenta.toLocaleString('es-CO')} / ${cupoFiadoDisponible.toLocaleString('es-CO')}
             </span>
@@ -34,7 +35,7 @@ export default function PanelFiado({
             <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
             <p className="text-xs text-amber-700 leading-relaxed">
               Solo tiene <strong>${cupoFiadoDisponible.toLocaleString('es-CO')}</strong> de cupo.
-              Se fiarán <strong>${montoFiado.toLocaleString('es-CO')}</strong> y debes cobrar
+              Se darán a crédito <strong>${montoFiado.toLocaleString('es-CO')}</strong> y debes cobrar
               <strong> ${montoInmediato.toLocaleString('es-CO')}</strong> ahora.
             </p>
           </div>
@@ -58,7 +59,7 @@ export default function PanelFiado({
       {sinCupo && form.tipo_pago === 'fiado' && (
         <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
           <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-red-600">Este cliente no tiene cupo de fiado disponible. Elige "Pago Total".</p>
+          <p className="text-xs text-red-600">Este cliente no tiene cupo de crédito disponible. Elige "Pago Total".</p>
         </div>
       )}
 
@@ -66,9 +67,9 @@ export default function PanelFiado({
       <div className="flex flex-col gap-1">
         <div className="flex gap-2 pt-1">
           {[
-            { val: 'total', label: 'Pago Total', icon: CreditCard, active: 'bg-primary text-white border-primary' },
+            { val: 'total', label: 'Pago Total',  icon: CreditCard, active: 'bg-primary text-white border-primary' },
             {
-              val: 'fiado', label: 'Fiado', icon: Clock,
+              val: 'fiado', label: 'Crédito', icon: Clock,
               active: 'bg-amber-500 text-white border-amber-500',
               disabled: !permitefiado || sinCupo || minimoInsuficiente,
             },
