@@ -3,14 +3,14 @@ import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { usePedidos } from '../hooks/usePedidos'
-import PedidoDetalle  from '../components/PedidoDetalle'
+import PedidoDetalle from '../components/PedidoDetalle'
 
 const FILTROS_ESTADO = [
-  { key: '',            label: 'Todos'        },
-  { key: 'pendiente',   label: 'Pendiente'    },
-  { key: 'sin_recoger', label: 'Sin recoger'  },
-  { key: 'entregado',   label: 'Entregado'    },
-  { key: 'anulado',     label: 'Anulado'      },
+  { key: '',            label: 'Todos'       },
+  { key: 'pendiente',   label: 'Pendiente'   },
+  { key: 'sin_recoger', label: 'Sin recoger' },
+  { key: 'entregado',   label: 'Entregado'   },
+  { key: 'anulado',     label: 'Anulado'     },
 ]
 
 export default function Pedidos() {
@@ -23,7 +23,6 @@ export default function Pedidos() {
     filtroBusqueda, setFiltroBusqueda,
     confirmarEntrega, confirmando,
     getColorEstado, getLabelEstado,
-    contPendiente, contSinRecoger,
   } = usePedidos()
 
   const columnas = [
@@ -43,24 +42,8 @@ export default function Pedidos() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Pedidos App</h1>
+        <h1 className="page-title">Pedidos</h1>
       </div>
-
-      {/* Alertas contadores */}
-      {(contPendiente > 0 || contSinRecoger > 0) && (
-        <div className="flex gap-3 mb-4">
-          {contPendiente > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
-              <span className="font-bold">{contPendiente}</span> pendiente{contPendiente > 1 ? 's' : ''} de entrega
-            </div>
-          )}
-          {contSinRecoger > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-50 border border-orange-200 text-xs text-orange-700">
-              <span className="font-bold">{contSinRecoger}</span> sin recoger
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Filtros */}
       <div className="flex gap-2 mb-4 flex-wrap items-center">
@@ -118,7 +101,6 @@ export default function Pedidos() {
         }}
       />
 
-      {/* Detalle */}
       <PedidoDetalle
         modalDetalle={modalDetalle}
         setModalDetalle={setModalDetalle}
@@ -130,7 +112,6 @@ export default function Pedidos() {
         }}
       />
 
-      {/* Modal confirmar entrega */}
       {modalConfirmarEntrega.abierto && modalConfirmarEntrega.pedido && (
         <Modal abierto onCerrar={() => setModalConfirmarEntrega({ abierto: false, pedido: null })}
           bloquearCierre titulo="Confirmar Entrega" ancho="max-w-sm">
@@ -145,7 +126,6 @@ export default function Pedidos() {
             <p className="text-sm font-bold text-primary">
               Total: {formatPrecio(modalConfirmarEntrega.pedido.total)}
             </p>
-
             <div>
               <label className="campo-label">Método de pago recibido</label>
               <div className="flex gap-2 mt-1">
@@ -162,14 +142,12 @@ export default function Pedidos() {
                 ))}
               </div>
             </div>
-
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
               <button onClick={() => setModalConfirmarEntrega({ abierto: false, pedido: null })}
                 className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg">
                 Cancelar
               </button>
-              <button
-                disabled={confirmando}
+              <button disabled={confirmando}
                 onClick={() => confirmarEntrega.mutate({
                   pedido: modalConfirmarEntrega.pedido,
                   metodo: metodoEntrega,

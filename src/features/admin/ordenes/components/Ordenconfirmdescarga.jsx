@@ -26,7 +26,7 @@ export default function OrdenConfirmDescarga({ confirmDescarga, setConfirmDescar
   }
 
   const etiqueta = confirmDescarga?.tipo === 'orden'
-    ? `la orden de compra #${confirmDescarga.id}`
+    ? `Compra #${confirmDescarga.id}`
     : 'el reporte de órdenes de compra'
 
   return (

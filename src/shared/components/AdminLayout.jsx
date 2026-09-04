@@ -35,7 +35,7 @@ const MENU = [
     items: [
       { to: '/admin/clientes', label: 'Clientes',    icon: Users,      permiso: 'ver_clientes' },
       { to: '/admin/ventas',   label: 'Ventas',      icon: BarChart2,  permiso: 'ver_ventas'   },
-      { to: '/admin/pedidos',  label: 'Pedidos App', icon: ShoppingBag,permiso: 'ver_pedidos'  },
+      { to: '/admin/pedidos',  label: 'Pedidos', icon: ShoppingBag,permiso: 'ver_pedidos'  },
       { to: '/admin/pagos',    label: 'Pagos',       icon: CreditCard, permiso: 'ver_pagos'    },
     ]
   },
