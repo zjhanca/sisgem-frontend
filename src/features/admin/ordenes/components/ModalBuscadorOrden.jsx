@@ -314,7 +314,7 @@ export default function ModalBuscadorOrden({
             )}
           </div>
           <button type="button" onClick={onCerrar} className="btn-primary px-6">
-            {form.productos.length > 0 ? 'Listo ✓' : 'Cerrar'}
+            {form.productos.length > 0 ? 'Listo ✓' : 'Aceptar'}
           </button>
         </div>
       </div>

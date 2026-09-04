@@ -275,7 +275,7 @@ export default function ModalBuscadorProducto({
             )}
           </div>
           <button type="button" onClick={onCerrar} className="btn-primary px-6">
-            {totalItems > 0 ? 'Listo ✓' : 'Cerrar'}
+            {totalItems > 0 ? 'Listo ✓' : 'Aceptar'}
           </button>
         </div>
       </div>
