@@ -6,27 +6,31 @@ export default function GestorImagenes({ imagenes = [], onChange }) {
   const [nuevaUrl, setNuevaUrl] = useState('')
   const [dragging, setDragging] = useState(false)
 
-  const agregarDesdeFile = file => {
-    if (!file || !file.type.startsWith('image/')) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const base64 = ev.target.result
-      onChange(imagenes.includes(base64) ? imagenes : [...imagenes, base64])
-    }
-    reader.readAsDataURL(file)
+  const agregarDesdeFiles = files => {
+    const arr = Array.from(files).filter(f => f.type.startsWith('image/'))
+    if (!arr.length) return
+    const promesas = arr.map(file => new Promise(resolve => {
+      const reader = new FileReader()
+      reader.onload = ev => resolve(ev.target.result)
+      reader.readAsDataURL(file)
+    }))
+    Promise.all(promesas).then(bases => {
+      const nuevas = bases.filter(b => !imagenes.includes(b))
+      if (nuevas.length) onChange([...imagenes, ...nuevas])
+    })
   }
 
   const handleInputFile = e => {
-    Array.from(e.target.files).forEach(agregarDesdeFile)
+    agregarDesdeFiles(e.target.files)
     e.target.value = ''
   }
 
   const onDrop = e => {
     e.preventDefault(); setDragging(false)
-    Array.from(e.dataTransfer.files).forEach(agregarDesdeFile)
+    agregarDesdeFiles(e.dataTransfer.files)
   }
 
-  const onDragOver = e => { e.preventDefault(); setDragging(true) }
+  const onDragOver  = e => { e.preventDefault(); setDragging(true) }
   const onDragLeave = () => setDragging(false)
 
   const agregarUrl = () => {
@@ -45,7 +49,6 @@ export default function GestorImagenes({ imagenes = [], onChange }) {
 
   return (
     <div className="space-y-2">
-      {/* Zona drag and drop */}
       <div
         onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
         onClick={() => fileRef.current?.click()}
@@ -60,7 +63,6 @@ export default function GestorImagenes({ imagenes = [], onChange }) {
       </div>
       <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleInputFile} />
 
-      {/* URL */}
       <div className="flex gap-2">
         <input value={nuevaUrl} onChange={e => setNuevaUrl(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); agregarUrl() } }}
@@ -70,7 +72,6 @@ export default function GestorImagenes({ imagenes = [], onChange }) {
         </button>
       </div>
 
-      {/* Grid imágenes */}
       {imagenes.length > 0 ? (
         <div className="grid grid-cols-3 gap-2">
           {imagenes.map((url, i) => (
