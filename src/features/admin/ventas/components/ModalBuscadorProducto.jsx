@@ -23,8 +23,6 @@ export default function ModalBuscadorProducto({
     const handler = e => {
       if (!abierto) return
       if (e.key === 'Escape') { onCerrar(); return }
-      if (e.key === 'Enter' && document.activeElement === codigoRef.current) return
-      if (e.key === 'Enter' && document.activeElement === nombreRef.current) return
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -32,8 +30,8 @@ export default function ModalBuscadorProducto({
 
   if (!abierto) return null
 
-  const indice    = pid => form.productos.findIndex(p => p.producto_id === pid)
-  const cantidad  = pid => { const i = indice(pid); return i >= 0 ? +form.productos[i].cantidad || 0 : 0 }
+  const indice   = pid => form.productos.findIndex(p => p.producto_id === pid)
+  const cantidad = pid => { const i = indice(pid); return i >= 0 ? +form.productos[i].cantidad || 0 : 0 }
 
   const sumar = p => {
     const i = indice(p.id)
@@ -61,12 +59,10 @@ export default function ModalBuscadorProducto({
   }
 
   const handleNombreKeyDown = e => {
-    if (e.key === 'Enter') {
-      if (prodsFiltrados.length === 1) {
-        sumar(prodsFiltrados[0])
-        buscarProducto('')
-        nombreRef.current?.focus()
-      }
+    if (e.key === 'Enter' && prodsFiltrados.length === 1) {
+      sumar(prodsFiltrados[0])
+      buscarProducto('')
+      nombreRef.current?.focus()
     }
   }
 
@@ -83,8 +79,8 @@ export default function ModalBuscadorProducto({
         {/* Tabs */}
         <div className="flex shrink-0 border-b border-gray-100">
           {[
-            { key: 'codigo', label: 'Código / Pistola', icon: Scan },
-            { key: 'nombre', label: 'Buscar nombre',    icon: Search },
+            { key: 'codigo', label: 'Código / Pistola', icon: Scan   },
+            { key: 'nombre', label: 'Buscar nombre',    icon: Search  },
           ].map(t => (
             <button key={t.key} type="button"
               onClick={() => {
@@ -92,12 +88,19 @@ export default function ModalBuscadorProducto({
                 buscarProducto('')
                 setTimeout(() => (t.key === 'codigo' ? codigoRef : nombreRef).current?.focus(), 50)
               }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors border-b-2 ${
-                modo === t.key ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-gray-600'
+              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium
+                transition-colors border-b-2 ${
+                modo === t.key
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
               }`}>
               <t.icon size={13} /> {t.label}
             </button>
           ))}
+          <button type="button" onClick={onCerrar}
+            className="px-4 text-gray-400 hover:text-gray-600 text-lg leading-none font-light">
+            ✕
+          </button>
         </div>
 
         {/* Input código */}
@@ -133,9 +136,10 @@ export default function ModalBuscadorProducto({
                 placeholder="Nombre del producto... Enter si hay 1 resultado"
                 className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400" />
               {prodBusqueda && (
-                <button type="button" onClick={() => { buscarProducto(''); nombreRef.current?.focus() }}
-                  className="text-gray-400 hover:text-red-400">
-                  <Trash2 size={13} />
+                <button type="button"
+                  onClick={() => { buscarProducto(''); nombreRef.current?.focus() }}
+                  className="text-gray-400 hover:text-red-400 text-base leading-none">
+                  ✕
                 </button>
               )}
             </div>

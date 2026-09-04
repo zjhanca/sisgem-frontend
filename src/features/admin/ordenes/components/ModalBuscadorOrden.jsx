@@ -69,7 +69,7 @@ export default function ModalBuscadorOrden({
     }
   }
 
-  const totalOrden = form.productos.reduce((s, p) => s + p.costo_unitario * p.cantidad, 0)
+  const totalOrden   = form.productos.reduce((s, p) => s + p.costo_unitario * p.cantidad, 0)
   const hayResultados = modo === 'nombre' && prodBusqueda.length > 0
 
   return (
@@ -81,8 +81,8 @@ export default function ModalBuscadorOrden({
         {/* Tabs */}
         <div className="flex shrink-0 border-b border-gray-100">
           {[
-            { key: 'codigo', label: 'Código / Pistola', icon: Scan },
-            { key: 'nombre', label: 'Buscar nombre',    icon: Search },
+            { key: 'codigo', label: 'Código / Pistola', icon: Scan   },
+            { key: 'nombre', label: 'Buscar nombre',    icon: Search  },
           ].map(t => (
             <button key={t.key} type="button"
               onClick={() => {
@@ -100,8 +100,8 @@ export default function ModalBuscadorOrden({
             </button>
           ))}
           <button type="button" onClick={onCerrar}
-            className="px-4 text-gray-400 hover:text-gray-600">
-            <Trash2 size={15} className="rotate-45" />
+            className="px-4 text-gray-400 hover:text-gray-600 text-lg leading-none font-light">
+            ✕
           </button>
         </div>
 
@@ -136,9 +136,10 @@ export default function ModalBuscadorOrden({
                 placeholder="Nombre del producto... Enter si hay 1 resultado"
                 className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400" />
               {prodBusqueda && (
-                <button type="button" onClick={() => { buscarProducto(''); nombreRef.current?.focus() }}
-                  className="text-gray-400 hover:text-red-400">
-                  <Trash2 size={13} />
+                <button type="button"
+                  onClick={() => { buscarProducto(''); nombreRef.current?.focus() }}
+                  className="text-gray-400 hover:text-red-400 text-base leading-none">
+                  ✕
                 </button>
               )}
             </div>
@@ -147,7 +148,7 @@ export default function ModalBuscadorOrden({
 
         {/* Resultados búsqueda */}
         {hayResultados && (
-          <div className="overflow-y-auto" style={{ maxHeight: '200px' }}>
+          <div className="overflow-y-auto" style={{ maxHeight: '180px' }}>
             {prodsFiltrados.length === 0 ? (
               <div className="py-6 text-center text-xs text-gray-400">Sin resultados</div>
             ) : prodsFiltrados.map(p => (
@@ -169,9 +170,8 @@ export default function ModalBuscadorOrden({
           </div>
         )}
 
-        {/* Formulario item — costo, precio venta, cantidad */}
+        {/* Formulario item */}
         <div className="px-4 py-3 border-b border-gray-100 shrink-0 space-y-2">
-          {/* Producto seleccionado */}
           {itemForm.producto_id && !modoEdicion && (
             <div className="flex items-center justify-between px-3 py-2 rounded-lg
               border border-primary/40 bg-primary/5 text-xs">
@@ -180,11 +180,12 @@ export default function ModalBuscadorOrden({
               </span>
               <button type="button"
                 onClick={() => { setItemForm(f => ({ ...f, producto_id: '', costo_unitario: '', precio_venta: '' })); setProdBusqueda('') }}
-                className="text-gray-400 hover:text-red-400 ml-2 shrink-0">
-                <Trash2 size={12} />
+                className="text-gray-400 hover:text-red-400 ml-2 shrink-0 text-base leading-none">
+                ✕
               </button>
             </div>
           )}
+
           {modoEdicion && (
             <div className="px-3 py-2 rounded-lg border border-amber-300 bg-amber-50 text-xs font-medium text-amber-700">
               ✏️ Editando: {form.productos[itemEditando]?.nombre}
@@ -228,7 +229,7 @@ export default function ModalBuscadorOrden({
               <>
                 <button type="button" onClick={guardarEdicionItem}
                   className="flex-1 btn-primary justify-center text-xs gap-1">
-                  <Check size={13} /> Guardar cambio
+                  <Check size={13} /> Guardar
                 </button>
                 <button type="button" onClick={cancelarEdicionItem}
                   className="px-3 py-2 rounded-lg border border-gray-200 text-gray-500 text-xs hover:text-red-400">
@@ -243,8 +244,8 @@ export default function ModalBuscadorOrden({
                 </button>
                 {onCrearProducto && (
                   <button type="button" onClick={onCrearProducto}
-                    className="px-3 py-2 rounded-lg border border-gray-200 text-xs text-primary/70
-                      hover:text-primary hover:border-primary/40 transition-colors">
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-xs
+                      text-primary/70 hover:text-primary hover:border-primary/40 transition-colors">
                     + Nuevo
                   </button>
                 )}
@@ -253,7 +254,7 @@ export default function ModalBuscadorOrden({
           </div>
         </div>
 
-        {/* Lista productos agregados */}
+        {/* Lista productos */}
         {form.productos.length > 0 ? (
           <div className="flex-1 overflow-y-auto">
             <p className="px-4 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
@@ -303,7 +304,9 @@ export default function ModalBuscadorOrden({
           <div>
             {form.productos.length > 0 ? (
               <>
-                <p className="text-xs text-gray-400">{form.productos.length} producto{form.productos.length !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-gray-400">
+                  {form.productos.length} producto{form.productos.length !== 1 ? 's' : ''}
+                </p>
                 <p className="text-base font-bold text-primary">{formatPrecio(totalOrden)}</p>
               </>
             ) : (
