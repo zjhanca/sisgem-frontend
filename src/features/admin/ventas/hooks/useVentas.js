@@ -28,7 +28,6 @@ export function useVentas() {
   const [form, setForm]                     = useState(formInicial)
   const [clienteBusqueda, setClienteBusqueda] = useState('')
 
-  // ── Queries ──
   const { data: ventas = [] }    = useQuery({ queryKey: ['pedidos'],        queryFn: ventasService.getAll })
   const { data: clientes = [] }  = useQuery({ queryKey: ['clientes'],       queryFn: ventasService.getClientes })
   const { data: productos = [] } = useQuery({ queryKey: ['productos'],      queryFn: ventasService.getProductos })
@@ -37,15 +36,17 @@ export function useVentas() {
   const estadoPagado    = estados.find(e => e.nombre?.toLowerCase().includes('paga') || e.nombre?.toLowerCase().includes('complet'))
   const estadoPendiente = estados.find(e => e.nombre?.toLowerCase().includes('pendiente'))
 
-  // ── Sub-hooks ──
   const carrito  = useCarritoProductos({ productos, getBarcode: ventasService.getBarcode })
   const fiado    = useFiadoCalculo({ clientes, form })
   const anulacion = useAnulacionVenta()
 
-  // ── Helpers carrito ──
+  // ── Helpers carrito — más ágiles ──
   const buscarProducto  = texto => carrito.buscarProducto(texto, setForm)
-  const buscarPorCodigo = cod   => carrito.buscarPorCodigo(cod, prod => carrito.agregarProducto(prod, form, setForm))
-  const agregarProducto = prod  => { carrito.agregarProducto(prod, form, setForm) }
+
+  // buscarPorCodigo ahora usa lista local primero — sin esperar API
+  const buscarPorCodigo = cod => carrito.buscarPorCodigo(cod, null, form, setForm)
+
+  const agregarProducto = prod  => carrito.agregarProducto(prod, form, setForm)
   const cambiarCantidad = (idx, val) => carrito.cambiarCantidad(idx, val, form, setForm)
   const quitarProducto  = idx => carrito.quitarProducto(idx, setForm)
 
@@ -54,10 +55,9 @@ export function useVentas() {
       `${c.nombre} ${c.apellido}`.toLowerCase().includes(clienteBusqueda.toLowerCase()))
     .slice(0, 6)
 
-  // ── Mutations ──
   const crearVenta = useMutation({
     mutationFn: async data => {
-      const res = await ventasService.create({ ...data, tipo_venta: 'mostrador' })
+      const res       = await ventasService.create({ ...data, tipo_venta: 'mostrador' })
       const pedido_id = res.data.pedido_id
       if (data._tipo_pago === 'fiado') {
         if (estadoPendiente) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPendiente.id })
@@ -79,11 +79,12 @@ export function useVentas() {
       qc.invalidateQueries(['clientes'])
       setModalNuevo(false)
       setForm(formInicial)
-      carrito.setProdBusqueda(''); setClienteBusqueda('')
+      carrito.setProdBusqueda('')
+      setClienteBusqueda('')
       toast.success(
         vars._tipo_pago === 'fiado'
-          ? (vars._monto_inmediato > 0 ? 'Venta registrada — fiado parcial y abono inmediato' : 'Venta registrada como fiado')
-          : 'Venta registrada y marcada como pagada'
+          ? (vars._monto_inmediato > 0 ? 'Venta registrada — fiado parcial' : 'Venta registrada como fiado')
+          : 'Venta registrada ✓'
       )
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
@@ -109,7 +110,6 @@ export function useVentas() {
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
 
-  // Completar pedido móvil sin fiado — cambia estado Y registra pago
   const completarPedidoMovil = useMutation({
     mutationFn: async ({ id, total, metodo_pago }) => {
       if (estadoPagado) await ventasService.cambiarEstado(id, { estado_id: estadoPagado.id })
@@ -123,7 +123,6 @@ export function useVentas() {
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al completar el pedido'),
   })
 
-  // Marcar entregado — solo para fiados móviles, sin cambiar estado
   const marcarEntregado = useMutation({
     mutationFn: ({ id }) => ventasService.marcarEntregado(id),
     onSuccess: () => {
@@ -133,21 +132,28 @@ export function useVentas() {
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
   })
 
-  // ── Handlers ──
   const handleCrear = e => {
     if (e?.preventDefault) e.preventDefault()
-    if (form.tipo_cliente === 'registrado' && !form.cliente_id) { toast.error('Selecciona un cliente'); return }
-    if (!form.productos.length) { toast.error('Agrega al menos un producto'); return }
+    if (form.tipo_cliente === 'registrado' && !form.cliente_id) {
+      toast.error('Selecciona un cliente'); return
+    }
+    if (!form.productos.length) {
+      toast.error('Agrega al menos un producto'); return
+    }
     for (const p of form.productos) {
-      if (!p.cantidad || +p.cantidad < 1) { toast.error(`${p.nombre}: la cantidad debe ser al menos 1`); return }
+      if (!p.cantidad || +p.cantidad < 1) {
+        toast.error(`${p.nombre}: la cantidad debe ser al menos 1`); return
+      }
       const stock = p.stock ?? carrito.getStock(p.producto_id)
-      if (+p.cantidad > stock) { toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return }
+      if (+p.cantidad > stock) {
+        toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return
+      }
     }
     if (form.tipo_pago === 'fiado' && fiado.totalVenta < MINIMO_FIADO) {
       toast.error(`El mínimo para ventas a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}`); return
     }
     if (form.tipo_pago === 'fiado' && form.cliente_id && fiado.cupoFiadoDisponible != null && fiado.cupoFiadoDisponible <= 0) {
-      toast.error('Este cliente no tiene cupo de fiado disponible actualmente'); return
+      toast.error('Este cliente no tiene cupo de fiado disponible'); return
     }
     crearVenta.mutate({
       cliente_id:             form.tipo_cliente === 'registrado' ? form.cliente_id : null,
@@ -163,7 +169,6 @@ export function useVentas() {
     })
   }
 
-  // ── Filtros ──
   const ventasFiltradas = ventas.filter(v => {
     if (filtroEstado   && v.estado_id !== +filtroEstado) return false
     if (filtroBusqueda && !`${v.id} ${v.cliente}`.toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
