@@ -67,13 +67,15 @@ export default function Productos() {
         : <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary/50">—</div>
     },
     { key: 'nombre',        label: 'Nombre' },
-    { key: 'codigo_barras', label: 'Referencia',
-      render: r => <span className="font-mono text-xs">{r.codigo_barras || '—'}</span> },
+    { key: 'codigo_barras', label: 'Cód. Barras',
+      render: r => <span className="font-mono text-xs">{r.codigo_barras || '—'}</span>
+    },
     { key: 'categoria', label: 'Categoría', render: r => r.categoria || '—' },
-    { key: 'marca',     label: 'Marca',     render: r => r.marca || '—' },
+    { key: 'marca',     label: 'Marca',     render: r => r.marca || '—'     },
     { key: 'precio',    label: 'Precio',    render: r => formatPrecio(r.precio) },
     { key: 'stock',     label: 'Stock',
-      render: r => <span className={r.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{r.stock}</span> },
+      render: r => <span className={r.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{r.stock}</span>
+    },
     { key: 'estado', label: 'Estado',
       render: r => r.stock <= 0
         ? <BadgeSinStock />
@@ -121,27 +123,21 @@ export default function Productos() {
         </>)}
       />
 
-      {/* Modal selector de tipo */}
       <ProductoTipoModal
         abierto={modalTipo}
         onCerrar={() => seleccionarTipo(null)}
         onSeleccionar={seleccionarTipo}
       />
-
-      {/* Formulario sin stock (original) */}
       <ProductoForm modal={modal} form={form} setForm={setForm} errores={errores}
         handleChange={handleChange} handleSubmit={handleSubmit} cerrarModal={cerrarModal}
         guardando={guardando} categorias={categorias} marcas={marcas}
         verificandoCodigo={verificandoCodigo} />
-
-      {/* Formulario con stock */}
       <ProductoFormConStock
         modal={modalConStock} form={formConStock} setForm={setFormConStock}
         errores={erroresConStock} handleChange={handleChangeConStock}
         handleSubmit={handleSubmitConStock} cerrarModal={cerrarModalConStock}
         guardando={guardandoConStock} categorias={categorias} marcas={marcas}
         verificandoCodigo={verificandoCodigo} />
-
       <ProductoDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         abrirModal={abrirModal} />
       <ProductoEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}

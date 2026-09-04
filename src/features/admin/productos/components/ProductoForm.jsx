@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Modal from '@shared/components/Modal'
 import { Search, Scan, Loader2, CheckCircle2 } from 'lucide-react'
 import GestorImagenes from '@shared/components/GestorImagenes'
+import { useBarcodeScanner } from '@shared/hooks/useBarcodeScanner'
 
 function BuscadorSelect({ label, items, valorId, onSelect, placeholder }) {
   const [busq, setBusq]       = useState('')
@@ -44,6 +45,13 @@ export default function ProductoForm({
   modal, form, setForm, errores, handleChange, handleSubmit,
   cerrarModal, guardando, categorias, marcas, verificandoCodigo,
 }) {
+  // Pistola — llena el campo código de barras automáticamente
+  useBarcodeScanner({
+    activo: modal.abierto,
+    soloNumeros: true,
+    onScan: codigo => handleChange('codigo_barras', codigo),
+  })
+
   return (
     <Modal abierto={modal.abierto} onCerrar={cerrarModal} bloquearCierre
       titulo={modal.item ? 'Editar Producto' : 'Nuevo Producto'} ancho="max-w-2xl">
@@ -76,9 +84,9 @@ export default function ProductoForm({
           <BuscadorSelect label="Marca" items={marcas} valorId={form.marca_id}
             onSelect={id => setForm(p => ({ ...p, marca_id: id }))} placeholder="Buscar marca..." />
 
-          {/* Referencia */}
+          {/* Código de barras */}
           <div className="col-span-2">
-            <label className="campo-label">Referencia (solo números)</label>
+            <label className="campo-label">Código de barras</label>
             <div className="relative">
               <input value={form.codigo_barras}
                 onChange={e => { if (/^\d*$/.test(e.target.value)) handleChange('codigo_barras', e.target.value) }}
@@ -86,7 +94,7 @@ export default function ProductoForm({
                 className={`campo-input pr-8 ${errores.codigo_barras ? 'border-red-400' : (
                   form.codigo_barras && !verificandoCodigo && !errores.codigo_barras ? 'border-primary/40' : ''
                 )}`}
-                placeholder="Ej: 7702001234567" />
+                placeholder="Escanea con pistola o escribe el código" />
               <div className="absolute right-2 bottom-2.5 flex items-center">
                 {verificandoCodigo
                   ? <Loader2 size={13} className="text-gray-400 animate-spin" />
@@ -100,6 +108,11 @@ export default function ProductoForm({
               <span className="campo-hint flex items-center gap-1">
                 <Loader2 size={10} className="animate-spin" /> Verificando...
               </span>
+            )}
+            {!form.codigo_barras && !errores.codigo_barras && (
+              <p className="campo-hint flex items-center gap-1">
+                <Scan size={10} /> La pistola escanea directo aquí cuando el modal está abierto
+              </p>
             )}
           </div>
 

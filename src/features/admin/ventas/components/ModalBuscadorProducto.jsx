@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Search, Scan, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
+import { useBarcodeScanner } from '@shared/hooks/useBarcodeScanner'
 
 export default function ModalBuscadorProducto({
   abierto, onCerrar,
@@ -27,6 +28,15 @@ export default function ModalBuscadorProducto({
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [abierto, onCerrar])
+
+  // Pistola — activa solo cuando el modal está abierto
+  useBarcodeScanner({
+    activo: abierto,
+    soloNumeros: true,
+    onScan: codigo => {
+      buscarPorCodigo(codigo)
+    },
+  })
 
   if (!abierto) return null
 
@@ -79,8 +89,8 @@ export default function ModalBuscadorProducto({
         {/* Tabs */}
         <div className="flex shrink-0 border-b border-gray-100">
           {[
-            { key: 'codigo', label: 'Código / Pistola', icon: Scan   },
-            { key: 'nombre', label: 'Buscar nombre',    icon: Search  },
+            { key: 'codigo', label: 'Cód. de barras / Pistola', icon: Scan   },
+            { key: 'nombre', label: 'Buscar nombre',             icon: Search },
           ].map(t => (
             <button key={t.key} type="button"
               onClick={() => {
@@ -103,7 +113,7 @@ export default function ModalBuscadorProducto({
           </button>
         </div>
 
-        {/* Input código */}
+        {/* Input código de barras */}
         {modo === 'codigo' && (
           <div className="px-4 py-3 border-b border-gray-100 shrink-0">
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-primary/40
@@ -111,13 +121,13 @@ export default function ModalBuscadorProducto({
               <Scan size={16} className="text-primary shrink-0" />
               <input
                 ref={codigoRef}
-                placeholder="Escanea o escribe el código + Enter"
+                placeholder="Escanea con pistola o escribe el código de barras + Enter"
                 className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400"
                 onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
                 onKeyDown={handleCodigoKeyDown} />
             </div>
             <p className="text-xs text-gray-400 mt-1.5 text-center">
-              Apunta la pistola aquí · o escribe el código manualmente
+              La pistola funciona automáticamente · también puedes escribir el código
             </p>
           </div>
         )}
@@ -146,7 +156,7 @@ export default function ModalBuscadorProducto({
           </div>
         )}
 
-        {/* Resultados búsqueda nombre */}
+        {/* Resultados */}
         {hayResultados && (
           <div className="flex-1 overflow-y-auto">
             {prodsFiltrados.length === 0 ? (
@@ -255,7 +265,9 @@ export default function ModalBuscadorProducto({
           <div className="flex-1 flex flex-col items-center justify-center py-10 text-gray-400">
             <ShoppingCart size={36} className="mb-3 opacity-30" />
             <p className="text-xs">
-              {modo === 'codigo' ? 'Escanea o escribe el código del producto' : 'Escribe el nombre del producto'}
+              {modo === 'codigo'
+                ? 'Escanea con la pistola o escribe el código de barras'
+                : 'Escribe el nombre del producto'}
             </p>
             <p className="text-xs mt-1 text-gray-300">Presiona Esc para cerrar</p>
           </div>
@@ -275,7 +287,7 @@ export default function ModalBuscadorProducto({
             )}
           </div>
           <button type="button" onClick={onCerrar} className="btn-primary px-6">
-            {totalItems > 0 ? 'Listo ✓' : 'Aceptar'}
+            {totalItems > 0 ? 'Listo ✓' : 'Cerrar'}
           </button>
         </div>
       </div>

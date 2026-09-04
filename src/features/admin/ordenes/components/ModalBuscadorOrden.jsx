@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Search, Scan, Trash2, ShoppingBag, Pencil, Check } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
+import { useBarcodeScanner } from '@shared/hooks/useBarcodeScanner'
 
 export default function ModalBuscadorOrden({
   abierto, onCerrar,
@@ -29,6 +30,16 @@ export default function ModalBuscadorOrden({
     return () => window.removeEventListener('keydown', handler)
   }, [abierto, onCerrar])
 
+  // Pistola — activa solo cuando el modal está abierto
+  useBarcodeScanner({
+    activo: abierto,
+    soloNumeros: true,
+    onScan: codigo => {
+      buscarPorCodigo(codigo)
+      setTimeout(() => costoRef.current?.focus(), 200)
+    },
+  })
+
   if (!abierto) return null
 
   const prodActual   = productos.find(p => p.id === +itemForm.producto_id)
@@ -51,6 +62,7 @@ export default function ModalBuscadorOrden({
       buscarPorCodigo(e.target.value.trim())
       e.target.value = ''
       e.target.focus()
+      setTimeout(() => costoRef.current?.focus(), 200)
     }
   }
 
@@ -69,7 +81,7 @@ export default function ModalBuscadorOrden({
     }
   }
 
-  const totalOrden   = form.productos.reduce((s, p) => s + p.costo_unitario * p.cantidad, 0)
+  const totalOrden    = form.productos.reduce((s, p) => s + p.costo_unitario * p.cantidad, 0)
   const hayResultados = modo === 'nombre' && prodBusqueda.length > 0
 
   return (
@@ -81,8 +93,8 @@ export default function ModalBuscadorOrden({
         {/* Tabs */}
         <div className="flex shrink-0 border-b border-gray-100">
           {[
-            { key: 'codigo', label: 'Código / Pistola', icon: Scan   },
-            { key: 'nombre', label: 'Buscar nombre',    icon: Search  },
+            { key: 'codigo', label: 'Cód. de barras / Pistola', icon: Scan   },
+            { key: 'nombre', label: 'Buscar nombre',             icon: Search },
           ].map(t => (
             <button key={t.key} type="button"
               onClick={() => {
@@ -105,20 +117,20 @@ export default function ModalBuscadorOrden({
           </button>
         </div>
 
-        {/* Input código */}
+        {/* Input código de barras */}
         {modo === 'codigo' && (
           <div className="px-4 py-3 border-b border-gray-100 shrink-0">
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-primary/40
               bg-primary/5 focus-within:border-primary transition-colors">
               <Scan size={16} className="text-primary shrink-0" />
               <input ref={codigoRef}
-                placeholder="Escanea o escribe el código + Enter"
+                placeholder="Escanea con pistola o escribe el código de barras + Enter"
                 className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400"
                 onInput={e => { e.target.value = e.target.value.replace(/\D/g, '') }}
                 onKeyDown={handleCodigoKeyDown} />
             </div>
             <p className="text-xs text-gray-400 mt-1.5 text-center">
-              Apunta la pistola aquí · o escribe el código manualmente
+              La pistola funciona automáticamente · también puedes escribir el código
             </p>
           </div>
         )}
@@ -146,7 +158,7 @@ export default function ModalBuscadorOrden({
           </div>
         )}
 
-        {/* Resultados búsqueda */}
+        {/* Resultados */}
         {hayResultados && (
           <div className="overflow-y-auto" style={{ maxHeight: '180px' }}>
             {prodsFiltrados.length === 0 ? (
@@ -162,7 +174,7 @@ export default function ModalBuscadorOrden({
                     {p.codigo_barras && (
                       <span className="text-xs font-mono text-gray-400">{p.codigo_barras}</span>
                     )}
-                    <span className="text-xs text-gray-400">Venta actual: {formatPrecio(p.precio)}</span>
+                    <span className="text-xs text-gray-400">Precio venta: {formatPrecio(p.precio)}</span>
                   </div>
                 </div>
               </button>
@@ -314,7 +326,7 @@ export default function ModalBuscadorOrden({
             )}
           </div>
           <button type="button" onClick={onCerrar} className="btn-primary px-6">
-            {form.productos.length > 0 ? 'Listo ✓' : 'Aceptar'}
+            {form.productos.length > 0 ? 'Listo ✓' : 'Cerrar'}
           </button>
         </div>
       </div>
