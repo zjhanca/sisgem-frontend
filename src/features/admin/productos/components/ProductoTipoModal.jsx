@@ -3,7 +3,7 @@ import { Package, PackagePlus } from 'lucide-react'
 
 export default function ProductoTipoModal({ abierto, onCerrar, onSeleccionar }) {
   return (
-    <Modal abierto={abierto} onCerrar={onCerrar} bloquearCierre
+    <Modal abierto={abierto} onCerrar={onCerrar} bloquearCierre={false}
       titulo="Nuevo Producto" ancho="max-w-sm">
       <div className="space-y-3">
         <p className="text-xs text-gray-500">
@@ -11,7 +11,6 @@ export default function ProductoTipoModal({ abierto, onCerrar, onSeleccionar }) 
         </p>
         <div className="grid grid-cols-1 gap-3">
 
-          {/* Sin stock */}
           <button type="button" onClick={() => onSeleccionar('sin_stock')}
             className="flex items-start gap-3 p-4 rounded-xl border border-gray-200
               hover:border-primary/40 hover:bg-primary/5 transition-all text-left group">
@@ -28,7 +27,6 @@ export default function ProductoTipoModal({ abierto, onCerrar, onSeleccionar }) 
             </div>
           </button>
 
-          {/* Con stock */}
           <button type="button" onClick={() => onSeleccionar('con_stock')}
             className="flex items-start gap-3 p-4 rounded-xl border border-gray-200
               hover:border-primary/40 hover:bg-primary/5 transition-all text-left group">
@@ -39,8 +37,8 @@ export default function ProductoTipoModal({ abierto, onCerrar, onSeleccionar }) 
             <div>
               <p className="text-sm font-semibold text-light-text">Producto con stock existente</p>
               <p className="text-xs text-gray-400 mt-0.5">
-                Ya tienes unidades en inventario. Registra stock, costo
-                y precio de venta desde el inicio.
+                Ya tienes unidades en inventario. Registra stock y precio
+                de venta desde el inicio.
               </p>
             </div>
           </button>

@@ -12,7 +12,7 @@ const formVacio = {
 
 const formVacioConStock = {
   nombre: '', descripcion: '', stock: '',
-  costo_unitario: '', precio: '',
+  precio: '',
   categoria_id: '', proveedor_id: '', marca_id: '',
   codigo_barras: '', imagen_url: '', imagenes: [],
 }
@@ -37,25 +37,21 @@ const validarConStock = (form, productos, itemId) => {
   const e = validar(form, productos, itemId)
   if (!form.stock || +form.stock < 1)
     e.stock = 'El stock debe ser al menos 1'
-  if (!form.costo_unitario || +form.costo_unitario <= 0)
-    e.costo_unitario = 'El costo unitario es obligatorio'
   if (!form.precio || +form.precio <= 0)
     e.precio = 'El precio de venta es obligatorio'
-  if (form.precio && form.costo_unitario && +form.precio < +form.costo_unitario)
-    e.precio = 'El precio no puede ser menor al costo'
   return e
 }
 
 export function useProductos() {
   const qc = useQueryClient()
-  const [modal, setModal]                   = useState({ abierto: false, item: null })
-  const [modalConStock, setModalConStock]   = useState({ abierto: false, item: null })
-  const [modalTipo, setModalTipo]           = useState(false)
-  const [modalDetalle, setModalDetalle]     = useState({ abierto: false, item: null })
-  const [modalEliminar, setModalEliminar]   = useState({ abierto: false, item: null })
-  const [form, setForm]                     = useState(formVacio)
-  const [formConStock, setFormConStock]     = useState(formVacioConStock)
-  const [errores, setErrores]               = useState({})
+  const [modal, setModal]                     = useState({ abierto: false, item: null })
+  const [modalConStock, setModalConStock]     = useState({ abierto: false, item: null })
+  const [modalTipo, setModalTipo]             = useState(false)
+  const [modalDetalle, setModalDetalle]       = useState({ abierto: false, item: null })
+  const [modalEliminar, setModalEliminar]     = useState({ abierto: false, item: null })
+  const [form, setForm]                       = useState(formVacio)
+  const [formConStock, setFormConStock]       = useState(formVacioConStock)
+  const [errores, setErrores]                 = useState({})
   const [erroresConStock, setErroresConStock] = useState({})
   const [verificandoCodigo, setVerificandoCodigo] = useState(false)
   const timerCodigo = useRef(null)
@@ -118,11 +114,11 @@ export function useProductos() {
     mutationFn: data => {
       const payload = {
         ...data,
-        imagen_url: data.imagenes?.[0] || data.imagen_url || '',
-        imagenes:   data.imagenes || [],
-        stock:      +data.stock,
-        precio:     +data.precio,
-        con_stock_inicial: true, // flag para el backend
+        imagen_url:        data.imagenes?.[0] || data.imagen_url || '',
+        imagenes:          data.imagenes || [],
+        stock:             +data.stock,
+        precio:            +data.precio,
+        con_stock_inicial: true,
       }
       return productosService.create(payload)
     },
@@ -149,16 +145,13 @@ export function useProductos() {
     onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar'),
   })
 
-  // Abre el selector de tipo (solo para nuevo)
   const abrirSelectorTipo = () => setModalTipo(true)
 
   const seleccionarTipo = tipo => {
     setModalTipo(false)
-    if (tipo === 'sin_stock') {
-      abrirModal()
-    } else {
-      abrirModalConStock()
-    }
+    if (tipo === 'sin_stock') abrirModal()
+    if (tipo === 'con_stock') abrirModalConStock()
+    // si tipo es null (cerró con X) no hace nada
   }
 
   const abrirModal = (item = null) => {
@@ -198,8 +191,15 @@ export function useProductos() {
     setModalConStock({ abierto: true, item: null })
   }
 
-  const cerrarModal = () => { setModal({ abierto: false, item: null }); setErrores({}) }
-  const cerrarModalConStock = () => { setModalConStock({ abierto: false, item: null }); setErroresConStock({}) }
+  const cerrarModal = () => {
+    setModal({ abierto: false, item: null })
+    setErrores({})
+  }
+
+  const cerrarModalConStock = () => {
+    setModalConStock({ abierto: false, item: null })
+    setErroresConStock({})
+  }
 
   const handleChange = (campo, valor) => {
     if (campo === 'nombre') valor = capitalizarPalabras(valor)
@@ -258,9 +258,9 @@ export function useProductos() {
     handleChange, handleChangeConStock,
     handleSubmit, handleSubmitConStock,
     toggleEstado, eliminar,
-    guardando: guardar.isPending,
+    guardando:         guardar.isPending,
     guardandoConStock: guardarConStock.isPending,
-    eliminando: eliminar.isPending,
+    eliminando:        eliminar.isPending,
     verificandoCodigo, descargarReporte,
   }
 }

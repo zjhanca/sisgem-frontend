@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import Modal from '@shared/components/Modal'
-import { Search, Scan, Plus, Trash2, ImageOff, Star, Loader2, CheckCircle2, Upload } from 'lucide-react'
+import { Search, Plus, Trash2, ImageOff, Star, Loader2, CheckCircle2, Upload, Scan } from 'lucide-react'
 
 function BuscadorSelect({ label, items, valorId, onSelect, placeholder }) {
   const [busq, setBusq]       = useState('')
@@ -62,7 +62,7 @@ function GestorImagenes({ imagenes, onChange }) {
     e.target.value = ''
   }
 
-  const quitar        = idx => onChange(imagenes.filter((_, i) => i !== idx))
+  const quitar         = idx => onChange(imagenes.filter((_, i) => i !== idx))
   const hacerPrincipal = idx => {
     const nueva = [...imagenes]
     const [item] = nueva.splice(idx, 1)
@@ -88,7 +88,9 @@ function GestorImagenes({ imagenes, onChange }) {
       {imagenes.length > 0 ? (
         <div className="grid grid-cols-3 gap-2">
           {imagenes.map((url, i) => (
-            <div key={i} className={`relative group rounded-lg overflow-hidden border-2 transition-colors ${i === 0 ? 'border-primary' : 'border-gray-200'}`}>
+            <div key={i} className={`relative group rounded-lg overflow-hidden border-2 transition-colors ${
+              i === 0 ? 'border-primary' : 'border-gray-200'
+            }`}>
               <img src={url} alt="" className="w-full h-20 object-cover bg-gray-50"
                 onError={e => { e.target.src=''; e.target.parentElement.classList.add('bg-gray-100') }} />
               {i === 0 && (
@@ -132,7 +134,7 @@ export default function ProductoFormConStock({
 
         {/* Aviso */}
         <div className="p-3 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-600">
-          Registra un producto que ya tienes en inventario. El stock, costo y precio
+          Registra un producto que ya tienes en inventario. El stock y precio
           de venta se asignarán directamente.
         </div>
 
@@ -153,7 +155,7 @@ export default function ProductoFormConStock({
           <BuscadorSelect label="Marca" items={marcas} valorId={form.marca_id}
             onSelect={id => setForm(p => ({ ...p, marca_id: id }))} placeholder="Buscar marca..." />
 
-          {/* Stock, Costo y Precio */}
+          {/* Stock y Precio */}
           <div>
             <label className="campo-label">Stock inicial *</label>
             <input type="number" min="1" value={form.stock}
@@ -163,14 +165,6 @@ export default function ProductoFormConStock({
             {errores.stock && <p className="campo-error">{errores.stock}</p>}
           </div>
           <div>
-            <label className="campo-label">Costo unitario *</label>
-            <input type="number" min="0" step="1" value={form.costo_unitario}
-              onChange={e => handleChange('costo_unitario', e.target.value)}
-              className={`campo-input ${errores.costo_unitario ? 'border-red-400' : ''}`}
-              placeholder="Ej: 5000" />
-            {errores.costo_unitario && <p className="campo-error">{errores.costo_unitario}</p>}
-          </div>
-          <div className="col-span-2">
             <label className="campo-label">Precio de venta *</label>
             <input type="number" min="0" step="1" value={form.precio}
               onChange={e => handleChange('precio', e.target.value)}
@@ -186,7 +180,9 @@ export default function ProductoFormConStock({
               <input value={form.codigo_barras}
                 onChange={e => { if (/^\d*$/.test(e.target.value)) handleChange('codigo_barras', e.target.value) }}
                 inputMode="numeric"
-                className={`campo-input pr-8 ${errores.codigo_barras ? 'border-red-400' : (form.codigo_barras && !verificandoCodigo && !errores.codigo_barras ? 'border-primary/40' : '')}`}
+                className={`campo-input pr-8 ${errores.codigo_barras ? 'border-red-400' : (
+                  form.codigo_barras && !verificandoCodigo && !errores.codigo_barras ? 'border-primary/40' : ''
+                )}`}
                 placeholder="Ej: 7702001234567" />
               <div className="absolute right-2 bottom-2.5 flex items-center">
                 {verificandoCodigo
