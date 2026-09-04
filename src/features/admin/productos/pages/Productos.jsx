@@ -4,7 +4,9 @@ import Tabla from '@shared/components/Tabla'
 import { formatPrecio } from '@shared/utils/validaciones'
 import { useProductos } from '../hooks/useProductos'
 import { useAuth } from '@shared/contexts/AuthContext'
+import ProductoTipoModal       from '../components/ProductoTipoModal'
 import ProductoForm            from '../components/ProductoForm'
+import ProductoFormConStock    from '../components/ProductoFormConStock'
 import ProductoDetalle         from '../components/ProductoDetalle'
 import ProductoEliminar        from '../components/ProductoEliminar'
 import ProductoConfirmEstado   from '../components/Productoconfirmestado'
@@ -41,11 +43,17 @@ export default function Productos() {
   const puedeEditar = esAdmin()
 
   const {
-    productos, categorias, proveedores, marcas,
+    productos, categorias, marcas,
     form, errores, modal, modalDetalle, modalEliminar,
-    setForm, setModalDetalle, setModalEliminar,
-    abrirModal, cerrarModal, handleChange, handleSubmit,
-    toggleEstado, eliminar, guardando, eliminando, verificandoCodigo, descargarReporte,
+    formConStock, erroresConStock, modalConStock, modalTipo,
+    setForm, setFormConStock, setModalDetalle, setModalEliminar,
+    abrirSelectorTipo, seleccionarTipo,
+    abrirModal, cerrarModal,
+    cerrarModalConStock,
+    handleChange, handleChangeConStock,
+    handleSubmit, handleSubmitConStock,
+    toggleEstado, eliminar, guardando, guardandoConStock,
+    eliminando, verificandoCodigo, descargarReporte,
   } = useProductos()
 
   const [confirmToggle, setConfirmToggle]     = useState(null)
@@ -88,9 +96,8 @@ export default function Productos() {
           <button onClick={() => setConfirmDescarga(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
-          {/* Solo admin puede crear productos */}
           {puedeEditar && (
-            <button onClick={() => abrirModal()} className="btn-primary">
+            <button onClick={abrirSelectorTipo} className="btn-primary">
               <Plus size={14} /> Nuevo
             </button>
           )}
@@ -102,7 +109,6 @@ export default function Productos() {
           <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost">
             <Eye size={14} />
           </button>
-          {/* Solo admin puede editar y eliminar */}
           {puedeEditar && (<>
             <button onClick={() => abrirModal(fila)} className="btn-ghost">
               <Edit2 size={14} />
@@ -115,10 +121,27 @@ export default function Productos() {
         </>)}
       />
 
+      {/* Modal selector de tipo */}
+      <ProductoTipoModal
+        abierto={modalTipo}
+        onCerrar={() => seleccionarTipo(null)}
+        onSeleccionar={seleccionarTipo}
+      />
+
+      {/* Formulario sin stock (original) */}
       <ProductoForm modal={modal} form={form} setForm={setForm} errores={errores}
         handleChange={handleChange} handleSubmit={handleSubmit} cerrarModal={cerrarModal}
         guardando={guardando} categorias={categorias} marcas={marcas}
         verificandoCodigo={verificandoCodigo} />
+
+      {/* Formulario con stock */}
+      <ProductoFormConStock
+        modal={modalConStock} form={formConStock} setForm={setFormConStock}
+        errores={erroresConStock} handleChange={handleChangeConStock}
+        handleSubmit={handleSubmitConStock} cerrarModal={cerrarModalConStock}
+        guardando={guardandoConStock} categorias={categorias} marcas={marcas}
+        verificandoCodigo={verificandoCodigo} />
+
       <ProductoDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
         abrirModal={abrirModal} />
       <ProductoEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}

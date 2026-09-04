@@ -10,7 +10,14 @@ const formVacio = {
   codigo_barras: '', imagen_url: '', imagenes: [],
 }
 
-const capitalizarPalabras = str => str.replace(/(^|\s)\S/g, letra => letra.toUpperCase())
+const formVacioConStock = {
+  nombre: '', descripcion: '', stock: '',
+  costo_unitario: '', precio: '',
+  categoria_id: '', proveedor_id: '', marca_id: '',
+  codigo_barras: '', imagen_url: '', imagenes: [],
+}
+
+const capitalizarPalabras = str => str.replace(/(^|\s)\S/g, l => l.toUpperCase())
 
 const validar = (form, productos, itemId) => {
   const e = {}
@@ -26,16 +33,33 @@ const validar = (form, productos, itemId) => {
   return e
 }
 
+const validarConStock = (form, productos, itemId) => {
+  const e = validar(form, productos, itemId)
+  if (!form.stock || +form.stock < 1)
+    e.stock = 'El stock debe ser al menos 1'
+  if (!form.costo_unitario || +form.costo_unitario <= 0)
+    e.costo_unitario = 'El costo unitario es obligatorio'
+  if (!form.precio || +form.precio <= 0)
+    e.precio = 'El precio de venta es obligatorio'
+  if (form.precio && form.costo_unitario && +form.precio < +form.costo_unitario)
+    e.precio = 'El precio no puede ser menor al costo'
+  return e
+}
+
 export function useProductos() {
   const qc = useQueryClient()
-  const [modal, setModal]                 = useState({ abierto: false, item: null })
-  const [modalDetalle, setModalDetalle]   = useState({ abierto: false, item: null })
-  const [modalEliminar, setModalEliminar] = useState({ abierto: false, item: null })
-  const [form, setForm]                   = useState(formVacio)
-  const [errores, setErrores]             = useState({})
+  const [modal, setModal]                   = useState({ abierto: false, item: null })
+  const [modalConStock, setModalConStock]   = useState({ abierto: false, item: null })
+  const [modalTipo, setModalTipo]           = useState(false)
+  const [modalDetalle, setModalDetalle]     = useState({ abierto: false, item: null })
+  const [modalEliminar, setModalEliminar]   = useState({ abierto: false, item: null })
+  const [form, setForm]                     = useState(formVacio)
+  const [formConStock, setFormConStock]     = useState(formVacioConStock)
+  const [errores, setErrores]               = useState({})
+  const [erroresConStock, setErroresConStock] = useState({})
   const [verificandoCodigo, setVerificandoCodigo] = useState(false)
-  const timerCodigo  = useRef(null)
-  const timerNombre  = useRef(null)
+  const timerCodigo = useRef(null)
+  const timerNombre = useRef(null)
 
   const { data: productos = [] }   = useQuery({ queryKey: ['productos'],   queryFn: productosService.getAll })
   const { data: categorias = [] }  = useQuery({ queryKey: ['categorias'],  queryFn: productosService.getCategorias })
@@ -45,6 +69,7 @@ export function useProductos() {
   const verificarCodigo = useCallback((codigo, itemId) => {
     if (!codigo || codigo.length < 3) {
       setErrores(prev => ({ ...prev, codigo_barras: '' }))
+      setErroresConStock(prev => ({ ...prev, codigo_barras: '' }))
       setVerificandoCodigo(false)
       return
     }
@@ -55,10 +80,9 @@ export function useProductos() {
         p.codigo_barras === codigo && p.id !== itemId
       )
       setVerificandoCodigo(false)
-      setErrores(prev => ({
-        ...prev,
-        codigo_barras: duplicado ? `Esta referencia ya está asignada a "${duplicado.nombre}"` : ''
-      }))
+      const msg = duplicado ? `Esta referencia ya está asignada a "${duplicado.nombre}"` : ''
+      setErrores(prev => ({ ...prev, codigo_barras: msg }))
+      setErroresConStock(prev => ({ ...prev, codigo_barras: msg }))
     }, 400)
   }, [productos])
 
@@ -67,6 +91,7 @@ export function useProductos() {
     timerNombre.current = setTimeout(() => {
       const e = validar({ nombre }, productos, itemId)
       setErrores(prev => ({ ...prev, nombre: e.nombre || '' }))
+      setErroresConStock(prev => ({ ...prev, nombre: e.nombre || '' }))
     }, 300)
   }, [productos])
 
@@ -89,6 +114,26 @@ export function useProductos() {
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar'),
   })
 
+  const guardarConStock = useMutation({
+    mutationFn: data => {
+      const payload = {
+        ...data,
+        imagen_url: data.imagenes?.[0] || data.imagen_url || '',
+        imagenes:   data.imagenes || [],
+        stock:      +data.stock,
+        precio:     +data.precio,
+        con_stock_inicial: true, // flag para el backend
+      }
+      return productosService.create(payload)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries(['productos'])
+      cerrarModalConStock()
+      toast.success('Producto registrado con stock')
+    },
+    onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar'),
+  })
+
   const toggleEstado = useMutation({
     mutationFn: productosService.toggleEstado,
     onSuccess: () => { qc.invalidateQueries(['productos']); toast.success('Estado actualizado') },
@@ -103,6 +148,18 @@ export function useProductos() {
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar'),
   })
+
+  // Abre el selector de tipo (solo para nuevo)
+  const abrirSelectorTipo = () => setModalTipo(true)
+
+  const seleccionarTipo = tipo => {
+    setModalTipo(false)
+    if (tipo === 'sin_stock') {
+      abrirModal()
+    } else {
+      abrirModalConStock()
+    }
+  }
 
   const abrirModal = (item = null) => {
     if (item) {
@@ -135,7 +192,14 @@ export function useProductos() {
     setModal({ abierto: true, item })
   }
 
+  const abrirModalConStock = () => {
+    setFormConStock(formVacioConStock)
+    setErroresConStock({})
+    setModalConStock({ abierto: true, item: null })
+  }
+
   const cerrarModal = () => { setModal({ abierto: false, item: null }); setErrores({}) }
+  const cerrarModalConStock = () => { setModalConStock({ abierto: false, item: null }); setErroresConStock({}) }
 
   const handleChange = (campo, valor) => {
     if (campo === 'nombre') valor = capitalizarPalabras(valor)
@@ -147,6 +211,16 @@ export function useProductos() {
     if (campo === 'codigo_barras') verificarCodigo(valor, modal.item?.id)
   }
 
+  const handleChangeConStock = (campo, valor) => {
+    if (campo === 'nombre') valor = capitalizarPalabras(valor)
+    const nuevo = { ...formConStock, [campo]: valor }
+    setFormConStock(nuevo)
+    const e = validarConStock(nuevo, productos, null)
+    setErroresConStock(prev => ({ ...prev, [campo]: e[campo] || '' }))
+    if (campo === 'nombre')        verificarNombre(valor, null)
+    if (campo === 'codigo_barras') verificarCodigo(valor, null)
+  }
+
   const handleSubmit = e => {
     e.preventDefault()
     const e2 = validar(form, productos, modal.item?.id)
@@ -154,6 +228,15 @@ export function useProductos() {
     if (errores.codigo_barras) return
     if (verificandoCodigo) return
     guardar.mutate(form)
+  }
+
+  const handleSubmitConStock = e => {
+    e.preventDefault()
+    const e2 = validarConStock(formConStock, productos, null)
+    if (Object.keys(e2).length) { setErroresConStock(e2); return }
+    if (erroresConStock.codigo_barras) return
+    if (verificandoCodigo) return
+    guardarConStock.mutate(formConStock)
   }
 
   const descargarReporte = async ({ formato = 'pdf' } = {}) => {
@@ -167,10 +250,17 @@ export function useProductos() {
   return {
     productos, categorias, proveedores, marcas,
     form, errores, modal, modalDetalle, modalEliminar,
-    setForm, setModalDetalle, setModalEliminar,
-    abrirModal, cerrarModal, handleChange, handleSubmit,
+    formConStock, erroresConStock, modalConStock, modalTipo,
+    setForm, setFormConStock, setModalDetalle, setModalEliminar,
+    abrirSelectorTipo, seleccionarTipo,
+    abrirModal, cerrarModal,
+    abrirModalConStock, cerrarModalConStock,
+    handleChange, handleChangeConStock,
+    handleSubmit, handleSubmitConStock,
     toggleEstado, eliminar,
-    guardando: guardar.isPending, eliminando: eliminar.isPending,
+    guardando: guardar.isPending,
+    guardandoConStock: guardarConStock.isPending,
+    eliminando: eliminar.isPending,
     verificandoCodigo, descargarReporte,
   }
 }
