@@ -22,6 +22,8 @@ import Proveedores    from '@features/admin/proveedores/pages/Proveedores'
 import Usuarios       from '@features/admin/usuarios/pages/Usuarios'
 import Roles          from '@features/admin/roles/pages/Roles'
 import Pedidos        from '@features/admin/pedidos/pages/Pedidos'
+import Cartera        from '@features/admin/cartera/pages/Cartera'
+
 
 function RutaAdmin({ children }) {
   const { usuario, cargando } = useAuth()
@@ -83,6 +85,8 @@ export default function AppRoutes() {
             element={<RutaPermiso permiso='ver_roles'><Roles /></RutaPermiso>} />
           <Route path='pedidos'
             element={<RutaPermiso permiso='ver_pedidos'><Pedidos /></RutaPermiso>} />
+          <Route path='cartera'
+            element={<RutaPermiso permiso='ver_pagos'><Cartera /></RutaPermiso>} />
         </Route>
 
         <Route path='*' element={<Navigate to='/' replace />} />
