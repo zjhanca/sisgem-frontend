@@ -2,9 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import Modal from '@shared/components/Modal'
 import { Search, Loader2, CheckCircle2, AlertCircle, Plus, ExternalLink, X } from 'lucide-react'
 import { normalizarUrl } from '../hooks/useMarcas'
+import ZonaImagen from '@shared/components/ZonaImagen'
 
 function BuscadorProveedores({ proveedores, seleccionados, onAgregar, onQuitar }) {
-  const [busq, setBusq] = useState('')
+  const [busq, setBusq]       = useState('')
   const [abierto, setAbierto] = useState(false)
   const ref = useRef(null)
 
@@ -24,8 +25,6 @@ function BuscadorProveedores({ proveedores, seleccionados, onAgregar, onQuitar }
   return (
     <div ref={ref}>
       <label className="campo-label">Proveedores Relacionados</label>
-
-      {/* chips de seleccionados */}
       {seleccionados.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {seleccionados.map(p => (
@@ -40,8 +39,6 @@ function BuscadorProveedores({ proveedores, seleccionados, onAgregar, onQuitar }
           ))}
         </div>
       )}
-
-      {/* buscador */}
       <div className="relative">
         <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400 pointer-events-none" />
         <input value={busq}
@@ -77,9 +74,12 @@ function BuscadorProveedores({ proveedores, seleccionados, onAgregar, onQuitar }
   )
 }
 
-export default function MarcaForm({ modal, form, setForm, errores, handleChange, handleSubmit, cerrarModal, guardando, proveedores, verificandoNombre }) {
+export default function MarcaForm({
+  modal, form, setForm, errores, handleChange, handleSubmit,
+  cerrarModal, guardando, proveedores, verificandoNombre
+}) {
   const urlPreview = form.sitio_web ? normalizarUrl(form.sitio_web) : ''
-  const urlValida = urlPreview && (() => { try { new URL(urlPreview); return true } catch { return false } })()
+  const urlValida  = urlPreview && (() => { try { new URL(urlPreview); return true } catch { return false } })()
 
   const proveedoresSeleccionados = form.proveedores || []
 
@@ -100,12 +100,16 @@ export default function MarcaForm({ modal, form, setForm, errores, handleChange,
           <label className="campo-label">Nombre *</label>
           <div className="relative">
             <input value={form.nombre} onChange={e => handleChange('nombre', e.target.value)}
-              className={`campo-input pr-8 ${errores.nombre ? 'border-red-400' : (form.nombre && !errores.nombre && !verificandoNombre ? 'border-primary/40' : '')}`}
+              className={`campo-input pr-8 ${errores.nombre ? 'border-red-400' : (
+                form.nombre && !errores.nombre && !verificandoNombre ? 'border-primary/40' : ''
+              )}`}
               placeholder="Nombre de la marca" maxLength={80} />
             <div className="absolute right-2.5 top-2.5">
-              {verificandoNombre ? <Loader2 size={13} className="text-gray-400 animate-spin" />
-                : form.nombre && !errores.nombre ? <CheckCircle2 size={13} className="text-primary" />
-                : null}
+              {verificandoNombre
+                ? <Loader2 size={13} className="text-gray-400 animate-spin" />
+                : form.nombre && !errores.nombre
+                  ? <CheckCircle2 size={13} className="text-primary" />
+                  : null}
             </div>
           </div>
           {errores.nombre
@@ -131,13 +135,12 @@ export default function MarcaForm({ modal, form, setForm, errores, handleChange,
         </div>
 
         <div>
-          <label className="campo-label">URL del Logo</label>
-          <input value={form.logo} onChange={e => handleChange('logo', e.target.value)}
-            className="campo-input" placeholder="https://ejemplo.com/logo.png" />
-          {form.logo && (
-            <img src={form.logo} alt="preview" className="mt-2 w-12 h-12 object-contain rounded border border-gray-200"
-              onError={e => e.target.style.display='none'} />
-          )}
+          <label className="campo-label">Logo de la marca</label>
+          <ZonaImagen
+            valor={form.logo}
+            onChange={val => handleChange('logo', val)}
+            placeholder="O pegar URL del logo..."
+          />
         </div>
 
         <div>
