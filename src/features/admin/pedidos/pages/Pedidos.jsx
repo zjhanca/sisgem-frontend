@@ -18,7 +18,6 @@ export default function Pedidos() {
     pedidosFiltrados,
     modalDetalle, setModalDetalle,
     modalConfirmarEntrega, setModalConfirmarEntrega,
-    metodoEntrega, setMetodoEntrega,
     filtroEstado, setFiltroEstado,
     filtroBusqueda, setFiltroBusqueda,
     confirmarEntrega, confirmando,
@@ -31,7 +30,8 @@ export default function Pedidos() {
     { key: 'total',   label: 'Total',   render: r => formatPrecio(r.total) },
     { key: 'estado',  label: 'Estado',
       render: r => (
-        <span className={`inline-flex items-center justify-center h-6 px-3 min-w-24 rounded-full text-white text-xs font-semibold ${getColorEstado(r.estado)}`}>
+        <span className={`inline-flex items-center justify-center h-6 px-3 min-w-24
+          rounded-full text-white text-xs font-semibold ${getColorEstado(r.estado)}`}>
           {getLabelEstado(r.estado)}
         </span>
       )
@@ -89,10 +89,7 @@ export default function Pedidos() {
             </button>
             {(esPendiente || esSinRecoger) && (
               <button
-                onClick={() => {
-                  setMetodoEntrega('efectivo')
-                  setModalConfirmarEntrega({ abierto: true, pedido: fila })
-                }}
+                onClick={() => setModalConfirmarEntrega({ abierto: true, pedido: fila })}
                 className="btn-ghost hover:text-primary" title="Confirmar entrega">
                 <CheckCircle size={14} />
               </button>
@@ -106,52 +103,37 @@ export default function Pedidos() {
         setModalDetalle={setModalDetalle}
         getColorEstado={getColorEstado}
         getLabelEstado={getLabelEstado}
-        onConfirmarEntrega={pedido => {
-          setMetodoEntrega('efectivo')
+        onConfirmarEntrega={pedido =>
           setModalConfirmarEntrega({ abierto: true, pedido })
-        }}
+        }
       />
 
+      {/* Modal confirmar entrega — sin selector de método */}
       {modalConfirmarEntrega.abierto && modalConfirmarEntrega.pedido && (
         <Modal abierto onCerrar={() => setModalConfirmarEntrega({ abierto: false, pedido: null })}
           bloquearCierre titulo="Confirmar Entrega" ancho="max-w-sm">
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Confirma que el cliente <span className="font-semibold text-light-text">
+              Confirma que el cliente{' '}
+              <span className="font-semibold text-light-text">
                 {modalConfirmarEntrega.pedido.cliente}
-              </span> recogió el pedido <span className="font-semibold text-primary">
+              </span>{' '}
+              recogió el pedido{' '}
+              <span className="font-semibold text-primary">
                 #{modalConfirmarEntrega.pedido.id}
               </span>.
             </p>
             <p className="text-sm font-bold text-primary">
               Total: {formatPrecio(modalConfirmarEntrega.pedido.total)}
             </p>
-            <div>
-              <label className="campo-label">Método de pago recibido</label>
-              <div className="flex gap-2 mt-1">
-                {['efectivo', 'transferencia'].map(m => (
-                  <button key={m} type="button"
-                    onClick={() => setMetodoEntrega(m)}
-                    className={`flex-1 py-2 text-xs rounded-lg border transition-all capitalize ${
-                      metodoEntrega === m
-                        ? 'bg-primary text-white border-primary'
-                        : 'border-gray-200 text-gray-500 hover:border-primary/40'
-                    }`}>
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button onClick={() => setModalConfirmarEntrega({ abierto: false, pedido: null })}
+              <button
+                onClick={() => setModalConfirmarEntrega({ abierto: false, pedido: null })}
                 className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg">
                 Cancelar
               </button>
               <button disabled={confirmando}
-                onClick={() => confirmarEntrega.mutate({
-                  pedido: modalConfirmarEntrega.pedido,
-                  metodo: metodoEntrega,
-                })}
+                onClick={() => confirmarEntrega.mutate({ pedido: modalConfirmarEntrega.pedido })}
                 className="btn-primary disabled:opacity-50">
                 {confirmando ? 'Confirmando...' : 'Confirmar entrega'}
               </button>

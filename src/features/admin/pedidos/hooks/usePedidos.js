@@ -6,11 +6,10 @@ import toast from 'react-hot-toast'
 export function usePedidos() {
   const qc = useQueryClient()
 
-  const [modalDetalle, setModalDetalle]         = useState({ abierto: false, pedido: null })
+  const [modalDetalle, setModalDetalle]                 = useState({ abierto: false, pedido: null })
   const [modalConfirmarEntrega, setModalConfirmarEntrega] = useState({ abierto: false, pedido: null })
-  const [metodoEntrega, setMetodoEntrega]       = useState('efectivo')
-  const [filtroEstado, setFiltroEstado]         = useState('')
-  const [filtroBusqueda, setFiltroBusqueda]     = useState('')
+  const [filtroEstado, setFiltroEstado]                 = useState('')
+  const [filtroBusqueda, setFiltroBusqueda]             = useState('')
 
   const { data: pedidosTodos = [] } = useQuery({
     queryKey: ['pedidos'],
@@ -22,7 +21,6 @@ export function usePedidos() {
     queryFn:  pedidosService.getEstados,
   })
 
-  // Solo pedidos móviles — excluye los de mostrador web
   const pedidosMovil = pedidosTodos.filter(p => p.origen === 'movil')
 
   const estadoEntregado = estados.find(e =>
@@ -30,16 +28,16 @@ export function usePedidos() {
   )
 
   const confirmarEntrega = useMutation({
-    mutationFn: async ({ pedido, metodo }) => {
+    mutationFn: async ({ pedido }) => {
       // 1. Cambiar estado a completado
       await pedidosService.cambiarEstado(pedido.id, { estado_id: estadoEntregado?.id })
       // 2. Marcar como entregado
       await pedidosService.marcarEntregado(pedido.id)
-      // 3. Registrar pago
+      // 3. Registrar pago — usa el método del pedido o efectivo por defecto
       await pedidosService.crearPago({
         pedido_id: pedido.id,
         monto:     pedido.total,
-        metodo,
+        metodo:    pedido.metodo_pago || 'efectivo',
       })
     },
     onSuccess: () => {
@@ -53,12 +51,10 @@ export function usePedidos() {
 
   const pedidosFiltrados = pedidosMovil.filter(p => {
     const estado = p.estado?.toLowerCase() || ''
-    // Filtro por estado seleccionado
-    if (filtroEstado === 'pendiente'   && !estado.includes('pendiente'))   return false
+    if (filtroEstado === 'pendiente'   && !estado.includes('pendiente'))                          return false
     if (filtroEstado === 'entregado'   && !(estado.includes('complet') || estado.includes('paga'))) return false
-    if (filtroEstado === 'sin_recoger' && !estado.includes('sin recoger')) return false
-    if (filtroEstado === 'anulado'     && !estado.includes('anula'))       return false
-    // Búsqueda por # o cliente
+    if (filtroEstado === 'sin_recoger' && !estado.includes('sin recoger'))                        return false
+    if (filtroEstado === 'anulado'     && !estado.includes('anula'))                              return false
     if (filtroBusqueda && !`${p.id} ${p.cliente}`.toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
     return true
   })
@@ -79,15 +75,13 @@ export function usePedidos() {
     return 'Pendiente'
   }
 
-  // Contadores por estado
-  const contPendiente   = pedidosMovil.filter(p => (p.estado || '').toLowerCase().includes('pendiente')).length
-  const contSinRecoger  = pedidosMovil.filter(p => (p.estado || '').toLowerCase().includes('sin recoger')).length
+  const contPendiente  = pedidosMovil.filter(p => (p.estado || '').toLowerCase().includes('pendiente')).length
+  const contSinRecoger = pedidosMovil.filter(p => (p.estado || '').toLowerCase().includes('sin recoger')).length
 
   return {
     pedidosFiltrados, pedidosMovil, estados,
     modalDetalle, setModalDetalle,
     modalConfirmarEntrega, setModalConfirmarEntrega,
-    metodoEntrega, setMetodoEntrega,
     filtroEstado, setFiltroEstado,
     filtroBusqueda, setFiltroBusqueda,
     confirmarEntrega,
