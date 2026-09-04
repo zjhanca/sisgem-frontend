@@ -2,8 +2,8 @@ import { useState } from 'react'
 import Modal from '@shared/components/Modal'
 import { CreditCard, Clock, PackagePlus } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
-import ClienteForm      from '@features/admin/clientes/components/ClienteForm'
-import { useClientes }  from '@features/admin/clientes/hooks/useClientes'
+import ClienteForm          from '@features/admin/clientes/components/ClienteForm'
+import { useClientes }      from '@features/admin/clientes/hooks/useClientes'
 import ListaProductosVenta  from './ListaProductosVenta'
 import SelectorCliente      from './SelectorCliente'
 import PanelFiado           from './PanelFiado'
@@ -17,8 +17,8 @@ export default function VentaForm({
   clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
   MINIMO_FIADO,
 }) {
-  const [modalNuevoCliente, setModalNuevoCliente]   = useState(false)
-  const [modalBuscador, setModalBuscador]           = useState(false)
+  const [modalNuevoCliente, setModalNuevoCliente] = useState(false)
+  const [modalBuscador, setModalBuscador]         = useState(false)
 
   const {
     form: formCliente, errores: erroresCliente, modal: modalCliente,
@@ -195,6 +195,9 @@ export default function VentaForm({
         buscarProducto={buscarProducto}
         buscarPorCodigo={buscarPorCodigo}
         agregarProducto={agregarProducto}
+        form={form}
+        cambiarCantidad={cambiarCantidad}
+        quitarProducto={quitarProducto}
       />
 
       <ClienteForm
