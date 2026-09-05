@@ -26,7 +26,7 @@ export default function Pedidos() {
 
   const columnas = [
     { key: 'id', label: 'N. Pedido',
-      render: r => <span className="font-mono text-xs font-semibold text-gray-500">#{r.id}</span> },
+      render: r => <span className="font-mono text-xs font-semibold text-gray-500">{r.id}</span> },
     { key: 'cliente', label: 'Cliente', render: r => r.cliente || 'Sin nombre' },
     { key: 'total',   label: 'Total',   render: r => formatPrecio(r.total) },
     { key: 'estado',  label: 'Estado',
@@ -115,7 +115,7 @@ export default function Pedidos() {
               </span>{' '}
               recogió el pedido{' '}
               <span className="font-semibold text-primary">
-                #{modalConfirmarEntrega.pedido.id}
+                {modalConfirmarEntrega.pedido.id}
               </span>.
             </p>
             <p className="text-sm font-bold text-primary">

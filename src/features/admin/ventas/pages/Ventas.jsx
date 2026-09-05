@@ -73,7 +73,7 @@ export default function Ventas() {
 
   const columnas = [
     { key: 'id', label: 'N. Venta',
-      render: r => <span className="font-mono text-xs font-semibold text-gray-500">#{r.id}</span> },
+      render: r => <span className="font-mono text-xs font-semibold text-gray-500">{r.id}</span> },
     { key: 'cliente', label: 'Cliente' },
     { key: 'total',   label: 'Total', render: r => formatPrecio(r.total) },
     { key: 'estado_id', label: 'Estado',
@@ -196,7 +196,7 @@ export default function Ventas() {
             onClick={() => setModalCompletarMovil({ abierto: false, venta: null })} />
           <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl border border-gray-200 shadow-xl p-5 space-y-4">
             <h3 className="text-sm font-semibold">
-              Confirmar {modalCompletarMovil.venta.tipo_venta === 'domicilio' ? 'entrega' : 'recepción'} — Venta #{modalCompletarMovil.venta.id}
+              Confirmar {modalCompletarMovil.venta.tipo_venta === 'domicilio' ? 'entrega' : 'recepción'} — Venta {modalCompletarMovil.venta.id}
             </h3>
             <p className="text-xs text-gray-500">
               El cliente {modalCompletarMovil.venta.tipo_venta === 'domicilio'
