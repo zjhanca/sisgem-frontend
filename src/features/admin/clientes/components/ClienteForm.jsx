@@ -113,7 +113,7 @@ export default function ClienteForm({ modal, form, errores, verificando = {}, ha
           </div>
           {form.permite_fiado && (
             <div className="animate-fadeIn">
-              <label className="campo-label">Límite de Fiado (opcional)</label>
+              <label className="campo-label">Límite de Crédito (opcional)</label>
               <input type="number" step="0.01" value={form.limite_fiado}
                 onChange={e => handleChange('limite_fiado', e.target.value)}
                 className="campo-input" placeholder="Ej: 100000 — vacío = sin límite" />
