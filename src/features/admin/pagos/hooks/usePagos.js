@@ -18,12 +18,14 @@ export function usePagos() {
   const [modalAnular, setModalAnular]   = useState({ abierto: false, pago: null })
   const [form, setForm]       = useState(formVacio)
   const [errores, setErrores] = useState({})
-  const [filtroEstado, setFiltroEstado]         = useState('')
-  const [filtroDesde, setFiltroDesde]           = useState('')
-  const [filtroHasta, setFiltroHasta]           = useState('')
-  const [filtroBusqueda, setFiltroBusqueda]     = useState('')
-  const [clienteBusqueda, setClienteBusqueda]   = useState('')
-  const [clienteDropdown, setClienteDropdown]   = useState(false)
+  const [filtroEstado, setFiltroEstado]     = useState('')
+  const [filtroDesde, setFiltroDesde]       = useState('')
+  const [filtroHasta, setFiltroHasta]       = useState('')
+  const [filtroBusqueda, setFiltroBusqueda] = useState('')
+  const [clienteBusqueda, setClienteBusqueda] = useState('')
+  const [clienteDropdown, setClienteDropdown] = useState(false)
+  // ID del pedido específico cuando se abre desde Ventas
+  const [pedidoEspecifico, setPedidoEspecifico] = useState(null)
 
   const { data: pagos = [] }           = useQuery({ queryKey: ['pagos'],    queryFn: pagosService.getAll })
   const { data: todosLosPedidos = [] } = useQuery({ queryKey: ['pedidos'],  queryFn: pagosService.getPedidos })
@@ -38,7 +40,6 @@ export function usePagos() {
       return acc
     }, {})
 
-  // Pedidos que necesitan pago manual
   const pedidos = todosLosPedidos.filter(p => {
     const estadoNom = p.estado?.toLowerCase() || ''
     if (estadoNom.includes('anula')) return false
@@ -49,7 +50,6 @@ export function usePagos() {
 
   const pagadoPorPedido = pagadoPorPedidoCalc(todosLosPedidos, pagos)
 
-  // Deuda consolidada por cliente
   const deudaPorCliente = useMemo(() => {
     const mapa = {}
     for (const p of pedidos) {
@@ -115,21 +115,27 @@ export function usePagos() {
     return new Date() <= limite
   }
 
-  // Cliente y su deuda seleccionados
-  const clienteSel     = clientes.find(c => c.id === +form.cliente_id) || null
-  const deudaCliente   = deudaPorCliente[+form.cliente_id] || null
-  const totalDeuda     = deudaCliente?.total_deuda || 0
+  const clienteSel   = clientes.find(c => c.id === +form.cliente_id) || null
+  const deudaCliente = deudaPorCliente[+form.cliente_id] || null
+
+  // Si hay pedido específico, solo muestra ese pedido — si no, todos los del cliente
+  const pedidosCliente = useMemo(() => {
+    if (!deudaCliente) return []
+    const todos = [...deudaCliente.pedidos]
+      .filter(p => p.pendiente > 0)
+      .sort((a, b) => new Date(a.fecha_pedido) - new Date(b.fecha_pedido))
+    if (pedidoEspecifico) {
+      return todos.filter(p => p.id === pedidoEspecifico)
+    }
+    return todos
+  }, [deudaCliente, pedidoEspecifico])
+
+  // Total deuda — solo del pedido específico si aplica
+  const totalDeuda = pedidosCliente.reduce((s, p) => s + p.pendiente, 0)
+
   const pagoCompleto   = !!form.cliente_id && totalDeuda === 0
   const montoPendiente = totalDeuda
 
-  // Pedidos del cliente ordenados del más antiguo al más nuevo
-  const pedidosCliente = deudaCliente
-    ? [...deudaCliente.pedidos]
-        .filter(p => p.pendiente > 0)
-        .sort((a, b) => new Date(a.fecha_pedido) - new Date(b.fecha_pedido))
-    : []
-
-  // Clientes que tienen deuda, filtrados por búsqueda
   const clientesConDeuda = clientes.filter(c => {
     const d = deudaPorCliente[c.id]
     return d && d.total_deuda > 0
@@ -143,28 +149,32 @@ export function usePagos() {
            (c.email || '').toLowerCase().includes(t)
   }).slice(0, 8)
 
-  // Abrir modal por cliente
   const abrirConCliente = cliente_id => {
     setForm({ ...formVacio, cliente_id: String(cliente_id) })
     setClienteBusqueda('')
     setClienteDropdown(false)
+    setPedidoEspecifico(null) // sin filtro — muestra toda la deuda
     setModalNuevo(true)
   }
 
-  // Compatibilidad con botón de Ventas — busca el cliente del pedido
+  // Abre con pedido específico — solo muestra la deuda de ese pedido
   const abrirConPedido = pedido_id => {
     const pedido = todosLosPedidos.find(p => p.id === pedido_id)
     if (pedido?.cliente_id) {
-      abrirConCliente(pedido.cliente_id)
+      setForm({ ...formVacio, cliente_id: String(pedido.cliente_id) })
+      setClienteBusqueda('')
+      setClienteDropdown(false)
+      setPedidoEspecifico(pedido_id) // filtra solo este pedido
+      setModalNuevo(true)
     } else {
       setForm(formVacio)
+      setPedidoEspecifico(null)
       setModalNuevo(true)
     }
   }
 
   const crear = useMutation({
     mutationFn: async data => {
-      // Distribuye el abono en los pedidos más antiguos primero
       let montoRestante = +data.monto
       for (const p of pedidosCliente) {
         if (montoRestante <= 0) break
@@ -180,6 +190,7 @@ export function usePagos() {
       setModalNuevo(false)
       setForm(formVacio)
       setClienteBusqueda('')
+      setPedidoEspecifico(null)
       toast.success('Abono registrado correctamente')
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al registrar el abono'),
@@ -278,10 +289,8 @@ export function usePagos() {
   }
 
   return {
-    // Lista principal
     pagosAgrupadosFiltrados,
     pedidos,
-    // Cliente
     clienteSel,
     clientesFiltradosModal,
     clientesConDeuda,
@@ -291,38 +300,30 @@ export function usePagos() {
     deudaPorCliente,
     totalDeuda,
     pedidosCliente,
-    // Form
+    pedidoEspecifico,
     form, setForm, errores,
-    // Modales
     modalNuevo, setModalNuevo,
     modalDetalle, setModalDetalle,
     modalAnular, setModalAnular,
     grupoDetalle, verHistorial,
-    // Filtros
     filtroEstado, setFiltroEstado,
     filtroDesde, setFiltroDesde,
     filtroHasta, setFiltroHasta,
     filtroBusqueda, setFiltroBusqueda,
-    // Montos
     totalPedido: totalDeuda,
     totalPagado: 0,
     montoPendiente,
     pagoCompleto,
     esFiado: true,
-    // Handlers
     handleSubmit,
     handleMontoChange,
     handlePedidoChange: () => {},
-    // Mutations
     anular,
-    // Utils
     esPagado, esAbono, esAnulado, getFechaPago,
     puedeAnularPago, getLimiteAnulacionVenta,
     getEstadoPago, tipoPagoActual,
-    // Acciones abrir modal
     abrirConPedido,
     abrirConCliente,
-    // Legacy compat con Ventas.jsx
     pedidoSeleccionado: null,
     pedidoBusqueda: clienteBusqueda,
     setPedidoBusqueda: setClienteBusqueda,
