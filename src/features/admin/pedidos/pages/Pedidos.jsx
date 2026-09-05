@@ -48,31 +48,23 @@ export default function Pedidos() {
 
       <Tabla columnas={columnas} datos={pedidosFiltrados} sinBusqueda
         filtros={<>
-          {/* Buscador */}
           <div className="relative">
             <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
               placeholder="Buscar # o cliente..."
-              className="pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-200
+              className="pl-8 pr-3 py-1.5 text-sm rounded-lg border
                 bg-light-bg dark:bg-dark-bg/60 border-gray-200 dark:border-dark-border
                 text-light-text dark:text-dark-text placeholder:text-gray-400/60
                 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                transition-all w-44" />
+                transition-all duration-150 w-52" />
           </div>
 
-          {/* Pills estado */}
-          <div className="flex gap-1 flex-wrap">
+          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}
+            className="campo-input w-40 text-xs">
             {FILTROS_ESTADO.map(f => (
-              <button key={f.key} onClick={() => setFiltroEstado(f.key)}
-                className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
-                  filtroEstado === f.key
-                    ? 'bg-primary text-white border-primary'
-                    : 'border-gray-200 text-gray-500 hover:border-primary/40'
-                }`}>
-                {f.label}
-              </button>
+              <option key={f.key} value={f.key}>{f.label}</option>
             ))}
-          </div>
+          </select>
 
           {(filtroEstado || filtroBusqueda) && (
             <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda('') }}

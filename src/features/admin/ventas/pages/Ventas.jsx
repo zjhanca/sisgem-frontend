@@ -11,6 +11,8 @@ import VentaAnular          from '../components/VentaAnular'
 import VentaConfirmDescarga from '../components/Ventaconfirmdescarga'
 import PagoForm             from '@features/admin/pagos/components/PagoForm'
 
+const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''
+
 const getBadgeEstado = nombre => {
   if (!nombre) return { color: 'bg-amber-500', label: 'Pendiente' }
   const l = nombre.toLowerCase()
@@ -30,27 +32,18 @@ function BadgeEstado({ color, label }) {
 
 const maxFechaHoy = () => new Date().toISOString().slice(0, 16)
 
-// Pills de estado para ventas — sin "Sin recoger" (va en Pedidos)
-const FILTROS_ESTADO = [
-  { key: '',          label: 'Todos'      },
-  { key: 'pendiente', label: 'Pendiente'  },
-  { key: 'complet',   label: 'Completado' },
-  { key: 'anula',     label: 'Anulado'    },
-  { key: 'credito',   label: 'Crédito'    },
-]
-
 export default function Ventas() {
   const {
     ventasFiltradas, clientes, form, setForm,
     clientesFiltrados, prodBusqueda, prodsFiltrados, clienteBusqueda,
     setProdBusqueda, setClienteBusqueda,
-    modalNuevo, modalDetalle, modalAnular, filtroBusqueda,
+    modalNuevo, modalDetalle, modalAnular, filtroEstado, filtroBusqueda,
     filtroDesde, setFiltroDesde, filtroHasta, setFiltroHasta,
-    setModalNuevo, setModalDetalle, setModalAnular, setFiltroBusqueda,
+    setModalNuevo, setModalDetalle, setModalAnular, setFiltroEstado, setFiltroBusqueda,
     buscarProducto, buscarPorCodigo, agregarProducto, quitarProducto, cambiarCantidad,
-    totalVenta, handleCrear, anular, getBadge, estados,
+    totalVenta, handleCrear, anular, getBadge, estados, cambiarEstado,
     completarPedidoMovil, marcarEntregado,
-    puedeAnular, horasRestantesAnulacion,
+    getFechaLimiteAnulacion, puedeAnular, horasRestantesAnulacion,
     descargarReporte,
     clienteSeleccionado, cupoFiadoDisponible, excedeCupoFiado, montoFiado, montoInmediato,
     creando, anulando, MINIMO_FIADO,
@@ -68,21 +61,14 @@ export default function Ventas() {
     creando: creandoPago,
   } = usePagos()
 
-  const [confirmDescarga, setConfirmDescarga]           = useState(null)
-  const [modalReporte, setModalReporte]                 = useState(false)
-  const [modalCompletarMovil, setModalCompletarMovil]   = useState({ abierto: false, venta: null })
+  const [confirmDescarga, setConfirmDescarga]         = useState(null)
+  const [modalReporte, setModalReporte]               = useState(false)
+  const [modalCompletarMovil, setModalCompletarMovil] = useState({ abierto: false, venta: null })
   const [metodoCompletarMovil, setMetodoCompletarMovil] = useState('efectivo')
-  const [filtroEstadoPill, setFiltroEstadoPill]         = useState('')
 
-  // Filtrado por pill en frontend
-  const ventasFiltradas2 = ventasFiltradas.filter(v => {
-    if (!filtroEstadoPill) return true
-    const e = v.estado?.toLowerCase() || ''
-    if (filtroEstadoPill === 'credito')   return !!v.es_fiado
-    if (filtroEstadoPill === 'pendiente') return e.includes('pendiente')
-    if (filtroEstadoPill === 'complet')   return e.includes('complet') || e.includes('paga')
-    if (filtroEstadoPill === 'anula')     return e.includes('anula')
-    return true
+  const estadosVenta = estados.filter(e => {
+    const n = e.nombre?.toLowerCase()
+    return n?.includes('pendiente') || n?.includes('complet') || n?.includes('anula')
   })
 
   const columnas = [
@@ -127,9 +113,8 @@ export default function Ventas() {
         </div>
       </div>
 
-      <Tabla columnas={columnas} datos={ventasFiltradas2} sinBusqueda
+      <Tabla columnas={columnas} datos={ventasFiltradas} sinBusqueda
         filtros={<>
-          {/* Buscador */}
           <div className="relative">
             <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
@@ -138,31 +123,18 @@ export default function Ventas() {
                 bg-light-bg dark:bg-dark-bg/60 border-gray-200 dark:border-dark-border
                 text-light-text dark:text-dark-text placeholder:text-gray-400/60
                 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                transition-all duration-150 w-44" />
+                transition-all duration-150 w-52" />
           </div>
-
-          {/* Pills estado */}
-          <div className="flex gap-1 flex-wrap">
-            {FILTROS_ESTADO.map(f => (
-              <button key={f.key} onClick={() => setFiltroEstadoPill(f.key)}
-                className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
-                  filtroEstadoPill === f.key
-                    ? 'bg-primary text-white border-primary'
-                    : 'border-gray-200 text-gray-500 hover:border-primary/40'
-                }`}>
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Fechas */}
+          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-40 text-xs">
+            <option value="">Todos los estados</option>
+            {estadosVenta.map(e => <option key={e.id} value={e.id}>{capitalizar(e.nombre)}</option>)}
+          </select>
           <input type="datetime-local" value={filtroDesde} max={maxFechaHoy()}
             onChange={e => setFiltroDesde(e.target.value)} className="campo-input w-44 text-xs" title="Desde" />
           <input type="datetime-local" value={filtroHasta} max={maxFechaHoy()}
             onChange={e => setFiltroHasta(e.target.value)} className="campo-input w-44 text-xs" title="Hasta" />
-
-          {(filtroEstadoPill || filtroBusqueda || filtroDesde || filtroHasta) && (
-            <button onClick={() => { setFiltroEstadoPill(''); setFiltroBusqueda(''); setFiltroDesde(''); setFiltroHasta('') }}
+          {(filtroEstado || filtroBusqueda || filtroDesde || filtroHasta) && (
+            <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda(''); setFiltroDesde(''); setFiltroHasta('') }}
               className="btn-ghost text-xs text-red-400">Limpiar</button>
           )}
         </>}
