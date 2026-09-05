@@ -200,5 +200,5 @@ export default function PagoForm({
         </div>
       </form>
     </Modal>
-  )h
+  )
 }
