@@ -132,7 +132,7 @@ export default function PagoForm({
               <div className="divide-y divide-red-50 bg-white">
                 {pedidosCliente.map(p => (
                   <div key={p.id} className="flex justify-between items-center px-3 py-1.5 text-gray-500">
-                    <span>Pedido #{p.id}</span>
+                    <span>Venta #{p.id}</span>
                     <span className="font-medium text-red-500">{formatPrecio(p.pendiente)}</span>
                   </div>
                 ))}
@@ -200,5 +200,5 @@ export default function PagoForm({
         </div>
       </form>
     </Modal>
-  )
+  )h
 }
