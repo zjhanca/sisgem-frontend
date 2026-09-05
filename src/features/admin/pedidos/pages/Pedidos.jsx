@@ -46,37 +46,40 @@ export default function Pedidos() {
         <h1 className="page-title">Pedidos</h1>
       </div>
 
-      <div className="flex gap-2 mb-4 flex-wrap items-center">
-        <div className="relative">
-          <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
-            placeholder="Buscar # o cliente..."
-            className="pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-200
-              bg-white text-light-text placeholder:text-gray-400/60
-              focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-              transition-all w-48" />
-        </div>
-        <div className="flex gap-1">
-          {FILTROS_ESTADO.map(f => (
-            <button key={f.key} onClick={() => setFiltroEstado(f.key)}
-              className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
-                filtroEstado === f.key
-                  ? 'bg-primary text-white border-primary'
-                  : 'border-gray-200 text-gray-500 hover:border-primary/40'
-              }`}>
-              {f.label}
-            </button>
-          ))}
-        </div>
-        {(filtroEstado || filtroBusqueda) && (
-          <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda('') }}
-            className="text-xs text-red-400 hover:underline">
-            Limpiar
-          </button>
-        )}
-      </div>
-
       <Tabla columnas={columnas} datos={pedidosFiltrados} sinBusqueda
+        filtros={<>
+          {/* Buscador */}
+          <div className="relative">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
+              placeholder="Buscar # o cliente..."
+              className="pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-200
+                bg-white text-light-text placeholder:text-gray-400/60
+                focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
+                transition-all w-48" />
+          </div>
+
+          {/* Pills de estado */}
+          <div className="flex gap-1">
+            {FILTROS_ESTADO.map(f => (
+              <button key={f.key} onClick={() => setFiltroEstado(f.key)}
+                className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                  filtroEstado === f.key
+                    ? 'bg-primary text-white border-primary'
+                    : 'border-gray-200 text-gray-500 hover:border-primary/40'
+                }`}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {(filtroEstado || filtroBusqueda) && (
+            <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda('') }}
+              className="text-xs text-red-400 hover:underline">
+              Limpiar
+            </button>
+          )}
+        </>}
         acciones={fila => {
           const esPendiente  = (fila.estado || '').toLowerCase().includes('pendiente')
           const esSinRecoger = (fila.estado || '').toLowerCase().includes('sin recoger')
