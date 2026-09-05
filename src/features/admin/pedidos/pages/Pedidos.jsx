@@ -54,13 +54,14 @@ export default function Pedidos() {
             <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
               placeholder="Buscar # o cliente..."
               className="pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-200
-                bg-white text-light-text placeholder:text-gray-400/60
+                bg-light-bg dark:bg-dark-bg/60 border-gray-200 dark:border-dark-border
+                text-light-text dark:text-dark-text placeholder:text-gray-400/60
                 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                transition-all w-48" />
+                transition-all w-44" />
           </div>
 
-          {/* Pills de estado */}
-          <div className="flex gap-1">
+          {/* Pills estado */}
+          <div className="flex gap-1 flex-wrap">
             {FILTROS_ESTADO.map(f => (
               <button key={f.key} onClick={() => setFiltroEstado(f.key)}
                 className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
@@ -75,7 +76,7 @@ export default function Pedidos() {
 
           {(filtroEstado || filtroBusqueda) && (
             <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda('') }}
-              className="text-xs text-red-400 hover:underline">
+              className="btn-ghost text-xs text-red-400">
               Limpiar
             </button>
           )}
