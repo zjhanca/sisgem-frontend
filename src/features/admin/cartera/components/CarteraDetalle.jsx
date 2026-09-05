@@ -23,20 +23,22 @@ export default function CarteraDetalle({ cliente, deuda, onCerrar, onAbono }) {
           <span className="text-lg font-bold text-red-600">{formatPrecio(deuda.total_deuda)}</span>
         </div>
 
-        {/* Pedidos pendientes */}
+        {/* Ventas pendientes */}
         <div className="space-y-2">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Pedidos con saldo pendiente
+            Ventas con saldo pendiente
           </p>
-          {pedidosPendientes.map(p => (
+          {pedidosPendientes.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-2">Sin ventas pendientes</p>
+          ) : pedidosPendientes.map(p => (
             <div key={p.id}
               className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-gray-50 text-sm">
               <div>
-                <p className="font-medium">Pedido #{p.id}</p>
+                <p className="font-medium">Venta <span className="font-mono text-gray-500">#{p.id}</span></p>
                 <p className="text-xs text-gray-400">{formatFecha(p.fecha_pedido)}</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-400">Total pedido: {formatPrecio(p.total)}</p>
+                <p className="text-xs text-gray-400">Total: {formatPrecio(p.total)}</p>
                 <p className="font-bold text-red-500">{formatPrecio(p.pendiente)} pendiente</p>
               </div>
             </div>

@@ -25,7 +25,8 @@ export default function Pedidos() {
   } = usePedidos()
 
   const columnas = [
-    { key: 'id',      label: '#',       render: r => `#${r.id}` },
+    { key: 'id', label: 'N. Pedido',
+      render: r => <span className="font-mono text-xs font-semibold text-gray-500">#{r.id}</span> },
     { key: 'cliente', label: 'Cliente', render: r => r.cliente || 'Sin nombre' },
     { key: 'total',   label: 'Total',   render: r => formatPrecio(r.total) },
     { key: 'estado',  label: 'Estado',
@@ -45,7 +46,6 @@ export default function Pedidos() {
         <h1 className="page-title">Pedidos</h1>
       </div>
 
-      {/* Filtros */}
       <div className="flex gap-2 mb-4 flex-wrap items-center">
         <div className="relative">
           <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -56,7 +56,6 @@ export default function Pedidos() {
               focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
               transition-all w-48" />
         </div>
-
         <div className="flex gap-1">
           {FILTROS_ESTADO.map(f => (
             <button key={f.key} onClick={() => setFiltroEstado(f.key)}
@@ -69,7 +68,6 @@ export default function Pedidos() {
             </button>
           ))}
         </div>
-
         {(filtroEstado || filtroBusqueda) && (
           <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda('') }}
             className="text-xs text-red-400 hover:underline">
@@ -103,12 +101,9 @@ export default function Pedidos() {
         setModalDetalle={setModalDetalle}
         getColorEstado={getColorEstado}
         getLabelEstado={getLabelEstado}
-        onConfirmarEntrega={pedido =>
-          setModalConfirmarEntrega({ abierto: true, pedido })
-        }
+        onConfirmarEntrega={pedido => setModalConfirmarEntrega({ abierto: true, pedido })}
       />
 
-      {/* Modal confirmar entrega — sin selector de método */}
       {modalConfirmarEntrega.abierto && modalConfirmarEntrega.pedido && (
         <Modal abierto onCerrar={() => setModalConfirmarEntrega({ abierto: false, pedido: null })}
           bloquearCierre titulo="Confirmar Entrega" ancho="max-w-sm">
@@ -127,8 +122,7 @@ export default function Pedidos() {
               Total: {formatPrecio(modalConfirmarEntrega.pedido.total)}
             </p>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button
-                onClick={() => setModalConfirmarEntrega({ abierto: false, pedido: null })}
+              <button onClick={() => setModalConfirmarEntrega({ abierto: false, pedido: null })}
                 className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg">
                 Cancelar
               </button>

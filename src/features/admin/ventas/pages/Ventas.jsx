@@ -72,10 +72,11 @@ export default function Ventas() {
   })
 
   const columnas = [
+    { key: 'id', label: 'N. Venta',
+      render: r => <span className="font-mono text-xs font-semibold text-gray-500">#{r.id}</span> },
     { key: 'cliente', label: 'Cliente' },
     { key: 'total',   label: 'Total', render: r => formatPrecio(r.total) },
-    {
-      key: 'estado_id', label: 'Estado',
+    { key: 'estado_id', label: 'Estado',
       render: r => {
         const { color, label } = getBadgeEstado(r.estado)
         return (
@@ -189,14 +190,13 @@ export default function Ventas() {
         }}
       />
 
-      {/* Modal confirmar entrega pedido móvil sin crédito */}
       {modalCompletarMovil.abierto && modalCompletarMovil.venta && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50"
             onClick={() => setModalCompletarMovil({ abierto: false, venta: null })} />
           <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl border border-gray-200 shadow-xl p-5 space-y-4">
             <h3 className="text-sm font-semibold">
-              Confirmar {modalCompletarMovil.venta.tipo_venta === 'domicilio' ? 'entrega' : 'recepción'} — Pedido #{modalCompletarMovil.venta.id}
+              Confirmar {modalCompletarMovil.venta.tipo_venta === 'domicilio' ? 'entrega' : 'recepción'} — Venta #{modalCompletarMovil.venta.id}
             </h3>
             <p className="text-xs text-gray-500">
               El cliente {modalCompletarMovil.venta.tipo_venta === 'domicilio'

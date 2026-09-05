@@ -40,7 +40,9 @@ export default function Pagos() {
   const hayFiltros = filtroEstado || filtroDesde || filtroHasta || filtroBusqueda
 
   const columnas = [
-    { key: 'cliente',      label: 'Cliente',
+    { key: 'pedido_id', label: 'N. Venta',
+      render: r => <span className="font-mono text-xs font-semibold text-gray-500">#{r.pedido_id}</span> },
+    { key: 'cliente', label: 'Cliente',
       render: r => r.cliente || '—' },
     { key: 'total_pagado', label: 'Pagado',
       render: r => <span className="text-light-text font-medium">{formatPrecio(r.total_pagado)}</span> },
