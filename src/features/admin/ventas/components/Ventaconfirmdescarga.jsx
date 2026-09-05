@@ -72,7 +72,7 @@ export default function VentaConfirmDescarga({ confirmDescarga, setConfirmDescar
                   }`}>
                   <FileText size={18} className={formato === 'a4' ? 'text-primary' : 'text-gray-400'} />
                   <span className={`text-xs font-medium ${formato === 'a4' ? 'text-primary' : 'text-gray-500'}`}>
-                    A4
+                    PDF
                   </span>
                   <span className="text-xs text-gray-400">Carta · Color</span>
                 </button>
