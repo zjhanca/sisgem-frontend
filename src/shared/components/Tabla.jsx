@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
- 
+
 export default function Tabla({
   columnas = [],
   datos = [],
@@ -12,7 +12,7 @@ export default function Tabla({
   const [busqueda, setBusqueda] = useState('')
   const [pagina, setPagina]     = useState(1)
   const [porPag, setPorPag]     = useState(porPagina)
- 
+
   const filtrados = useMemo(() => {
     if (!busqueda.trim()) return datos
     const t = busqueda.toLowerCase()
@@ -23,15 +23,15 @@ export default function Tabla({
       })
     )
   }, [datos, busqueda, columnas])
- 
+
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / porPag))
   const paginaActual = Math.min(pagina, totalPaginas)
   const inicio       = (paginaActual - 1) * porPag
   const filasPagina  = filtrados.slice(inicio, inicio + porPag)
- 
+
   const handleBusqueda = v => { setBusqueda(v); setPagina(1) }
   const handlePorPag   = v => { setPorPag(+v); setPagina(1) }
- 
+
   const paginasVisibles = () => {
     const rango = []
     const delta = 2
@@ -40,10 +40,10 @@ export default function Tabla({
     for (let i = left; i <= right; i++) rango.push(i)
     return rango
   }
- 
+
   return (
     <div className="space-y-3 animate-fadeIn">
-      {/* barra superior */}
+      {/* Barra superior */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap flex-1">
           {!sinBusqueda && (
@@ -75,17 +75,24 @@ export default function Tabla({
           </select>
         </div>
       </div>
- 
-      {/* tabla */}
+
+      {/* Tabla */}
       <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-dark-border/60 shadow-sm dark:shadow-none">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-light-bg dark:bg-dark-bg border-b border-gray-100 dark:border-dark-border/60">
               {columnas.map(col => (
-                <th key={col.key} className="tabla-header normal-case">{col.label}</th>
+                <th key={col.key}
+                  className="tabla-header normal-case font-semibold
+                    text-gray-700 dark:text-dark-text">
+                  {col.label}
+                </th>
               ))}
               {acciones && (
-                <th className="tabla-header normal-case text-right">Acciones</th>
+                <th className="tabla-header normal-case text-right font-semibold
+                  text-gray-700 dark:text-dark-text">
+                  Acciones
+                </th>
               )}
             </tr>
           </thead>
@@ -99,7 +106,8 @@ export default function Tabla({
               </tr>
             ) : filasPagina.map((fila, i) => (
               <tr key={fila.id ?? i}
-                className="bg-light-card dark:bg-dark-card hover:bg-primary/4 transition-colors duration-100">
+                className="bg-light-card dark:bg-dark-card hover:bg-primary/4
+                  transition-colors duration-100">
                 {columnas.map(col => (
                   <td key={col.key} className="tabla-celda">
                     {col.render ? col.render(fila) : (fila[col.key] ?? '—')}
@@ -117,8 +125,8 @@ export default function Tabla({
           </tbody>
         </table>
       </div>
- 
-      {/* paginación */}
+
+      {/* Paginación */}
       {totalPaginas > 1 && (
         <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="text-xs text-gray-400 dark:text-dark-text/35">
@@ -126,8 +134,8 @@ export default function Tabla({
           </p>
           <div className="flex items-center gap-1">
             {[
-              { icon: ChevronsLeft,  action: () => setPagina(1),                      disabled: paginaActual === 1 },
-              { icon: ChevronLeft,   action: () => setPagina(p => Math.max(1, p - 1)), disabled: paginaActual === 1 },
+              { icon: ChevronsLeft,  action: () => setPagina(1),                       disabled: paginaActual === 1            },
+              { icon: ChevronLeft,   action: () => setPagina(p => Math.max(1, p - 1)), disabled: paginaActual === 1            },
             ].map((btn, i) => (
               <button key={i} onClick={btn.action} disabled={btn.disabled}
                 className="p-1.5 rounded-lg border border-gray-200 dark:border-dark-border
@@ -148,7 +156,7 @@ export default function Tabla({
             ))}
             {[
               { icon: ChevronRight,  action: () => setPagina(p => Math.min(totalPaginas, p + 1)), disabled: paginaActual === totalPaginas },
-              { icon: ChevronsRight, action: () => setPagina(totalPaginas),                       disabled: paginaActual === totalPaginas },
+              { icon: ChevronsRight, action: () => setPagina(totalPaginas),                        disabled: paginaActual === totalPaginas },
             ].map((btn, i) => (
               <button key={i} onClick={btn.action} disabled={btn.disabled}
                 className="p-1.5 rounded-lg border border-gray-200 dark:border-dark-border
