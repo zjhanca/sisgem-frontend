@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Package, ArrowRight, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Package, ArrowRight } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 function ProductCard({ prod }) {
@@ -24,8 +24,7 @@ function ProductCard({ prod }) {
     <div onClick={() => navigate(`/producto/${prod.id}`)}
       className="bg-white rounded-3xl border border-gray-100
         hover:border-primary/30 hover:shadow-2xl transition-all duration-300
-        hover:-translate-y-2 group flex flex-col overflow-hidden cursor-pointer
-        relative">
+        hover:-translate-y-2 group flex flex-col overflow-hidden cursor-pointer relative">
 
       {/* Badge categoría */}
       {prod.categoria && (
@@ -111,18 +110,9 @@ function ProductCard({ prod }) {
           <p className="text-xs text-gray-400">{prod.marca}</p>
         )}
 
-        <div className="flex items-center justify-between mt-1">
-          <p className="text-lg font-black text-primary">
-            {formatPrecio(prod.precio)}
-          </p>
-          {/* Estrellas decorativas */}
-          <div className="flex gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} size={10}
-                className={i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
-            ))}
-          </div>
-        </div>
+        <p className="text-lg font-black text-primary mt-1">
+          {formatPrecio(prod.precio)}
+        </p>
 
         {/* Botón ver más */}
         <div className="mt-2 pt-3 border-t border-gray-50">
@@ -158,9 +148,9 @@ export default function FeaturedProducts({ productos = [] }) {
               </p>
             </div>
             <Link to="/productos"
-              className="hidden md:flex items-center gap-1.5 text-sm font-bold
+              className="hidden md:flex items-center gap-2 text-sm font-bold
                 text-primary border-2 border-primary px-5 py-2.5 rounded-full
-                hover:bg-primary hover:text-white transition-all gap-2">
+                hover:bg-primary hover:text-white transition-all">
               Ver todos <ArrowRight size={15} />
             </Link>
           </div>
