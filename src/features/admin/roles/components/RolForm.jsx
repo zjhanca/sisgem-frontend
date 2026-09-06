@@ -1,7 +1,29 @@
 import Modal from '@shared/components/Modal'
 import { Edit2, Shield } from 'lucide-react'
 
-const capitalizar = str => str.charAt(0).toUpperCase() + str.slice(1)
+// Nombres de módulos en español
+const NOMBRES_MODULO = {
+  ordenes:     'Compras',
+  productos:   'Productos',
+  categorias:  'Categorías',
+  marcas:      'Marcas',
+  proveedores:  'Proveedores',
+  ventas:      'Ventas',
+  pedidos:     'Pedidos',
+  clientes:    'Clientes',
+  pagos:       'Pagos',
+  cartera:     'Cartera',
+  usuarios:    'Usuarios',
+  roles:       'Roles',
+  dashboard:   'Dashboard',
+  reportes:    'Reportes',
+}
+
+const labelModulo = modulo =>
+  NOMBRES_MODULO[modulo] || modulo.charAt(0).toUpperCase() + modulo.slice(1)
+
+const capitalizar = str =>
+  str.charAt(0).toUpperCase() + str.slice(1)
 
 export default function RolForm({
   modal, form, setForm, errores, tab, setTab,
@@ -12,13 +34,9 @@ export default function RolForm({
 }) {
   const nombreValido = form.nombre.trim().length > 0 && !errores.nombre
 
-  const handleTabClick = (id) => {
-    // No permite ir a permisos si el nombre no es válido
+  const handleTabClick = id => {
     if (id === 'permisos' && !nombreValido) {
-      if (!form.nombre.trim()) {
-        // Dispara el error visualmente
-        handleNombreChange('')
-      }
+      if (!form.nombre.trim()) handleNombreChange('')
       return
     }
     setTab(id)
@@ -31,15 +49,16 @@ export default function RolForm({
       {/* Tabs */}
       <div className="flex gap-1 mb-4 p-1 bg-gray-50 rounded-xl">
         {[
-          { id: 'info',     label: 'Información', icon: Edit2   },
-          { id: 'permisos', label: 'Permisos',    icon: Shield  },
+          { id: 'info',     label: 'Información', icon: Edit2  },
+          { id: 'permisos', label: 'Permisos',    icon: Shield },
         ].map(t => {
           const bloqueado = t.id === 'permisos' && !nombreValido
           return (
             <button key={t.id} type="button"
               onClick={() => handleTabClick(t.id)}
               title={bloqueado ? 'Ingresa un nombre válido primero' : ''}
-              className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg
+                text-xs font-medium transition-all ${
                 tab === t.id
                   ? 'bg-primary text-white shadow-sm'
                   : bloqueado
@@ -92,18 +111,28 @@ export default function RolForm({
                 {permisosSeleccionados.length} de {todosPermisos.length} permisos
               </p>
               <div className="flex gap-2">
-                <button type="button" onClick={seleccionarTodos} className="text-xs text-primary hover:underline">Todos</button>
+                <button type="button" onClick={seleccionarTodos}
+                  className="text-xs text-primary hover:underline">
+                  Todos
+                </button>
                 <span className="text-gray-300">|</span>
-                <button type="button" onClick={limpiarTodos} className="text-xs text-gray-400 hover:underline">Limpiar</button>
+                <button type="button" onClick={limpiarTodos}
+                  className="text-xs text-gray-400 hover:underline">
+                  Limpiar
+                </button>
               </div>
             </div>
+
             <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
               {Object.entries(gruposPermisos).map(([modulo, perms]) => {
                 const todosSelec = perms.every(p => permisosSeleccionados.includes(p.id))
                 return (
-                  <div key={modulo} className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div key={modulo}
+                    className="border border-gray-200 rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 bg-gray-50">
-                      <span className="text-xs font-semibold capitalize">{modulo}</span>
+                      <span className="text-xs font-semibold">
+                        {labelModulo(modulo)}
+                      </span>
                       <button type="button" onClick={() => toggleModulo(perms)}
                         className={`text-xs px-2 py-0.5 rounded border transition-colors ${
                           todosSelec
@@ -116,7 +145,8 @@ export default function RolForm({
                     <div className="grid grid-cols-2 gap-px bg-gray-100">
                       {perms.map(p => (
                         <label key={p.id}
-                          className="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer bg-white hover:bg-primary/5 transition-colors">
+                          className="flex items-center gap-2 px-3 py-2 text-xs
+                            cursor-pointer bg-white hover:bg-primary/5 transition-colors">
                           <input type="checkbox"
                             checked={permisosSeleccionados.includes(p.id)}
                             onChange={() => togglePermiso(p.id)}
