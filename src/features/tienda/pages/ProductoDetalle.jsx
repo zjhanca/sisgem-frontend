@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import {
   ChevronLeft, ChevronRight, ArrowLeft, Package,
-  Tag, Check, Store, Smartphone, Share2, Heart,
+  Tag, Check, Store, Smartphone,
   ChevronRight as Chevron, ShieldCheck, Banknote, MapPin,
 } from 'lucide-react'
 import NavbarPublico from '@shared/components/NavbarPublico'
@@ -34,10 +34,8 @@ function Skeleton() {
 
 export default function ProductoDetalle() {
   const { producto, isLoading } = useProductoDetalle()
-  const navigate  = useNavigate()
-  const [imgIdx, setImgIdx]     = useState(0)
-  const [favorito, setFavorito] = useState(false)
-  const [copiado, setCopiado]   = useState(false)
+  const navigate = useNavigate()
+  const [imgIdx, setImgIdx] = useState(0)
 
   if (isLoading) return <Skeleton />
 
@@ -80,34 +78,12 @@ export default function ProductoDetalle() {
 
   const prev = () => setImgIdx(i => (i - 1 + imagenes.length) % imagenes.length)
   const next = () => setImgIdx(i => (i + 1) % imagenes.length)
-
-  const compartir = () => {
-    navigator.clipboard.writeText(window.location.href)
-    setCopiado(true)
-    setTimeout(() => setCopiado(false), 2000)
-  }
-
   const disponible = producto.stock > 0
 
   const INFO_CARDS = [
-    {
-      icon:  MapPin,
-      label: 'Tienda física',
-      sub:   'Medellín',
-      color: 'bg-primary/10 text-primary',
-    },
-    {
-      icon:  ShieldCheck,
-      label: 'Calidad',
-      sub:   'Garantizada',
-      color: 'bg-green-50 text-green-600',
-    },
-    {
-      icon:  Banknote,
-      label: 'Pago',
-      sub:   'Efectivo o transferencia',
-      color: 'bg-gray-100 text-gray-600',
-    },
+    { icon: MapPin,      label: 'Tienda física', sub: 'Medellín',                  color: 'bg-primary/10 text-primary'  },
+    { icon: ShieldCheck, label: 'Calidad',        sub: 'Garantizada',               color: 'bg-green-50 text-green-600'  },
+    { icon: Banknote,    label: 'Pago',           sub: 'Efectivo o transferencia',   color: 'bg-gray-100 text-gray-600'   },
   ]
 
   return (
@@ -138,7 +114,6 @@ export default function ProductoDetalle() {
 
       <div className="max-w-6xl mx-auto w-full px-4 py-8 flex-1">
 
-        {/* Volver móvil */}
         <button onClick={() => navigate(-1)}
           className="md:hidden flex items-center gap-1.5 text-xs text-gray-400
             hover:text-primary mb-5 transition-colors font-medium">
@@ -148,17 +123,91 @@ export default function ProductoDetalle() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
 
           {/* ── GALERÍA ── */}
-          <div className="flex gap-3">
-            {/* Miniaturas */}
+          <div className="space-y-3">
+
+            {/* Imagen principal */}
+            <div className="relative aspect-square rounded-3xl overflow-hidden
+              bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200
+              shadow-xl group">
+
+              {imagenes.length > 0 ? (
+                <>
+                  {/* Fondo decorativo difuminado de la imagen */}
+                  <div className="absolute inset-0 scale-110 blur-2xl opacity-20">
+                    <img src={imagenes[imgIdx]} alt=""
+                      className="w-full h-full object-cover" />
+                  </div>
+
+                  {/* Imagen real centrada */}
+                  <div className="relative z-10 w-full h-full flex items-center
+                    justify-center p-10">
+                    <img src={imagenes[imgIdx]} alt={producto.nombre}
+                      className="max-w-full max-h-full object-contain
+                        drop-shadow-2xl transition-all duration-500
+                        group-hover:scale-105"
+                      onError={e => e.target.style.display = 'none'} />
+                  </div>
+
+                  {/* Navegación flechas */}
+                  {imagenes.length > 1 && (<>
+                    <button onClick={prev}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 z-20
+                        w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm
+                        shadow-lg flex items-center justify-center text-gray-500
+                        hover:text-primary hover:bg-white hover:shadow-xl
+                        transition-all border border-gray-100
+                        opacity-0 group-hover:opacity-100">
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button onClick={next}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 z-20
+                        w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm
+                        shadow-lg flex items-center justify-center text-gray-500
+                        hover:text-primary hover:bg-white hover:shadow-xl
+                        transition-all border border-gray-100
+                        opacity-0 group-hover:opacity-100">
+                      <ChevronRight size={20} />
+                    </button>
+                  </>)}
+
+                  {/* Badge agotado */}
+                  {!disponible && (
+                    <div className="absolute inset-0 z-30 bg-black/50
+                      flex items-center justify-center backdrop-blur-[2px]">
+                      <span className="text-white font-black bg-black/70
+                        px-8 py-3 rounded-full text-sm tracking-widest uppercase
+                        border border-white/20">
+                        Agotado
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Contador */}
+                  {imagenes.length > 1 && (
+                    <div className="absolute bottom-4 right-4 z-20
+                      bg-black/50 backdrop-blur-sm text-white text-xs
+                      font-semibold px-3 py-1.5 rounded-full">
+                      {imgIdx + 1} / {imagenes.length}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Package size={80} className="text-gray-300" />
+                </div>
+              )}
+            </div>
+
+            {/* Miniaturas horizontales */}
             {imagenes.length > 1 && (
-              <div className="hidden sm:flex flex-col gap-2 shrink-0">
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 {imagenes.map((img, i) => (
                   <button key={i} onClick={() => setImgIdx(i)}
-                    className={`w-16 h-16 rounded-2xl overflow-hidden border-2
-                      bg-gray-50 p-1 transition-all duration-200 ${
+                    className={`shrink-0 w-16 h-16 rounded-2xl overflow-hidden
+                      border-2 bg-gray-50 p-1 transition-all duration-200 ${
                       i === imgIdx
-                        ? 'border-primary shadow-md shadow-primary/20'
-                        : 'border-gray-200 hover:border-primary/50 opacity-50 hover:opacity-100'
+                        ? 'border-primary shadow-md shadow-primary/20 scale-105'
+                        : 'border-gray-200 hover:border-primary/40 opacity-60 hover:opacity-100'
                     }`}>
                     <img src={img} alt=""
                       className="w-full h-full object-contain"
@@ -167,100 +216,6 @@ export default function ProductoDetalle() {
                 ))}
               </div>
             )}
-
-            {/* Imagen principal */}
-            <div className="relative flex-1">
-              <div className="relative aspect-square rounded-3xl overflow-hidden
-                bg-gray-50 border border-gray-100 shadow-xl">
-
-                {imagenes.length > 0 ? (
-                  <>
-                    <img src={imagenes[imgIdx]} alt={producto.nombre}
-                      className="w-full h-full object-contain p-8
-                        transition-all duration-500"
-                      onError={e => e.target.style.display = 'none'} />
-
-                    {imagenes.length > 1 && (<>
-                      <button onClick={prev}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10
-                          rounded-full bg-white shadow-lg flex items-center justify-center
-                          text-gray-400 hover:text-primary hover:shadow-xl
-                          transition-all border border-gray-100">
-                        <ChevronLeft size={20} />
-                      </button>
-                      <button onClick={next}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10
-                          rounded-full bg-white shadow-lg flex items-center justify-center
-                          text-gray-400 hover:text-primary hover:shadow-xl
-                          transition-all border border-gray-100">
-                        <ChevronRight size={20} />
-                      </button>
-                      <div className="sm:hidden absolute bottom-4 left-1/2
-                        -translate-x-1/2 flex gap-1.5">
-                        {imagenes.map((_, i) => (
-                          <button key={i} onClick={() => setImgIdx(i)}
-                            className={`rounded-full transition-all ${
-                              i === imgIdx
-                                ? 'w-5 h-2 bg-primary'
-                                : 'w-2 h-2 bg-gray-300'
-                            }`} />
-                        ))}
-                      </div>
-                    </>)}
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package size={80} className="text-gray-200" />
-                  </div>
-                )}
-
-                {/* Agotado overlay */}
-                {!disponible && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center
-                    justify-center rounded-3xl backdrop-blur-[2px]">
-                    <span className="text-white font-black bg-black/70 px-6 py-3
-                      rounded-full text-sm tracking-widest uppercase">
-                      Agotado
-                    </span>
-                  </div>
-                )}
-
-                {/* Acciones flotantes */}
-                <div className="absolute top-4 right-4 flex flex-col gap-2">
-                  <button onClick={() => setFavorito(f => !f)}
-                    title={favorito ? 'Quitar de favoritos' : 'Guardar en favoritos'}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center
-                      shadow-md transition-all border ${
-                      favorito
-                        ? 'bg-red-500 border-red-500 text-white'
-                        : 'bg-white border-gray-100 text-gray-400 hover:text-red-400 hover:border-red-200'
-                    }`}>
-                    <Heart size={15} className={favorito ? 'fill-white' : ''} />
-                  </button>
-                  <div className="relative">
-                    <button onClick={compartir} title="Copiar enlace"
-                      className="w-9 h-9 rounded-full bg-white border border-gray-100
-                        flex items-center justify-center shadow-md text-gray-400
-                        hover:text-primary hover:border-primary/30 transition-all">
-                      <Share2 size={15} />
-                    </button>
-                    {copiado && (
-                      <span className="absolute right-11 top-1/2 -translate-y-1/2
-                        bg-gray-900 text-white text-xs px-2.5 py-1.5 rounded-xl
-                        whitespace-nowrap shadow-lg font-medium">
-                        Enlace copiado
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {imagenes.length > 1 && (
-                <p className="text-center text-xs text-gray-300 mt-3 font-medium">
-                  {imgIdx + 1} de {imagenes.length} fotos
-                </p>
-              )}
-            </div>
           </div>
 
           {/* ── INFO PRODUCTO ── */}
@@ -288,7 +243,7 @@ export default function ProductoDetalle() {
               )}
             </div>
 
-            {/* Nombre y código */}
+            {/* Nombre */}
             <div>
               <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight">
                 {producto.nombre}
@@ -301,7 +256,7 @@ export default function ProductoDetalle() {
             </div>
 
             {/* Precio */}
-            <div className="flex items-baseline gap-3 py-3 border-y border-gray-100">
+            <div className="flex items-baseline gap-3 py-4 border-y border-gray-100">
               <span className="text-4xl md:text-5xl font-black text-primary leading-none">
                 {formatPrecio(producto.precio)}
               </span>
@@ -323,9 +278,7 @@ export default function ProductoDetalle() {
                 bg-orange-50 border border-orange-100">
                 <div className="w-2.5 h-2.5 rounded-full bg-orange-400 shrink-0 animate-pulse" />
                 <div>
-                  <p className="text-sm font-bold text-orange-500">
-                    Pocas unidades disponibles
-                  </p>
+                  <p className="text-sm font-bold text-orange-500">Pocas unidades disponibles</p>
                   <p className="text-xs text-orange-400 mt-0.5">
                     Solo quedan {producto.stock} en tienda
                   </p>
@@ -357,18 +310,18 @@ export default function ProductoDetalle() {
               </div>
             )}
 
-            {/* Cómo comprar */}
+            {/* Cómo obtenerlo */}
             <div>
-              <p className="text-xs font-black text-gray-400 uppercase
-                tracking-widest mb-3">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">
                 Cómo obtenerlo
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex items-start gap-3 p-4 rounded-2xl
                   bg-primary/5 border border-primary/15 hover:border-primary/30
-                  transition-all group">
+                  transition-all group cursor-default">
                   <div className="w-10 h-10 rounded-xl bg-primary flex items-center
-                    justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                    justify-center shrink-0 shadow-md
+                    group-hover:scale-105 transition-transform">
                     <Store size={18} className="text-white" />
                   </div>
                   <div>
@@ -380,9 +333,10 @@ export default function ProductoDetalle() {
                 </div>
                 <div className="flex items-start gap-3 p-4 rounded-2xl
                   bg-green-50 border border-green-100 hover:border-green-200
-                  transition-all group">
+                  transition-all group cursor-default">
                   <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center
-                    justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                    justify-center shrink-0 shadow-md
+                    group-hover:scale-105 transition-transform">
                     <Smartphone size={18} className="text-white" />
                   </div>
                   <div>
@@ -398,26 +352,24 @@ export default function ProductoDetalle() {
             {/* Botón volver */}
             <Link to="/productos"
               className="flex items-center justify-center gap-2 border-2 border-primary
-                text-primary font-bold py-3.5 rounded-2xl hover:bg-primary hover:text-white
-                transition-all text-sm">
+                text-primary font-bold py-3.5 rounded-2xl
+                hover:bg-primary hover:text-white transition-all text-sm">
               <ArrowLeft size={15} /> Ver más productos
             </Link>
 
             {/* Info cards */}
-            <div className="grid grid-cols-3 gap-3 pt-1 border-t border-gray-100">
+            <div className="grid grid-cols-3 gap-3 border-t border-gray-100 pt-4">
               {INFO_CARDS.map((item, i) => (
                 <div key={i}
                   className="flex flex-col items-center text-center p-3
                     rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors gap-2">
                   <div className={`w-9 h-9 rounded-xl flex items-center
-                    justify-center shrink-0 ${item.color}`}>
+                    justify-center ${item.color}`}>
                     <item.icon size={16} />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-gray-800">{item.label}</p>
-                    <p className="text-xs text-gray-400 mt-0.5 leading-tight">
-                      {item.sub}
-                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5 leading-tight">{item.sub}</p>
                   </div>
                 </div>
               ))}
