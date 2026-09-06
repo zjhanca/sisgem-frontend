@@ -3,7 +3,7 @@ import { useState } from 'react'
 import {
   ChevronLeft, ChevronRight, ArrowLeft, Package,
   Tag, Check, Store, Smartphone,
-  ChevronRight as Chevron, ShieldCheck, Banknote, MapPin,
+  ShieldCheck, Banknote, MapPin,
 } from 'lucide-react'
 import NavbarPublico from '@shared/components/NavbarPublico'
 import Footer from '../components/Footer'
@@ -81,9 +81,9 @@ export default function ProductoDetalle() {
   const disponible = producto.stock > 0
 
   const INFO_CARDS = [
-    { icon: MapPin,      label: 'Tienda física', sub: 'Medellín',                  color: 'bg-primary/10 text-primary'  },
-    { icon: ShieldCheck, label: 'Calidad',        sub: 'Garantizada',               color: 'bg-green-50 text-green-600'  },
-    { icon: Banknote,    label: 'Pago',           sub: 'Efectivo o transferencia',   color: 'bg-gray-100 text-gray-600'   },
+    { icon: MapPin,      label: 'Tienda física', sub: 'Medellín',                color: 'bg-primary/10 text-primary' },
+    { icon: ShieldCheck, label: 'Calidad',        sub: 'Garantizada',             color: 'bg-green-50 text-green-600' },
+    { icon: Banknote,    label: 'Pago',           sub: 'Efectivo o transferencia', color: 'bg-gray-100 text-gray-600' },
   ]
 
   return (
@@ -91,21 +91,28 @@ export default function ProductoDetalle() {
       <NavbarPublico />
 
       {/* Breadcrumb */}
-      <div className="bg-gray-50 border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-1.5 text-xs text-gray-400 flex-wrap">
-            <Link to="/" className="hover:text-primary transition-colors">Inicio</Link>
-            <Chevron size={12} />
-            <Link to="/productos" className="hover:text-primary transition-colors">Productos</Link>
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link to="/"
+              className="text-xs text-gray-400 hover:text-primary transition-colors font-medium">
+              Inicio
+            </Link>
+            <span className="text-gray-200 text-sm">/</span>
+            <Link to="/productos"
+              className="text-xs text-gray-400 hover:text-primary transition-colors font-medium">
+              Productos
+            </Link>
             {producto.categoria && (<>
-              <Chevron size={12} />
+              <span className="text-gray-200 text-sm">/</span>
               <Link to={`/productos?categoria=${producto.categoria_id}`}
-                className="hover:text-primary transition-colors">
+                className="text-xs text-primary/70 hover:text-primary
+                  transition-colors font-semibold">
                 {producto.categoria}
               </Link>
             </>)}
-            <Chevron size={12} />
-            <span className="text-gray-600 font-medium truncate max-w-[180px]">
+            <span className="text-gray-200 text-sm">/</span>
+            <span className="text-xs font-bold text-gray-700 truncate max-w-[200px]">
               {producto.nombre}
             </span>
           </div>
@@ -132,13 +139,13 @@ export default function ProductoDetalle() {
 
               {imagenes.length > 0 ? (
                 <>
-                  {/* Fondo decorativo difuminado de la imagen */}
+                  {/* Fondo difuminado */}
                   <div className="absolute inset-0 scale-110 blur-2xl opacity-20">
                     <img src={imagenes[imgIdx]} alt=""
                       className="w-full h-full object-cover" />
                   </div>
 
-                  {/* Imagen real centrada */}
+                  {/* Imagen centrada */}
                   <div className="relative z-10 w-full h-full flex items-center
                     justify-center p-10">
                     <img src={imagenes[imgIdx]} alt={producto.nombre}
@@ -148,7 +155,7 @@ export default function ProductoDetalle() {
                       onError={e => e.target.style.display = 'none'} />
                   </div>
 
-                  {/* Navegación flechas */}
+                  {/* Flechas navegación */}
                   {imagenes.length > 1 && (<>
                     <button onClick={prev}
                       className="absolute left-3 top-1/2 -translate-y-1/2 z-20
@@ -256,11 +263,10 @@ export default function ProductoDetalle() {
             </div>
 
             {/* Precio */}
-            <div className="flex items-baseline gap-3 py-4 border-y border-gray-100">
+            <div className="py-4 border-y border-gray-100">
               <span className="text-4xl md:text-5xl font-black text-primary leading-none">
                 {formatPrecio(producto.precio)}
               </span>
-              <span className="text-xs text-gray-400 font-medium">IVA incluido</span>
             </div>
 
             {/* Estado stock */}
