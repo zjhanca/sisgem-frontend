@@ -32,7 +32,7 @@ const validarCampo = (campo, valor, esEdicion) => {
     case 'telefono':
       if (!valor) return ''
       if (!/^\d+$/.test(valor)) return 'Solo números'
-      if (valor.length < 7 || valor.length > 10) return 'El teléfono debe tener entre 7 y 10 dígitos'
+      if (valor.length !== 10) return 'El teléfono debe tener 10 dígitos'
       return ''
     case 'numero_documento':
       if (!valor) return ''
@@ -54,14 +54,22 @@ export function useUsuarios() {
   const [verificando, setVerificando] = useState({})
   const [filtroRol, setFiltroRol]       = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
-
   const timerEmail = useRef(null)
   const timerDoc   = useRef(null)
 
-  const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: usuariosService.getAll })
-  const { data: roles = [] }    = useQuery({ queryKey: ['roles'],    queryFn: usuariosService.getRoles })
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios'],
+    queryFn:  usuariosService.getAll,
+  })
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles'],
+    queryFn:  usuariosService.getRoles,
+  })
 
-  const rolesCliente = roles.filter(r => r.nombre?.toLowerCase().includes('cliente')).map(r => r.id)
+  const rolesCliente = roles
+    .filter(r => r.nombre?.toLowerCase().includes('cliente'))
+    .map(r => r.id)
+
   const usuariosFiltrados = usuarios.filter(u => {
     if (rolesCliente.includes(u.rol_id)) return false
     if (filtroRol    && u.rol_id !== +filtroRol)  return false
@@ -75,7 +83,9 @@ export function useUsuarios() {
     clearTimeout(timerEmail.current)
     setVerificando(v => ({ ...v, email: true }))
     timerEmail.current = setTimeout(() => {
-      const existe = usuarios.find(u => u.email?.toLowerCase() === email.toLowerCase() && u.id !== itemId)
+      const existe = usuarios.find(u =>
+        u.email?.toLowerCase() === email.toLowerCase() && u.id !== itemId
+      )
       setVerificando(v => ({ ...v, email: false }))
       if (existe) setErrores(p => ({ ...p, email: 'Este correo ya está registrado' }))
     }, 400)
@@ -86,26 +96,41 @@ export function useUsuarios() {
     clearTimeout(timerDoc.current)
     setVerificando(v => ({ ...v, numero_documento: true }))
     timerDoc.current = setTimeout(() => {
-      const existe = usuarios.find(u => u.numero_documento === doc && u.id !== itemId)
+      const existe = usuarios.find(u =>
+        u.numero_documento === doc && u.id !== itemId
+      )
       setVerificando(v => ({ ...v, numero_documento: false }))
       if (existe) setErrores(p => ({ ...p, numero_documento: 'Este documento ya está registrado' }))
     }, 400)
   }, [usuarios])
 
   const guardar = useMutation({
-    mutationFn: data => modal.item ? usuariosService.update(modal.item.id, data) : usuariosService.create(data),
-    onSuccess: () => { qc.invalidateQueries(['usuarios']); cerrarModal(); toast.success('Usuario guardado') },
+    mutationFn: data => modal.item
+      ? usuariosService.update(modal.item.id, data)
+      : usuariosService.create(data),
+    onSuccess: () => {
+      qc.invalidateQueries(['usuarios'])
+      cerrarModal()
+      toast.success('Usuario guardado')
+    },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error al guardar'),
   })
 
   const toggleEstado = useMutation({
     mutationFn: usuariosService.toggleEstado,
-    onSuccess: () => { qc.invalidateQueries(['usuarios']); toast.success('Estado actualizado') },
+    onSuccess: () => {
+      qc.invalidateQueries(['usuarios'])
+      toast.success('Estado actualizado')
+    },
   })
 
   const eliminar = useMutation({
     mutationFn: usuariosService.delete,
-    onSuccess: () => { qc.invalidateQueries(['usuarios']); setModalEliminar({ abierto: false, item: null }); toast.success('Usuario eliminado') },
+    onSuccess: () => {
+      qc.invalidateQueries(['usuarios'])
+      setModalEliminar({ abierto: false, item: null })
+      toast.success('Usuario eliminado')
+    },
     onError: err => toast.error(err.response?.data?.mensaje || 'No se puede eliminar'),
   })
 
@@ -135,7 +160,6 @@ export function useUsuarios() {
 
   const handleChange = (campo, valor) => {
     if ((campo === 'telefono' || campo === 'numero_documento') && valor && !/^\d*$/.test(valor)) return
-    // Máximo 10 dígitos en teléfono y documento
     if ((campo === 'telefono' || campo === 'numero_documento') && valor.length > 10) return
     if ((campo === 'nombre' || campo === 'apellido') && valor && !SOLO_LETRAS.test(valor)) return
     const nuevo = { ...form, [campo]: valor }
@@ -153,7 +177,10 @@ export function useUsuarios() {
     campos.forEach(c => { nuevosErrores[c] = validarCampo(c, form[c], !!modal.item) })
     setErrores(nuevosErrores)
     if (Object.values(nuevosErrores).some(Boolean)) return
-    if (Object.values(verificando).some(Boolean)) { toast.error('Espera, verificando datos...'); return }
+    if (Object.values(verificando).some(Boolean)) {
+      toast.error('Espera, verificando datos...')
+      return
+    }
     const data = { ...form }
     if (modal.item && !data.password) delete data.password
     guardar.mutate(data)
