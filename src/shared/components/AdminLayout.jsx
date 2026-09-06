@@ -54,8 +54,9 @@ const estadoInicial = () => {
 function SidebarContent({
   collapsed, mobile, usuario, handleLogout,
   toggleCollapse, gruposAbiertos, toggleGrupo,
-  onCambiarContrasena, tienePermiso, esAdmin,
+  onCambiarContrasena,
 }) {
+  const { tienePermiso, esAdmin } = useAuth()
   const navRef = useRef(null)
   const [perfilAbierto, setPerfilAbierto] = useState(false)
 
@@ -88,7 +89,8 @@ function SidebarContent({
                 e.target.nextSibling.style.display = 'flex'
               }} />
             <span style={{ display: 'none' }}
-              className="w-full h-full items-center justify-center text-xs font-bold text-primary">
+              className="w-full h-full items-center justify-center
+                text-xs font-bold text-primary">
               S
             </span>
           </div>
@@ -106,7 +108,7 @@ function SidebarContent({
         )}
       </div>
 
-      {/* Dashboard — solo si tiene permiso */}
+      {/* Dashboard */}
       {puedeDashboard && (
         <div className="px-2 pt-2">
           <NavLink to="/admin" end
@@ -252,7 +254,7 @@ function SidebarContent({
 }
 
 export default function AdminLayout() {
-  const { usuario, logout, tienePermiso, esAdmin } = useAuth()
+  const { usuario, logout } = useAuth()
   const navigate = useNavigate()
   const [collapsed, setCollapsed]             = useState(false)
   const [menuMovil, setMenuMovil]             = useState(false)
@@ -274,7 +276,6 @@ export default function AdminLayout() {
   const sidebarProps = {
     usuario, handleLogout, toggleCollapse,
     gruposAbiertos, toggleGrupo,
-    tienePermiso, esAdmin,
     onCambiarContrasena: () => setModalContrasena(true),
   }
 
