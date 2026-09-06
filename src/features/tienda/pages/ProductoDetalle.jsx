@@ -81,9 +81,9 @@ export default function ProductoDetalle() {
   const disponible = producto.stock > 0
 
   const INFO_CARDS = [
-    { icon: MapPin,      label: 'Tienda física', sub: 'Medellín',                color: 'bg-primary/10 text-primary' },
-    { icon: ShieldCheck, label: 'Calidad',        sub: 'Garantizada',             color: 'bg-green-50 text-green-600' },
-    { icon: Banknote,    label: 'Pago',           sub: 'Efectivo o transferencia', color: 'bg-gray-100 text-gray-600' },
+    { icon: MapPin,      label: 'Tienda física', sub: 'Medellín',                 color: 'bg-primary/10 text-primary'  },
+    { icon: ShieldCheck, label: 'Calidad',        sub: 'Garantizada',              color: 'bg-green-50 text-green-600'  },
+    { icon: Banknote,    label: 'Pago',           sub: 'Efectivo o transferencia', color: 'bg-gray-100 text-gray-600'   },
   ]
 
   return (
@@ -98,20 +98,20 @@ export default function ProductoDetalle() {
               className="text-xs text-gray-400 hover:text-primary transition-colors font-medium">
               Inicio
             </Link>
-            <span className="text-gray-200 text-sm">/</span>
+            <span className="text-gray-200">/</span>
             <Link to="/productos"
               className="text-xs text-gray-400 hover:text-primary transition-colors font-medium">
               Productos
             </Link>
             {producto.categoria && (<>
-              <span className="text-gray-200 text-sm">/</span>
+              <span className="text-gray-200">/</span>
               <Link to={`/productos?categoria=${producto.categoria_id}`}
                 className="text-xs text-primary/70 hover:text-primary
                   transition-colors font-semibold">
                 {producto.categoria}
               </Link>
             </>)}
-            <span className="text-gray-200 text-sm">/</span>
+            <span className="text-gray-200">/</span>
             <span className="text-xs font-bold text-gray-700 truncate max-w-[200px]">
               {producto.nombre}
             </span>
@@ -134,28 +134,23 @@ export default function ProductoDetalle() {
 
             {/* Imagen principal */}
             <div className="relative aspect-square rounded-3xl overflow-hidden
-              bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200
-              shadow-xl group">
+              border border-gray-200 shadow-xl group bg-gray-50">
 
               {imagenes.length > 0 ? (
                 <>
                   {/* Fondo difuminado */}
-                  <div className="absolute inset-0 scale-110 blur-2xl opacity-20">
+                  <div className="absolute inset-0 scale-110 blur-2xl opacity-30">
                     <img src={imagenes[imgIdx]} alt=""
                       className="w-full h-full object-cover" />
                   </div>
 
-                  {/* Imagen centrada */}
-                  <div className="relative z-10 w-full h-full flex items-center
-                    justify-center p-10">
-                    <img src={imagenes[imgIdx]} alt={producto.nombre}
-                      className="max-w-full max-h-full object-contain
-                        drop-shadow-2xl transition-all duration-500
-                        group-hover:scale-105"
-                      onError={e => e.target.style.display = 'none'} />
-                  </div>
+                  {/* Imagen principal — llena el cuadro */}
+                  <img src={imagenes[imgIdx]} alt={producto.nombre}
+                    className="relative z-10 w-full h-full object-cover
+                      transition-all duration-500 group-hover:scale-105"
+                    onError={e => e.target.style.display = 'none'} />
 
-                  {/* Flechas navegación */}
+                  {/* Flechas */}
                   {imagenes.length > 1 && (<>
                     <button onClick={prev}
                       className="absolute left-3 top-1/2 -translate-y-1/2 z-20
@@ -177,7 +172,7 @@ export default function ProductoDetalle() {
                     </button>
                   </>)}
 
-                  {/* Badge agotado */}
+                  {/* Agotado */}
                   {!disponible && (
                     <div className="absolute inset-0 z-30 bg-black/50
                       flex items-center justify-center backdrop-blur-[2px]">
@@ -200,7 +195,7 @@ export default function ProductoDetalle() {
                 </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Package size={80} className="text-gray-300" />
+                  <Package size={80} className="text-gray-200" />
                 </div>
               )}
             </div>
@@ -211,13 +206,13 @@ export default function ProductoDetalle() {
                 {imagenes.map((img, i) => (
                   <button key={i} onClick={() => setImgIdx(i)}
                     className={`shrink-0 w-16 h-16 rounded-2xl overflow-hidden
-                      border-2 bg-gray-50 p-1 transition-all duration-200 ${
+                      border-2 transition-all duration-200 ${
                       i === imgIdx
                         ? 'border-primary shadow-md shadow-primary/20 scale-105'
                         : 'border-gray-200 hover:border-primary/40 opacity-60 hover:opacity-100'
                     }`}>
                     <img src={img} alt=""
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover"
                       onError={e => e.target.style.display = 'none'} />
                   </button>
                 ))}
