@@ -2,22 +2,22 @@
 import { DollarSign, Clock, TrendingUp, Calendar, Download } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 import { useDashboard } from '../hooks/useDashboard'
-import DashboardStatCard       from '../components/DashboardStatCard'
-import DashboardVentas         from '../components/DashboardVentas'
-import DashboardTopProductos   from '../components/DashboardTopProductos'
-import DashboardVentasMes      from '../components/DashboardVentasMes'
+import DashboardStatCard        from '../components/DashboardStatCard'
+import DashboardVentas          from '../components/DashboardVentas'
+import DashboardTopProductos    from '../components/DashboardTopProductos'
+import DashboardMetodosPago     from '../components/DashboardMetodosPago'
 import DashboardConfirmDescarga from '../components/Dashboardconfirmdescarga'
 import DashboardBajoStock       from '../components/DashboardBajoStock'
 
 export default function Dashboard() {
   const {
-    data, isLoading, ventasMes, bajoStock, ventasGrafica,
+    data, isLoading, ventasGrafica,
     totalSemana, totalMes,
     periodoVentas, setPeriodoVentas,
     descargarReporte,
   } = useDashboard()
 
-  const [confirmDescarga, setConfirmDescarga] = useState(null) // null | { tipo: 'semana' } | { tipo: 'mes' }
+  const [confirmDescarga, setConfirmDescarga] = useState(null)
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
@@ -47,6 +47,7 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <DashboardStatCard
           icon={DollarSign} label="Ventas Hoy"
@@ -72,22 +73,27 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* Gráfica barras + bajo stock */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <DashboardVentas
           ventasGrafica={ventasGrafica}
           periodoVentas={periodoVentas}
           setPeriodoVentas={setPeriodoVentas}
         />
-        <DashboardBajoStock productos={bajoStock} />
+        <DashboardBajoStock productos={data.bajo_stock || []} />
       </div>
 
+      {/* Pasteles */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <DashboardTopProductos productos={data.productos_top} />
-        <DashboardVentasMes ventasMes={ventasMes} />
+        <DashboardTopProductos categorias={data.categorias_mas_vendidas || []} />
+        <DashboardMetodosPago  metodosPago={data.metodos_pago || []} />
       </div>
 
-      <DashboardConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga}
-        descargarReporte={descargarReporte} />
+      <DashboardConfirmDescarga
+        confirmDescarga={confirmDescarga}
+        setConfirmDescarga={setConfirmDescarga}
+        descargarReporte={descargarReporte}
+      />
     </div>
   )
 }

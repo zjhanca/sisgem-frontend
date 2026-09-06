@@ -1,24 +1,27 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { Package } from 'lucide-react'
+import { CreditCard } from 'lucide-react'
 
-const COLORES = ['#1E9E50', '#2DB860', '#374151', '#6B7280', '#9CA3AF', '#D1D5DB']
+const COLORES = ['#1E9E50', '#374151', '#6B7280', '#9CA3AF']
+
+const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1) : str
 
 const tooltipStyle = {
   contentStyle: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12 },
   labelStyle:   { color: '#1D3326', fontWeight: 600 },
 }
 
-export default function DashboardTopProductos({ categorias = [] }) {
-  const datos = categorias.map(c => ({
-    name:  c.categoria,
-    value: +c.total_vendido,
+export default function DashboardMetodosPago({ metodosPago = [] }) {
+  const datos = metodosPago.map(m => ({
+    name:     capitalizar(m.metodo),
+    value:    +m.cantidad,
+    total:    +m.total,
   }))
 
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-light-text">Categorías más vendidas</h2>
-        <Package size={14} className="text-primary/50" />
+        <h2 className="text-sm font-semibold text-light-text">Métodos de Pago</h2>
+        <CreditCard size={14} className="text-primary/50" />
       </div>
       {!datos.length ? (
         <p className="text-xs text-gray-400 text-center py-8">Sin datos disponibles</p>
@@ -34,7 +37,7 @@ export default function DashboardTopProductos({ categorias = [] }) {
               paddingAngle={3}
               dataKey="value"
               label={({ name, percent }) =>
-                percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''
+                `${name} ${(percent * 100).toFixed(0)}%`
               }
               labelLine={false}
             >
@@ -44,7 +47,7 @@ export default function DashboardTopProductos({ categorias = [] }) {
             </Pie>
             <Tooltip
               {...tooltipStyle}
-              formatter={(v, name) => [`${v} uds`, name]}
+              formatter={(v, name) => [`${v} transacciones`, name]}
             />
             <Legend
               iconType="circle"
