@@ -17,10 +17,6 @@ export default function ProveedorDetalle({ modalDetalle, setModalDetalle, abrirM
             <div><p className="campo-label">Contacto</p><p>{item.contacto || '—'}</p></div>
             <div><p className="campo-label">Teléfono</p><p>{item.telefono || '—'}</p></div>
             <div><p className="campo-label">Correo</p><p>{item.email || '—'}</p></div>
-            <div><p className="campo-label">Dirección</p><p>{item.direccion || '—'}</p></div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
           </div>
         </div>
       )}

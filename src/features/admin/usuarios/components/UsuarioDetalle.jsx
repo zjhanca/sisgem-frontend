@@ -17,11 +17,6 @@ export default function UsuarioDetalle({ modalDetalle, setModalDetalle, abrirMod
             <div><p className="campo-label">Rol</p><p>{item.rol}</p></div>
             <div className="col-span-2"><p className="campo-label">Correo</p><p>{item.email}</p></div>
           </div>
-          <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-dark-border">
-            {!esAdmin && (
-              <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs"><Edit2 size={12} /> Editar</button>
-            )}
-          </div>
         </div>
       )}
     </Modal>

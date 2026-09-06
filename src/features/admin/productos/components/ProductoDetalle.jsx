@@ -77,10 +77,6 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
                 <p className={item.stock <= 5 ? 'text-red-400 font-semibold' : ''}>{item.stock} uds</p>
               </div>
               <div>
-                <p className="campo-label">Margen</p>
-                <p className="font-medium">{item.margen != null ? `${item.margen}%` : '—'}</p>
-              </div>
-              <div>
                 <p className="campo-label">Categoría</p>
                 <p className="truncate">{item.categoria || '—'}</p>
               </div>
@@ -99,15 +95,6 @@ export default function ProductoDetalle({ modalDetalle, setModalDetalle, abrirMo
             <div className="pt-2 border-t border-gray-100">
               <p className="campo-label">Descripción</p>
               <p className="text-sm text-gray-600">{item.descripcion}</p>
-            </div>
-          )}
-
-          {/* Botón editar — solo admin */}
-          {puedeEditar && (
-            <div className="flex justify-end pt-2 border-t border-gray-100">
-              <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs">
-                <Edit2 size={12} /> Editar
-              </button>
             </div>
           )}
         </div>

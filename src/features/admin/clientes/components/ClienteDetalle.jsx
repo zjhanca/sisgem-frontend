@@ -90,12 +90,6 @@ export default function ClienteDetalle({ modalDetalle, setModalDetalle, abrirMod
               )
             }
           </div>
-
-          <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-dark-border">
-            <button onClick={() => { cerrar(); abrirModal(item) }} className="btn-outline text-xs">
-              <Edit2 size={12} /> Editar
-            </button>
-          </div>
         </div>
       )}
     </Modal>
