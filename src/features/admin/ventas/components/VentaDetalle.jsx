@@ -58,8 +58,16 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
 
   const productos = detalle?.productos || []
 
+  // Calcular saldo pendiente solo para crédito
+  const totalPagado = detalle?.total_pagado != null
+    ? parseFloat(detalle.total_pagado)
+    : null
+  const saldoPendiente = esCredito && totalPagado != null
+    ? Math.max(0, parseFloat(venta.total) - totalPagado)
+    : null
+
   return (
-    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo={`Venta #${venta?.id}`}>
+    <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre titulo={`Venta ${venta?.id}`}>
       {venta && (
         <div className="flex flex-col" style={{ maxHeight: '80vh' }}>
           <div className="overflow-y-auto flex-1 space-y-3 text-xs pr-1">
@@ -79,12 +87,14 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   {venta.origen === 'movil' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/15 border border-blue-500/30 text-blue-500">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                      text-xs font-medium bg-blue-500/15 border border-blue-500/30 text-blue-500">
                       <Smartphone size={10} /> App
                     </span>
                   )}
                   {venta.es_fiado && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 border border-amber-500/30 text-amber-500">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full
+                      text-xs font-medium bg-amber-500/15 border border-amber-500/30 text-amber-500">
                       Crédito
                     </span>
                   )}
@@ -121,7 +131,9 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
             <div className="flex items-center justify-between px-1">
               <div>
                 <p className="campo-label">Método de pago</p>
-                <p className="font-medium capitalize">{detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}</p>
+                <p className="font-medium capitalize">
+                  {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
+                </p>
               </div>
               <div className="text-right">
                 <p className="campo-label">Entrega</p>
@@ -177,12 +189,15 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                     <div key={p.id} className="flex items-center gap-2 p-2 rounded bg-gray-50">
                       {p.imagen_url
                         ? <img src={p.imagen_url} alt="" className="w-8 h-8 object-cover rounded shrink-0"
-                            onError={e => e.target.style.display='none'} />
-                        : <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary/50 shrink-0">—</div>
+                            onError={e => e.target.style.display = 'none'} />
+                        : <div className="w-8 h-8 bg-primary/10 rounded flex items-center
+                            justify-center text-xs text-primary/50 shrink-0">—</div>
                       }
                       <div className="flex-1 min-w-0">
                         <p className="truncate font-medium">{p.producto}</p>
-                        {p.codigo_barras && <p className="text-gray-400 font-mono">{p.codigo_barras}</p>}
+                        {p.codigo_barras && (
+                          <p className="text-gray-400 font-mono">{p.codigo_barras}</p>
+                        )}
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-gray-400">{p.cantidad} × {formatPrecio(p.precio_unitario)}</p>
@@ -195,12 +210,45 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
             </div>
           </div>
 
-          {/* Total + acciones */}
-          <div className="pt-3 mt-3 border-t border-gray-100 shrink-0 space-y-3">
+          {/* Total + saldo + acciones */}
+          <div className="pt-3 mt-3 border-t border-gray-100 shrink-0 space-y-2">
             <div className="flex justify-between items-center px-1">
-              <span className="text-sm font-semibold">Total</span>
+              <span className="text-sm font-semibold">Total venta</span>
               <span className="text-lg font-bold text-primary">{formatPrecio(venta.total)}</span>
             </div>
+
+            {/* Saldo pendiente — solo si es crédito */}
+            {esCredito && (
+              <>
+                {totalPagado != null && (
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-xs text-gray-400">Total pagado</span>
+                    <span className="text-sm font-semibold text-green-600">
+                      {formatPrecio(totalPagado)}
+                    </span>
+                  </div>
+                )}
+                {saldoPendiente != null && (
+                  <div className={`flex justify-between items-center px-3 py-2 rounded-lg ${
+                    saldoPendiente === 0
+                      ? 'bg-green-50 border border-green-100'
+                      : 'bg-red-50 border border-red-100'
+                  }`}>
+                    <span className={`text-xs font-semibold ${
+                      saldoPendiente === 0 ? 'text-green-600' : 'text-red-500'
+                    }`}>
+                      {saldoPendiente === 0 ? 'Deuda saldada' : 'Saldo pendiente'}
+                    </span>
+                    <span className={`text-sm font-bold ${
+                      saldoPendiente === 0 ? 'text-green-600' : 'text-red-500'
+                    }`}>
+                      {saldoPendiente === 0 ? '—' : formatPrecio(saldoPendiente)}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+
             <button
               onClick={() => descargarPDF(`/reportes/pedido/${venta.id}`, `comprobante-${venta.id}.pdf`)}
               className="btn-outline text-xs w-full justify-center">
