@@ -4,38 +4,39 @@ import { useAuth } from '../contexts/AuthContext'
 import { Menu, X, LogOut } from 'lucide-react'
 
 export default function NavbarPublico() {
-  const { usuario, logout } = useAuth()
-  const navigate  = useNavigate()
-  const location  = useLocation()
+  const { usuario, logout, puedeAccederAdmin } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [menuMovil, setMenuMovil] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/') }
 
-  const esAdmin   = usuario && +usuario.rol_id === 1
-  const esCajero  = usuario && +usuario.rol_id === 13
-  const esCliente = usuario && +usuario.rol_id === 11
-  const enAdmin   = location.pathname.startsWith('/admin')
-  const enPerfil  = location.pathname === '/perfil'
+  const puedeAdmin = puedeAccederAdmin()
+  const enAdmin    = location.pathname.startsWith('/admin')
+  const enPerfil   = location.pathname === '/perfil'
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center gap-4">
-
         <Link to="/" className="shrink-0 flex items-center gap-2">
           <img src="/logo.png" alt="Sisgem"
             className="h-9 w-auto object-contain"
-            onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='block' }} />
-          <span style={{display:'none'}} className="text-xl font-bold text-primary">Sisgem</span>
+            onError={e => {
+              e.target.style.display = 'none'
+              e.target.nextSibling.style.display = 'block'
+            }} />
+          <span style={{ display: 'none' }} className="text-xl font-bold text-primary">
+            Sisgem
+          </span>
         </Link>
 
         <div className="flex items-center gap-2 ml-auto shrink-0">
           {usuario ? (
             <div className="flex items-center gap-2">
-
               {/* Saludo */}
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg">
-                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center
-                  text-white text-xs font-bold shrink-0">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center
+                  justify-center text-white text-xs font-bold shrink-0">
                   {usuario.nombre?.charAt(0).toUpperCase()}
                 </div>
                 <span className="text-xs font-medium text-light-text">
@@ -43,27 +44,30 @@ export default function NavbarPublico() {
                 </span>
               </div>
 
-              {/* Panel Admin — admin y cajero */}
-              {(esAdmin || esCajero) && (
+              {/* Panel Admin — cualquier usuario con permisos admin */}
+              {puedeAdmin && (
                 enAdmin ? (
                   <span className="hidden md:block px-3 py-1.5 text-xs rounded-lg
-                    border border-primary/30 text-primary/40 font-medium cursor-default select-none">
+                    border border-primary/30 text-primary/40 font-medium
+                    cursor-default select-none">
                     Panel Admin
                   </span>
                 ) : (
                   <Link to="/admin"
                     className="hidden md:block px-3 py-1.5 text-xs rounded-lg
-                      border border-primary/30 text-primary hover:bg-primary/5 transition-colors font-medium">
+                      border border-primary/30 text-primary hover:bg-primary/5
+                      transition-colors font-medium">
                     Panel Admin
                   </Link>
                 )
               )}
 
-              {/* Mi Panel — solo clientes */}
-              {esCliente && !enPerfil && (
+              {/* Mi Panel — solo si NO puede acceder al admin */}
+              {!puedeAdmin && !enPerfil && (
                 <Link to="/perfil"
                   className="hidden md:block px-3 py-1.5 text-xs rounded-lg
-                    border border-primary/30 text-primary hover:bg-primary/5 transition-colors font-medium">
+                    border border-primary/30 text-primary hover:bg-primary/5
+                    transition-colors font-medium">
                   Mi Panel
                 </Link>
               )}
@@ -77,7 +81,8 @@ export default function NavbarPublico() {
           ) : (
             <div className="hidden sm:flex items-center gap-2">
               <Link to="/login"
-                className="px-3 py-1.5 text-xs text-gray-500 hover:text-primary transition-colors font-medium">
+                className="px-3 py-1.5 text-xs text-gray-500 hover:text-primary
+                  transition-colors font-medium">
                 Entrar
               </Link>
               <Link to="/register" className="btn-primary text-xs px-3 py-1.5">
@@ -93,36 +98,47 @@ export default function NavbarPublico() {
         </div>
       </div>
 
+      {/* Menú móvil */}
       {menuMovil && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-2">
           {usuario ? (
             <>
               <div className="flex items-center gap-2 py-1.5">
-                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center
+                  justify-center text-white text-xs font-bold">
                   {usuario.nombre?.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm font-medium text-light-text">Hola, {usuario.nombre}</span>
+                <span className="text-sm font-medium text-light-text">
+                  Hola, {usuario.nombre}
+                </span>
               </div>
-              {(esAdmin || esCajero) && (
+              {puedeAdmin && (
                 <Link to="/admin" onClick={() => setMenuMovil(false)}
                   className="block text-sm py-1.5 text-primary font-medium">
                   Panel Admin
                 </Link>
               )}
-              {esCliente && !enPerfil && (
+              {!puedeAdmin && !enPerfil && (
                 <Link to="/perfil" onClick={() => setMenuMovil(false)}
                   className="block text-sm py-1.5 text-primary font-medium">
                   Mi Panel
                 </Link>
               )}
-              <button onClick={handleLogout} className="block text-sm py-1.5 text-red-400 text-left w-full">
+              <button onClick={handleLogout}
+                className="block text-sm py-1.5 text-red-400 text-left w-full">
                 Cerrar Sesión
               </button>
             </>
           ) : (
             <>
-              <Link to="/login"    onClick={() => setMenuMovil(false)} className="block text-sm py-1.5 text-gray-600">Entrar</Link>
-              <Link to="/register" onClick={() => setMenuMovil(false)} className="block text-sm py-1.5 text-primary font-medium">Crear Cuenta</Link>
+              <Link to="/login" onClick={() => setMenuMovil(false)}
+                className="block text-sm py-1.5 text-gray-600">
+                Entrar
+              </Link>
+              <Link to="/register" onClick={() => setMenuMovil(false)}
+                className="block text-sm py-1.5 text-primary font-medium">
+                Crear Cuenta
+              </Link>
             </>
           )}
         </div>
