@@ -2,6 +2,7 @@ import { useHome }        from '../hooks/useHome'
 import NavbarPublico      from '@shared/components/NavbarPublico'
 import Carrusel           from '../components/Carrusel'
 import CategoryCarousel   from '../components/CategoryCarousel'
+import BannerTriptico     from '../components/BannerTriptico'
 import FeaturedProducts   from '../components/FeaturedProducts'
 import PromotionalBanners from '../components/PromotionalBanners'
 import BrandCarousel      from '../components/BrandCarousel'
@@ -16,6 +17,7 @@ export default function Home() {
       <NavbarPublico />
       <Carrusel />
       <CategoryCarousel categorias={categorias} />
+      <BannerTriptico />
       <FeaturedProducts productos={productos} />
       <PromotionalBanners />
       <BrandCarousel marcas={marcas} />
