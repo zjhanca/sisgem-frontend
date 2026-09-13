@@ -1,9 +1,9 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
 import ModalCambiarContrasena from '@shared/components/ModalCambiarContrasena'
 import { useQuery } from '@tanstack/react-query'
-import { pedidosService } from '@features/pedidos/services/pedidosService'
+import { pedidosService } from '../../features/pedidos/services/pedidosService'
 import {
   LayoutDashboard, BarChart2,
   Package, Tag, Grid3X3, Users, Shield,
@@ -53,7 +53,6 @@ const estadoInicial = () => {
   return MENU.reduce((acc, g) => ({ ...acc, [g.id]: true }), {})
 }
 
-// Hook para contar pedidos pendientes desde el layout
 function usePedidosBadge() {
   const { data: pedidos = [] } = useQuery({
     queryKey:        ['pedidos'],
@@ -148,7 +147,7 @@ function SidebarContent({
         </div>
       )}
 
-      {/* Menú filtrado */}
+      {/* Menú */}
       <nav ref={navRef}
         className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
         {menuFiltrado.map(grupo => {
@@ -169,7 +168,6 @@ function SidebarContent({
                     }
                     title={item.label}>
                     <item.icon size={16} />
-                    {/* Badge colapsado */}
                     {item.badge && totalBadge > 0 && (
                       <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1
                         rounded-full bg-red-500 text-white text-[9px] font-bold
@@ -206,7 +204,6 @@ function SidebarContent({
                       }>
                       <item.icon size={15} />
                       <span className="flex-1">{item.label}</span>
-                      {/* Badge expandido */}
                       {item.badge && totalBadge > 0 && (
                         <span className="min-w-[20px] h-5 px-1.5 rounded-full
                           bg-red-500 text-white text-[10px] font-bold
@@ -316,12 +313,10 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen bg-light-bg overflow-hidden">
-      {/* Sidebar desktop */}
       <div className="hidden md:flex shrink-0">
         <SidebarContent {...sidebarProps} collapsed={collapsed} mobile={false} />
       </div>
 
-      {/* Sidebar móvil */}
       {menuMovil && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={cerrarMovil} />
@@ -334,7 +329,6 @@ export default function AdminLayout() {
         </div>
       )}
 
-      {/* Contenido */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="md:hidden flex items-center gap-3 px-4 py-3
           border-b border-gray-200 bg-white">

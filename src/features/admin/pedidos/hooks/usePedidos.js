@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { pedidosService } from '../services/pedidosService'
 import toast from 'react-hot-toast'
-import { ShoppingBag } from 'lucide-react'
 
 export function usePedidos() {
   const qc = useQueryClient()
@@ -16,7 +15,7 @@ export function usePedidos() {
   const { data: pedidosTodos = [] } = useQuery({
     queryKey:        ['pedidos'],
     queryFn:         pedidosService.getAll,
-    refetchInterval: 30_000, // auto-refresh cada 30s
+    refetchInterval: 30_000,
     staleTime:       0,
   })
 
@@ -33,32 +32,13 @@ export function usePedidos() {
     const prevIds = new Set(prev.map(p => p.id))
 
     if (prev.length > 0) {
-      // Pedidos nuevos pendientes
       const nuevos = pedidosMovil.filter(
         p => !prevIds.has(p.id) && (p.estado || '').toLowerCase().includes('pendiente')
       )
       nuevos.forEach(p => {
-        toast(
-          t => (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center
-                justify-center shrink-0">
-                <ShoppingBag size={16} className="text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Nuevo pedido #{p.id}</p>
-                <p className="text-xs text-gray-500">{p.cliente || 'Sin nombre'}</p>
-              </div>
-            </div>
-          ),
-          {
-            duration: 6000,
-            style: {
-              border: '1px solid #22C55E',
-              padding: '10px 14px',
-              borderRadius: '12px',
-            },
-          }
+        toast.success(
+          `Nuevo pedido #${p.id} — ${p.cliente || 'Sin nombre'}`,
+          { duration: 6000 }
         )
       })
     }
