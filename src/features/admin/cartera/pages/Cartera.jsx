@@ -2,10 +2,14 @@ import { useState } from 'react'
 import { CreditCard, Search, Plus } from 'lucide-react'
 import { formatPrecio, formatFecha } from '@shared/utils/validaciones'
 import { usePagos } from '@features/admin/pagos/hooks/usePagos'
+import { useAuth } from '@shared/contexts/AuthContext'
 import PagoForm from '@features/admin/pagos/components/PagoForm'
 import CarteraDetalle from '../components/CarteraDetalle'
 
 export default function Cartera() {
+  const { tienePermiso, esAdmin } = useAuth()
+  const puedeAbonar = esAdmin() || tienePermiso('gestionar_cartera')
+
   const {
     clientesConDeuda, deudaPorCliente,
     form, setForm, errores,
@@ -41,7 +45,8 @@ export default function Cartera() {
       </div>
 
       {/* Resumen total */}
-      <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 flex items-center justify-between">
+      <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-100
+        flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
             <CreditCard size={18} className="text-red-500" />
@@ -59,7 +64,8 @@ export default function Cartera() {
 
       {/* Buscador */}
       <div className="relative mb-4 w-64">
-        <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2
+          text-gray-400 pointer-events-none" />
         <input value={busqueda} onChange={e => setBusqueda(e.target.value)}
           placeholder="Buscar cliente..."
           className="pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-200
@@ -86,12 +92,13 @@ export default function Cartera() {
 
             return (
               <div key={c.id}
-                className="flex items-center justify-between p-4 rounded-xl border border-gray-200
-                  bg-white hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer"
+                className="flex items-center justify-between p-4 rounded-xl border
+                  border-gray-200 bg-white hover:border-primary/30 hover:shadow-sm
+                  transition-all cursor-pointer"
                 onClick={() => setClienteVer(c)}>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center
-                    text-sm font-bold text-red-500 shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-red-100 flex items-center
+                    justify-center text-sm font-bold text-red-500 shrink-0">
                     {c.nombre?.charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -105,14 +112,18 @@ export default function Cartera() {
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <p className="text-xs text-gray-400">Deuda</p>
-                    <p className="text-base font-bold text-red-500">{formatPrecio(deuda.total_deuda)}</p>
+                    <p className="text-base font-bold text-red-500">
+                      {formatPrecio(deuda.total_deuda)}
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={e => { e.stopPropagation(); abrirConCliente(c.id) }}
-                    className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1">
-                    <Plus size={12} /> Abono
-                  </button>
+                  {puedeAbonar && (
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); abrirConCliente(c.id) }}
+                      className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1">
+                      <Plus size={12} /> Abono
+                    </button>
+                  )}
                 </div>
               </div>
             )
@@ -125,7 +136,7 @@ export default function Cartera() {
         cliente={clienteVer}
         deuda={clienteVer ? deudaPorCliente[clienteVer.id] : null}
         onCerrar={() => setClienteVer(null)}
-        onAbono={c => { abrirConCliente(c.id); setClienteVer(null) }}
+        onAbono={puedeAbonar ? c => { abrirConCliente(c.id); setClienteVer(null) } : null}
       />
 
       {/* Form abono */}

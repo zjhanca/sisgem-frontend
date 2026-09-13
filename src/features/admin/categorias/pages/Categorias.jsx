@@ -2,6 +2,7 @@
 import { Plus, Edit2, Trash2 } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { useCategorias } from '../hooks/useCategorias'
+import { useAuth } from '@shared/contexts/AuthContext'
 import CategoriaForm          from '../components/CategoriaForm'
 import CategoriaEliminar      from '../components/CategoriaEliminar'
 import CategoriaConfirmEstado from '../components/Categoriaconfirmestado'
@@ -10,29 +11,43 @@ import { formatFecha } from '@shared/utils/validaciones'
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (
     <button type="button" onClick={e => { e.stopPropagation(); onClick() }}
-      className={`inline-flex items-center h-6 rounded-full px-1 transition-colors duration-200 cursor-pointer w-24 relative ${
-        activo ? 'bg-primary' : 'bg-gray-300'
-      }`}>
-      <span className={`absolute inline-block w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${
-        activo ? 'left-1' : 'left-[calc(100%-1.25rem)]'
-      }`} />
+      className={`inline-flex items-center h-6 rounded-full px-1 transition-colors
+        duration-200 cursor-pointer w-24 relative ${activo ? 'bg-primary' : 'bg-gray-300'}`}>
+      <span className={`absolute inline-block w-4 h-4 rounded-full bg-white shadow-sm
+        transition-all duration-200 ${activo ? 'left-1' : 'left-[calc(100%-1.25rem)]'}`} />
       <span className={`w-full text-center text-xs font-semibold transition-all duration-200 ${
-        activo ? 'pl-5 text-white' : 'pr-5 text-white/80'
-      }`}>
+        activo ? 'pl-5 text-white' : 'pr-5 text-white/80'}`}>
         {activo ? labelActivo : labelInactivo}
       </span>
     </button>
   )
 }
 
+function SwitchEstadoReadonly({ activo }) {
+  return (
+    <span className={`inline-flex items-center h-6 rounded-full px-1 w-24 relative
+      opacity-50 cursor-not-allowed ${activo ? 'bg-primary' : 'bg-gray-300'}`}>
+      <span className={`absolute inline-block w-4 h-4 rounded-full bg-white shadow-sm
+        ${activo ? 'left-1' : 'left-[calc(100%-1.25rem)]'}`} />
+      <span className={`w-full text-center text-xs font-semibold
+        ${activo ? 'pl-5 text-white' : 'pr-5 text-white/80'}`}>
+        {activo ? 'Activa' : 'Inactiva'}
+      </span>
+    </span>
+  )
+}
+
 export default function Categorias() {
+  const { tienePermiso, esAdmin } = useAuth()
+  const puedeCrear   = esAdmin() || tienePermiso('crear_categorias')
+  const puedeEditar  = esAdmin() || tienePermiso('editar_categorias')
+  const puedeEliminar= esAdmin() || tienePermiso('eliminar_categorias')
+
   const {
     categorias, form, errores, handleChange, handleSubmit,
-    modal, modalEliminar,
-    setModalEliminar,
+    modal, modalEliminar, setModalEliminar,
     abrirModal, cerrarModal,
-    toggleEstado, eliminar,
-    guardando, eliminando,
+    toggleEstado, eliminar, guardando, eliminando,
   } = useCategorias()
 
   const [confirmToggle, setConfirmToggle] = useState(null)
@@ -42,7 +57,8 @@ export default function Categorias() {
       render: r => r.icono
         ? <img src={r.icono} alt="" className="w-8 h-8 object-contain rounded"
             onError={e => e.target.style.display='none'} />
-        : <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-xs font-bold text-primary">
+        : <div className="w-8 h-8 bg-primary/10 rounded flex items-center
+            justify-center text-xs font-bold text-primary">
             {r.nombre?.charAt(0).toUpperCase()}
           </div>
     },
@@ -50,8 +66,11 @@ export default function Categorias() {
     { key: 'descripcion', label: 'Descripción', render: r => r.descripcion || '—' },
     { key: 'created_at',  label: 'Creada', render: r => formatFecha(r.created_at) },
     { key: 'estado', label: 'Estado',
-      render: r => <SwitchEstado activo={r.estado} labelActivo="Activa" labelInactivo="Inactiva"
-        onClick={() => setConfirmToggle({ id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
+      render: r => puedeEditar
+        ? <SwitchEstado activo={r.estado} labelActivo="Activa" labelInactivo="Inactiva"
+            onClick={() => setConfirmToggle({
+              id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
+        : <SwitchEstadoReadonly activo={r.estado} />
     },
   ]
 
@@ -59,20 +78,26 @@ export default function Categorias() {
     <div>
       <div className="page-header">
         <h1 className="page-title">Categorías</h1>
-        <button onClick={() => abrirModal()} className="btn-primary">
-          <Plus size={14} /> Nueva
-        </button>
+        {puedeCrear && (
+          <button onClick={() => abrirModal()} className="btn-primary">
+            <Plus size={14} /> Nueva
+          </button>
+        )}
       </div>
 
       <Tabla columnas={columnas} datos={categorias}
         acciones={fila => (<>
-          <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar">
-            <Edit2 size={14} />
-          </button>
-          <button onClick={() => setModalEliminar({ abierto: true, item: fila })}
-            className="btn-ghost hover:text-red-400" title="Eliminar">
-            <Trash2 size={14} />
-          </button>
+          {puedeEditar && (
+            <button onClick={() => abrirModal(fila)} className="btn-ghost" title="Editar">
+              <Edit2 size={14} />
+            </button>
+          )}
+          {puedeEliminar && (
+            <button onClick={() => setModalEliminar({ abierto: true, item: fila })}
+              className="btn-ghost hover:text-red-400" title="Eliminar">
+              <Trash2 size={14} />
+            </button>
+          )}
         </>)}
       />
 

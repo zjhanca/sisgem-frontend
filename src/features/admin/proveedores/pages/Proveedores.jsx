@@ -2,6 +2,7 @@
 import { Plus, Edit2, Eye, Trash2, Download } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import { useProveedores } from '../hooks/useProveedores'
+import { useAuth } from '@shared/contexts/AuthContext'
 import ProveedorForm            from '../components/ProveedorForm'
 import ProveedorDetalle         from '../components/ProveedorDetalle'
 import ProveedorEliminar        from '../components/ProveedorEliminar'
@@ -11,22 +12,38 @@ import ProveedorConfirmDescarga from '../components/Proveedorconfirmdescarga'
 function SwitchEstado({ activo, onClick, labelActivo = 'Activo', labelInactivo = 'Inactivo' }) {
   return (
     <button type="button" onClick={e => { e.stopPropagation(); onClick() }}
-      className={`inline-flex items-center h-6 rounded-full px-1 transition-colors duration-200 cursor-pointer w-24 relative ${
-        activo ? 'bg-primary' : 'bg-gray-300'
-      }`}>
-      <span className={`absolute inline-block w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${
-        activo ? 'left-1' : 'left-[calc(100%-1.25rem)]'
-      }`} />
+      className={`inline-flex items-center h-6 rounded-full px-1 transition-colors
+        duration-200 cursor-pointer w-24 relative ${activo ? 'bg-primary' : 'bg-gray-300'}`}>
+      <span className={`absolute inline-block w-4 h-4 rounded-full bg-white shadow-sm
+        transition-all duration-200 ${activo ? 'left-1' : 'left-[calc(100%-1.25rem)]'}`} />
       <span className={`w-full text-center text-xs font-semibold transition-all duration-200 ${
-        activo ? 'pl-5 text-white' : 'pr-5 text-white/80'
-      }`}>
+        activo ? 'pl-5 text-white' : 'pr-5 text-white/80'}`}>
         {activo ? labelActivo : labelInactivo}
       </span>
     </button>
   )
 }
 
+function SwitchEstadoReadonly({ activo }) {
+  return (
+    <span className={`inline-flex items-center h-6 rounded-full px-1 w-24 relative
+      opacity-50 cursor-not-allowed ${activo ? 'bg-primary' : 'bg-gray-300'}`}>
+      <span className={`absolute inline-block w-4 h-4 rounded-full bg-white shadow-sm
+        ${activo ? 'left-1' : 'left-[calc(100%-1.25rem)]'}`} />
+      <span className={`w-full text-center text-xs font-semibold
+        ${activo ? 'pl-5 text-white' : 'pr-5 text-white/80'}`}>
+        {activo ? 'Activo' : 'Inactivo'}
+      </span>
+    </span>
+  )
+}
+
 export default function Proveedores() {
+  const { tienePermiso, esAdmin } = useAuth()
+  const puedeCrear    = esAdmin() || tienePermiso('gestionar_proveedores')
+  const puedeEditar   = esAdmin() || tienePermiso('gestionar_proveedores')
+  const puedeEliminar = esAdmin() || tienePermiso('gestionar_proveedores')
+
   const {
     proveedores, form, errores,
     modal, modalDetalle, modalEliminar,
@@ -35,7 +52,7 @@ export default function Proveedores() {
     toggleEstado, eliminar, guardando, eliminando, verificando, descargarReporte,
   } = useProveedores()
 
-  const [confirmToggle, setConfirmToggle] = useState(null)
+  const [confirmToggle, setConfirmToggle]     = useState(null)
   const [confirmDescarga, setConfirmDescarga] = useState(false)
 
   const columnas = [
@@ -45,8 +62,11 @@ export default function Proveedores() {
     { key: 'telefono',       label: 'Teléfono', render: r => r.telefono || '—' },
     { key: 'email',          label: 'Correo',   render: r => r.email    || '—' },
     { key: 'estado', label: 'Estado',
-      render: r => <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
-        onClick={() => setConfirmToggle({ id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
+      render: r => puedeEditar
+        ? <SwitchEstado activo={r.estado} labelActivo="Activo" labelInactivo="Inactivo"
+            onClick={() => setConfirmToggle({
+              id: r.id, nombre: r.nombre, estadoActual: r.estado })} />
+        : <SwitchEstadoReadonly activo={r.estado} />
     },
   ]
 
@@ -58,15 +78,27 @@ export default function Proveedores() {
           <button onClick={() => setConfirmDescarga(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
-          <button onClick={() => abrirModal()} className="btn-primary"><Plus size={14} /> Nuevo </button>
+          {puedeCrear && (
+            <button onClick={() => abrirModal()} className="btn-primary">
+              <Plus size={14} /> Nuevo
+            </button>
+          )}
         </div>
       </div>
 
       <Tabla columnas={columnas} datos={proveedores}
         acciones={fila => (<>
-          <button onClick={() => setModalDetalle({ abierto: true, item: fila })} className="btn-ghost"><Eye size={14} /></button>
-          <button onClick={() => abrirModal(fila)} className="btn-ghost"><Edit2 size={14} /></button>
-          <button onClick={() => setModalEliminar({ abierto: true, item: fila })} className="btn-ghost hover:text-red-400"><Trash2 size={14} /></button>
+          <button onClick={() => setModalDetalle({ abierto: true, item: fila })}
+            className="btn-ghost"><Eye size={14} /></button>
+          {puedeEditar && (
+            <button onClick={() => abrirModal(fila)} className="btn-ghost">
+              <Edit2 size={14} />
+            </button>
+          )}
+          {puedeEliminar && (
+            <button onClick={() => setModalEliminar({ abierto: true, item: fila })}
+              className="btn-ghost hover:text-red-400"><Trash2 size={14} /></button>
+          )}
         </>)}
       />
 
@@ -74,11 +106,13 @@ export default function Proveedores() {
         handleChange={handleChange} handleSubmit={handleSubmit} cerrarModal={cerrarModal}
         guardando={guardando} verificando={verificando} />
       <ProveedorDetalle modalDetalle={modalDetalle} setModalDetalle={setModalDetalle}
-        abrirModal={abrirModal} toggleEstado={toggleEstado} />
+        abrirModal={puedeEditar ? abrirModal : null} toggleEstado={toggleEstado} />
       <ProveedorEliminar modalEliminar={modalEliminar} setModalEliminar={setModalEliminar}
         eliminar={eliminar} eliminando={eliminando} />
-      <ProveedorConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle} toggleEstado={toggleEstado} />
-      <ProveedorConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga} descargarReporte={descargarReporte} />
+      <ProveedorConfirmEstado confirmToggle={confirmToggle} setConfirmToggle={setConfirmToggle}
+        toggleEstado={toggleEstado} />
+      <ProveedorConfirmDescarga abierto={confirmDescarga} setAbierto={setConfirmDescarga}
+        descargarReporte={descargarReporte} />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import ReporteDescargaModal from '../components/ReporteDescargaModal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
 import { useVentas } from '../hooks/useVentas'
 import { usePagos } from '@features/admin/pagos/hooks/usePagos'
+import { useAuth } from '@shared/contexts/AuthContext'
 import VentaForm            from '../components/VentaForm'
 import VentaDetalle         from '../components/VentaDetalle'
 import VentaAnular          from '../components/VentaAnular'
@@ -16,15 +17,16 @@ const capitalizar = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLo
 const getBadgeEstado = nombre => {
   if (!nombre) return { color: 'bg-amber-500', label: 'Pendiente' }
   const l = nombre.toLowerCase()
-  if (l.includes('anula'))                          return { color: 'bg-gray-300',   label: 'Anulado'    }
-  if (l.includes('sin recoger'))                    return { color: 'bg-orange-500', label: 'Sin recoger'}
-  if (l.includes('complet') || l.includes('paga'))  return { color: 'bg-primary',    label: 'Completado' }
+  if (l.includes('anula'))                         return { color: 'bg-gray-300',   label: 'Anulado'     }
+  if (l.includes('sin recoger'))                   return { color: 'bg-orange-500', label: 'Sin recoger' }
+  if (l.includes('complet') || l.includes('paga')) return { color: 'bg-primary',    label: 'Completado'  }
   return { color: 'bg-amber-500', label: 'Pendiente' }
 }
 
 function BadgeEstado({ color, label }) {
   return (
-    <span className={`inline-flex items-center justify-center h-6 px-3 min-w-24 rounded-full text-white text-xs font-semibold ${color}`}>
+    <span className={`inline-flex items-center justify-center h-6 px-3 min-w-24
+      rounded-full text-white text-xs font-semibold ${color}`}>
       {label}
     </span>
   )
@@ -33,6 +35,10 @@ function BadgeEstado({ color, label }) {
 const maxFechaHoy = () => new Date().toISOString().slice(0, 16)
 
 export default function Ventas() {
+  const { tienePermiso, esAdmin } = useAuth()
+  const puedeCrear         = esAdmin() || tienePermiso('crear_ventas')
+  const puedeAnularPermiso = esAdmin() || tienePermiso('anular_ventas')
+
   const {
     ventasFiltradas, clientes, form, setForm,
     clientesFiltrados, prodBusqueda, prodsFiltrados, clienteBusqueda,
@@ -61,9 +67,9 @@ export default function Ventas() {
     creando: creandoPago,
   } = usePagos()
 
-  const [confirmDescarga, setConfirmDescarga]         = useState(null)
-  const [modalReporte, setModalReporte]               = useState(false)
-  const [modalCompletarMovil, setModalCompletarMovil] = useState({ abierto: false, venta: null })
+  const [confirmDescarga, setConfirmDescarga]           = useState(null)
+  const [modalReporte, setModalReporte]                 = useState(false)
+  const [modalCompletarMovil, setModalCompletarMovil]   = useState({ abierto: false, venta: null })
   const [metodoCompletarMovil, setMetodoCompletarMovil] = useState('efectivo')
 
   const estadosVenta = estados.filter(e => {
@@ -83,12 +89,14 @@ export default function Ventas() {
           <div className="flex items-center gap-1.5">
             <BadgeEstado color={color} label={label} />
             {r.origen === 'movil' && (
-              <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-500 font-medium">
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/15
+                border border-blue-500/30 text-blue-500 font-medium">
                 App
               </span>
             )}
             {r.es_fiado && (
-              <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 font-medium">
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15
+                border border-amber-500/30 text-amber-500 font-medium">
                 Crédito
               </span>
             )}
@@ -107,16 +115,19 @@ export default function Ventas() {
           <button onClick={() => setModalReporte(true)} className="btn-outline">
             <Download size={14} /> Reporte
           </button>
-          <button onClick={() => setModalNuevo(true)} className="btn-primary">
-            <Plus size={14} /> Nueva
-          </button>
+          {puedeCrear && (
+            <button onClick={() => setModalNuevo(true)} className="btn-primary">
+              <Plus size={14} /> Nueva
+            </button>
+          )}
         </div>
       </div>
 
       <Tabla columnas={columnas} datos={ventasFiltradas} sinBusqueda
         filtros={<>
           <div className="relative">
-            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2
+              text-gray-400 pointer-events-none" />
             <input value={filtroBusqueda} onChange={e => setFiltroBusqueda(e.target.value)}
               placeholder="Buscar..."
               className="pl-8 pr-3 py-1.5 text-sm rounded-lg border
@@ -125,17 +136,22 @@ export default function Ventas() {
                 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
                 transition-all duration-150 w-52" />
           </div>
-          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="campo-input w-40 text-xs">
+          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}
+            className="campo-input w-40 text-xs">
             <option value="">Todos los estados</option>
             {estadosVenta.map(e => <option key={e.id} value={e.id}>{capitalizar(e.nombre)}</option>)}
           </select>
           <input type="datetime-local" value={filtroDesde} max={maxFechaHoy()}
-            onChange={e => setFiltroDesde(e.target.value)} className="campo-input w-44 text-xs" title="Desde" />
+            onChange={e => setFiltroDesde(e.target.value)}
+            className="campo-input w-44 text-xs" title="Desde" />
           <input type="datetime-local" value={filtroHasta} max={maxFechaHoy()}
-            onChange={e => setFiltroHasta(e.target.value)} className="campo-input w-44 text-xs" title="Hasta" />
+            onChange={e => setFiltroHasta(e.target.value)}
+            className="campo-input w-44 text-xs" title="Hasta" />
           {(filtroEstado || filtroBusqueda || filtroDesde || filtroHasta) && (
-            <button onClick={() => { setFiltroEstado(''); setFiltroBusqueda(''); setFiltroDesde(''); setFiltroHasta('') }}
-              className="btn-ghost text-xs text-red-400">Limpiar</button>
+            <button onClick={() => {
+              setFiltroEstado(''); setFiltroBusqueda('')
+              setFiltroDesde(''); setFiltroHasta('')
+            }} className="btn-ghost text-xs text-red-400">Limpiar</button>
           )}
         </>}
         acciones={fila => {
@@ -145,15 +161,20 @@ export default function Ventas() {
           const esFiadoMovilNoEntregado = esPendiente && fila.origen === 'movil' && fila.es_fiado && !fila.entregado
           const esFiadoMovilEntregado   = esPendiente && fila.origen === 'movil' && fila.es_fiado && fila.entregado
           return (<>
-            <button onClick={() => setModalDetalle({ abierto: true, venta: fila })} className="btn-ghost">
+            <button onClick={() => setModalDetalle({ abierto: true, venta: fila })}
+              className="btn-ghost">
               <Eye size={14} />
             </button>
-            <button onClick={() => setConfirmDescarga({ tipo: 'comprobante', id: fila.id })} className="btn-ghost">
+            <button onClick={() => setConfirmDescarga({ tipo: 'comprobante', id: fila.id })}
+              className="btn-ghost">
               <Download size={14} />
             </button>
             {esPedidoMovilPendiente && (
               <button
-                onClick={() => { setModalCompletarMovil({ abierto: true, venta: fila }); setMetodoCompletarMovil('efectivo') }}
+                onClick={() => {
+                  setModalCompletarMovil({ abierto: true, venta: fila })
+                  setMetodoCompletarMovil('efectivo')
+                }}
                 className="btn-ghost hover:text-primary"
                 title={fila.tipo_venta === 'domicilio' ? 'Confirmar entrega' : 'Confirmar recepción'}>
                 <CheckCircle size={14} />
@@ -171,11 +192,14 @@ export default function Ventas() {
                 <CreditCard size={14} />
               </button>
             )}
-            {(() => {
+            {puedeAnularPermiso && (() => {
               if (esAnulada) return null
               if (!puedeAnular(fila)) return (
-                <button disabled title="Solo se puede anular dentro de las primeras 72 horas"
-                  className="btn-ghost opacity-30 cursor-not-allowed"><Ban size={14} /></button>
+                <button disabled
+                  title="Solo se puede anular dentro de las primeras 72 horas"
+                  className="btn-ghost opacity-30 cursor-not-allowed">
+                  <Ban size={14} />
+                </button>
               )
               const horas = horasRestantesAnulacion(fila)
               return (
@@ -194,9 +218,11 @@ export default function Ventas() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50"
             onClick={() => setModalCompletarMovil({ abierto: false, venta: null })} />
-          <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl border border-gray-200 shadow-xl p-5 space-y-4">
+          <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl border
+            border-gray-200 shadow-xl p-5 space-y-4">
             <h3 className="text-sm font-semibold">
-              Confirmar {modalCompletarMovil.venta.tipo_venta === 'domicilio' ? 'entrega' : 'recepción'} — Venta {modalCompletarMovil.venta.id}
+              Confirmar {modalCompletarMovil.venta.tipo_venta === 'domicilio'
+                ? 'entrega' : 'recepción'} — Venta {modalCompletarMovil.venta.id}
             </h3>
             <p className="text-xs text-gray-500">
               El cliente {modalCompletarMovil.venta.tipo_venta === 'domicilio'
@@ -223,14 +249,15 @@ export default function Ventas() {
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button type="button" onClick={() => setModalCompletarMovil({ abierto: false, venta: null })}
+              <button type="button"
+                onClick={() => setModalCompletarMovil({ abierto: false, venta: null })}
                 className="px-4 py-1.5 text-sm border border-gray-200 text-gray-500 rounded-lg">
                 Cancelar
               </button>
               <button type="button" disabled={completarPedidoMovil.isPending}
                 onClick={() => completarPedidoMovil.mutate({
-                  id: modalCompletarMovil.venta.id,
-                  total: modalCompletarMovil.venta.total,
+                  id:          modalCompletarMovil.venta.id,
+                  total:       modalCompletarMovil.venta.total,
                   metodo_pago: metodoCompletarMovil,
                 }, { onSuccess: () => setModalCompletarMovil({ abierto: false, venta: null }) })}
                 className="btn-primary disabled:opacity-50">
@@ -259,7 +286,8 @@ export default function Ventas() {
         setModalAnular={setModalAnular} getBadge={getBadge} />
       <VentaAnular modalAnular={modalAnular} setModalAnular={setModalAnular}
         anular={anular} anulando={anulando} />
-      <VentaConfirmDescarga confirmDescarga={confirmDescarga} setConfirmDescarga={setConfirmDescarga} />
+      <VentaConfirmDescarga confirmDescarga={confirmDescarga}
+        setConfirmDescarga={setConfirmDescarga} />
       <ReporteDescargaModal abierto={modalReporte} setAbierto={setModalReporte}
         descargarReporte={descargarReporte} nombreEntidad="ventas" />
       <PagoForm
