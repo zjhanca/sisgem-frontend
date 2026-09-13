@@ -1,4 +1,4 @@
-﻿import { Eye, Search } from 'lucide-react'
+﻿import { Eye, Search, CheckCircle} from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
