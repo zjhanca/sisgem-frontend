@@ -3,7 +3,7 @@ import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
 import ModalCambiarContrasena from '@shared/components/ModalCambiarContrasena'
 import { useQuery } from '@tanstack/react-query'
-import { pedidosService } from '@features/pedidos/services/pedidosService'
+import { pedidosService } from '@features/admin/pedidos/services/pedidosService'
 import {
   LayoutDashboard, BarChart2,
   Package, Tag, Grid3X3, Users, Shield,
