@@ -21,15 +21,18 @@ function diasRestantes(fechaVenta) {
 }
 
 function BadgeEstado({ estado }) {
-  const l     = estado?.toLowerCase() || ''
-  const color = l.includes('anula') ? 'bg-gray-300'
-    : l.includes('complet') || l.includes('paga') ? 'bg-primary'
+  const l = estado?.toLowerCase() || ''
+  const color = l.includes('anula')                          ? 'bg-gray-400'
+    : l.includes('sin recoger')                              ? 'bg-orange-500'
+    : l.includes('complet') || l.includes('paga')            ? 'bg-primary'
     : 'bg-amber-500'
-  const label = l.includes('anula') ? 'Anulado'
-    : l.includes('complet') || l.includes('paga') ? 'Completado'
+  const label = l.includes('anula')                          ? 'Anulado'
+    : l.includes('sin recoger')                              ? 'Sin recoger'
+    : l.includes('complet') || l.includes('paga')            ? 'Completado'
     : 'Pendiente'
   return (
-    <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full text-white text-xs font-semibold ${color}`}>
+    <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full
+      text-white text-xs font-semibold ${color}`}>
       {label}
     </span>
   )
@@ -39,9 +42,10 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
   const venta  = modalDetalle.venta
   const cerrar = () => setModalDetalle({ abierto: false, venta: null })
 
-  const esCredito = venta?.es_fiado && venta?.estado?.toLowerCase().includes('pendiente')
-  const dias      = esCredito ? diasRestantes(venta?.fecha_pedido) : null
-  const vencida   = dias !== null && dias < 0
+  const esSinRecoger = venta?.estado?.toLowerCase().includes('sin recoger')
+  const esCredito    = venta?.es_fiado && venta?.estado?.toLowerCase().includes('pendiente')
+  const dias         = esCredito ? diasRestantes(venta?.fecha_pedido) : null
+  const vencida      = dias !== null && dias < 0
 
   const { data: detalle, isLoading } = useQuery({
     queryKey: ['pedido-detalle', venta?.id],
@@ -58,7 +62,6 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
 
   const productos = detalle?.productos || []
 
-  // Calcular saldo pendiente solo para crédito
   const totalPagado = detalle?.total_pagado != null
     ? parseFloat(detalle.total_pagado)
     : null
@@ -77,6 +80,15 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
               <BadgeEstado estado={venta.estado} />
               <span className="text-gray-400">{formatFechaHora(venta.fecha_pedido)}</span>
             </div>
+
+            {/* Aviso sin recoger */}
+            {esSinRecoger && (
+              <div className="p-3 rounded-lg bg-orange-50 border border-orange-200
+                text-xs text-orange-600 font-medium">
+                ⚠ El cliente no recogió el pedido en las 6 horas establecidas.
+                El stock fue devuelto automáticamente.
+              </div>
+            )}
 
             {/* Cliente */}
             <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 space-y-2">
@@ -247,6 +259,14 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
                   </div>
                 )}
               </>
+            )}
+
+            {/* Aviso sin recoger en el footer */}
+            {esSinRecoger && (
+              <div className="flex items-center justify-center gap-2 py-2 rounded-xl
+                bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold">
+                ⚠ No recogido — stock devuelto automáticamente
+              </div>
             )}
 
             <button

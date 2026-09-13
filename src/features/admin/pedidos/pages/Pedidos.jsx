@@ -1,4 +1,4 @@
-﻿import { Eye, Search, CheckCircle } from 'lucide-react'
+﻿import { Eye, Search } from 'lucide-react'
 import Tabla from '@shared/components/Tabla'
 import Modal from '@shared/components/Modal'
 import { formatPrecio, formatFechaHora } from '@shared/utils/validaciones'
@@ -74,14 +74,14 @@ export default function Pedidos() {
           )}
         </>}
         acciones={fila => {
-          const esPendiente  = (fila.estado || '').toLowerCase().includes('pendiente')
-          const esSinRecoger = (fila.estado || '').toLowerCase().includes('sin recoger')
+          const esPendiente = (fila.estado || '').toLowerCase().includes('pendiente')
+          // ← Solo mostrar confirmar entrega si es PENDIENTE, NO si es sin recoger
           return (<>
             <button onClick={() => setModalDetalle({ abierto: true, pedido: fila })}
               className="btn-ghost" title="Ver detalle">
               <Eye size={14} />
             </button>
-            {(esPendiente || esSinRecoger) && (
+            {esPendiente && (
               <button
                 onClick={() => setModalConfirmarEntrega({ abierto: true, pedido: fila })}
                 className="btn-ghost hover:text-primary" title="Confirmar entrega">

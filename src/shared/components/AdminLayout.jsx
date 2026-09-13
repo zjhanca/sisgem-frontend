@@ -1,7 +1,9 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@shared/contexts/AuthContext'
 import ModalCambiarContrasena from '@shared/components/ModalCambiarContrasena'
+import { useQuery } from '@tanstack/react-query'
+import { pedidosService } from '@features/pedidos/services/pedidosService'
 import {
   LayoutDashboard, BarChart2,
   Package, Tag, Grid3X3, Users, Shield,
@@ -34,11 +36,11 @@ const MENU = [
     id: 'ventas',
     label: 'Ventas',
     items: [
-      { to: '/admin/clientes', label: 'Clientes', icon: Users,      permiso: 'ver_clientes' },
-      { to: '/admin/ventas',   label: 'Ventas',   icon: BarChart2,  permiso: 'ver_ventas'   },
-      { to: '/admin/pedidos',  label: 'Pedidos',  icon: ShoppingBag,permiso: 'ver_pedidos'  },
-      { to: '/admin/cartera',  label: 'Cartera',  icon: Wallet,     permiso: 'ver_cartera'  },
-      { to: '/admin/pagos',    label: 'Pagos',    icon: CreditCard, permiso: 'ver_pagos'    },
+      { to: '/admin/clientes', label: 'Clientes', icon: Users,       permiso: 'ver_clientes' },
+      { to: '/admin/ventas',   label: 'Ventas',   icon: BarChart2,   permiso: 'ver_ventas'   },
+      { to: '/admin/pedidos',  label: 'Pedidos',  icon: ShoppingBag, permiso: 'ver_pedidos', badge: true },
+      { to: '/admin/cartera',  label: 'Cartera',  icon: Wallet,      permiso: 'ver_cartera'  },
+      { to: '/admin/pagos',    label: 'Pagos',    icon: CreditCard,  permiso: 'ver_pagos'    },
     ]
   },
 ]
@@ -51,6 +53,22 @@ const estadoInicial = () => {
   return MENU.reduce((acc, g) => ({ ...acc, [g.id]: true }), {})
 }
 
+// Hook para contar pedidos pendientes desde el layout
+function usePedidosBadge() {
+  const { data: pedidos = [] } = useQuery({
+    queryKey:        ['pedidos'],
+    queryFn:         pedidosService.getAll,
+    refetchInterval: 30_000,
+    staleTime:       0,
+  })
+  const pedidosMovil = pedidos.filter(p => p.origen === 'movil')
+  const pendientes   = pedidosMovil.filter(p =>
+    (p.estado || '').toLowerCase().includes('pendiente')).length
+  const sinRecoger   = pedidosMovil.filter(p =>
+    (p.estado || '').toLowerCase().includes('sin recoger')).length
+  return pendientes + sinRecoger
+}
+
 function SidebarContent({
   collapsed, mobile, usuario, handleLogout,
   toggleCollapse, gruposAbiertos, toggleGrupo,
@@ -59,6 +77,7 @@ function SidebarContent({
   const { tienePermiso, esAdmin } = useAuth()
   const navRef = useRef(null)
   const [perfilAbierto, setPerfilAbierto] = useState(false)
+  const totalBadge = usePedidosBadge()
 
   const menuFiltrado = MENU
     .map(grupo => ({
@@ -141,7 +160,7 @@ function SidebarContent({
                 {grupo.items.map(item => (
                   <NavLink key={item.to} to={item.to}
                     className={({ isActive }) =>
-                      `flex items-center justify-center p-2.5 rounded-lg
+                      `relative flex items-center justify-center p-2.5 rounded-lg
                         transition-all mb-0.5 ${
                         isActive
                           ? 'bg-primary text-white'
@@ -150,6 +169,14 @@ function SidebarContent({
                     }
                     title={item.label}>
                     <item.icon size={16} />
+                    {/* Badge colapsado */}
+                    {item.badge && totalBadge > 0 && (
+                      <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1
+                        rounded-full bg-red-500 text-white text-[9px] font-bold
+                        flex items-center justify-center leading-none">
+                        {totalBadge > 99 ? '99+' : totalBadge}
+                      </span>
+                    )}
                   </NavLink>
                 ))}
               </div>
@@ -170,7 +197,7 @@ function SidebarContent({
                   {grupo.items.map(item => (
                     <NavLink key={item.to} to={item.to}
                       className={({ isActive }) =>
-                        `flex items-center gap-2.5 px-3 py-2 rounded-lg
+                        `relative flex items-center gap-2.5 px-3 py-2 rounded-lg
                           text-sm transition-all ${
                           isActive
                             ? 'bg-primary text-white font-medium'
@@ -178,7 +205,15 @@ function SidebarContent({
                         }`
                       }>
                       <item.icon size={15} />
-                      <span>{item.label}</span>
+                      <span className="flex-1">{item.label}</span>
+                      {/* Badge expandido */}
+                      {item.badge && totalBadge > 0 && (
+                        <span className="min-w-[20px] h-5 px-1.5 rounded-full
+                          bg-red-500 text-white text-[10px] font-bold
+                          flex items-center justify-center leading-none">
+                          {totalBadge > 99 ? '99+' : totalBadge}
+                        </span>
+                      )}
                     </NavLink>
                   ))}
                 </div>
