@@ -15,7 +15,7 @@ export default function Login() {
         <div className="mb-8">
           <Link to="/" className="flex items-center gap-2 mb-8">
             <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center overflow-hidden">
-              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain"
+              <img src="/logo-green.png" alt="Logo" className="w-full h-full object-contain"
                 onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
               <span style={{display:'none'}} className="text-sm font-bold text-primary">S</span>
             </div>
@@ -78,7 +78,7 @@ export default function Login() {
         style={{ background: 'linear-gradient(135deg, #0f2d1a 0%, #1E9E50 100%)' }}>
         <div>
           <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-12 overflow-hidden">
-            <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain"
+            <img src="/logo-white.png" alt="Logo" className="w-8 h-8 object-contain"
               onError={e => e.target.style.display='none'} />
           </div>
         </div>

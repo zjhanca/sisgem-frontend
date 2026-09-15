@@ -100,7 +100,7 @@ function SidebarContent({
         <Link to="/" className="flex items-center gap-2 group" title="Ir a la tienda">
           <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center
             justify-center shrink-0 overflow-hidden">
-            <img src="/logo.png" alt="Logo"
+            <img src="/logo-white.png" alt="Logo"
               className="w-full h-full object-contain"
               onError={e => {
                 e.target.style.display = 'none'
