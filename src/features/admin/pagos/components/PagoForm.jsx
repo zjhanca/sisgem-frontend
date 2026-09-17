@@ -35,9 +35,8 @@ export default function PagoForm({
     return deudaPorCliente[c.id]?.total_deuda || 0
   }
 
-  // ── Pago mixto ───────────────────────────────────────────────
-  const montoEf  = parseFloat(form.monto_efectivo || 0)
-  const montoTr  = parseFloat(form.monto_transferencia || 0)
+  const montoEf   = parseFloat(form.monto_efectivo || 0)
+  const montoTr   = parseFloat(form.monto_transferencia || 0)
   const sumaMixta = montoEf + montoTr
   const mixtoValido = !form.pago_mixto || (sumaMixta > 0 && sumaMixta <= totalDeuda + 1)
 
@@ -163,9 +162,9 @@ export default function PagoForm({
               <button type="button"
                 onClick={() => setForm(f => ({
                   ...f,
-                  pago_mixto: !f.pago_mixto,
-                  monto: '',
-                  monto_efectivo: '',
+                  pago_mixto:          !f.pago_mixto,
+                  monto:               '',
+                  monto_efectivo:      '',
                   monto_transferencia: '',
                 }))}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full
@@ -264,17 +263,6 @@ export default function PagoForm({
                 {!errores.monto && sumaMixta > 0 && mixtoValido && (
                   <p className="text-xs text-primary">✓ Total: {formatPrecio(sumaMixta)}</p>
                 )}
-                {totalDeuda > 0 && (
-                  <button type="button"
-                    onClick={() => setForm(f => ({
-                      ...f,
-                      monto_efectivo:      '',
-                      monto_transferencia: String(Math.round(totalDeuda)),
-                    }))}
-                    className="text-xs text-primary hover:underline">
-                    Usar deuda total en transferencia ({formatPrecio(totalDeuda)})
-                  </button>
-                )}
               </div>
             )}
           </div>
@@ -282,9 +270,11 @@ export default function PagoForm({
 
         <div className="flex justify-end pt-2 border-t border-gray-100">
           <button type="submit"
-            disabled={creando || pagoCompleto || !!errores.monto || !form.cliente_id ||
+            disabled={
+              creando || pagoCompleto || !!errores.monto || !form.cliente_id ||
               (!form.pago_mixto && !form.monto) ||
-              (form.pago_mixto && sumaMixta <= 0)}
+              (form.pago_mixto && sumaMixta <= 0)
+            }
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
           </button>
