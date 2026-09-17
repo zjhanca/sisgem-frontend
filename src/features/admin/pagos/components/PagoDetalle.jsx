@@ -11,6 +11,11 @@ export default function PagoDetalle({
   const puedeAnular = grupo ? puedeAnularPago(grupo.pedido_id) : false
   const limite = grupo ? getLimiteAnulacionVenta(grupo) : null
 
+  // ── Detectar pago mixto ──────────────────────────────────────
+  const pagosActivos = grupo?.pagos?.filter(p => !esAnulado(p.estado)) || []
+  const metodos      = [...new Set(pagosActivos.map(p => p.metodo).filter(Boolean))]
+  const esPagoMixto  = metodos.length > 1
+
   return (
     <Modal abierto={modalDetalle.abierto} onCerrar={cerrar} bloquearCierre
       titulo={grupo ? `Historial de Pagos — Venta #${grupo.pedido_id}` : 'Historial de Pagos'}>
@@ -19,17 +24,49 @@ export default function PagoDetalle({
           <div className="grid grid-cols-2 gap-3">
             <div><p className="campo-label">Cliente</p><p className="font-medium">{grupo.cliente || '—'}</p></div>
             <div><p className="campo-label">Total venta</p><p>{formatPrecio(grupo.total_pedido)}</p></div>
-            <div><p className="campo-label">Total pagado</p><p className="text-green-600 font-semibold">{formatPrecio(grupo.total_pagado)}</p></div>
-            <div><p className="campo-label">Saldo pendiente</p>
+            <div>
+              <p className="campo-label">Total pagado</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-green-600 font-semibold">{formatPrecio(grupo.total_pagado)}</p>
+                {esPagoMixto && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full
+                    text-xs font-medium bg-blue-500/15 border border-blue-500/30 text-blue-500">
+                    Pago mixto
+                  </span>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="campo-label">Saldo pendiente</p>
               <p className={grupo.completo ? 'text-green-600 font-semibold' : 'text-primary font-semibold'}>
                 {grupo.completo ? '✓ Completamente pagado' : formatPrecio(grupo.saldo_pendiente)}
               </p>
             </div>
           </div>
 
+          {/* Resumen métodos pago mixto */}
+          {esPagoMixto && (
+            <div className="p-2.5 rounded-lg bg-blue-500/5 border border-blue-500/20 text-xs">
+              <p className="font-semibold text-blue-600 mb-1.5">Desglose pago mixto</p>
+              {metodos.map(m => {
+                const totalMetodo = pagosActivos
+                  .filter(p => p.metodo === m)
+                  .reduce((s, p) => s + parseFloat(p.monto || 0), 0)
+                return (
+                  <div key={m} className="flex justify-between items-center">
+                    <span className="capitalize text-gray-500">{m}</span>
+                    <span className="font-semibold text-blue-600">{formatPrecio(totalMetodo)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {limite && (
             <div className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs ${
-              puedeAnular ? 'bg-amber-500/5 border-amber-400/20 text-amber-600' : 'bg-gray-50 border-gray-200 text-gray-400'
+              puedeAnular
+                ? 'bg-amber-500/5 border-amber-400/20 text-amber-600'
+                : 'bg-gray-50 border-gray-200 text-gray-400'
             }`}>
               <Clock size={13} className="shrink-0" />
               <span>
@@ -41,7 +78,9 @@ export default function PagoDetalle({
           )}
 
           <div className="pt-2 border-t border-gray-100">
-            <p className="campo-label mb-1.5 flex items-center gap-1"><History size={11} /> Movimientos ({grupo.pagos.length})</p>
+            <p className="campo-label mb-1.5 flex items-center gap-1">
+              <History size={11} /> Movimientos ({grupo.pagos.length})
+            </p>
             <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
               {grupo.pagos.map(pago => {
                 const anulado = esAnulado(pago.estado)
@@ -52,15 +91,22 @@ export default function PagoDetalle({
                       anulado ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-gray-50 border-gray-100'
                     }`}>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={`font-semibold ${anulado ? 'text-gray-400 line-through' : 'text-light-text'}`}>
                           {formatPrecio(pago.monto)}
                         </span>
                         <span className={clase}>{label}</span>
+                        {esPagoMixto && !anulado && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full
+                            text-[10px] font-medium bg-blue-500/10 text-blue-500 capitalize">
+                            {pago.metodo}
+                          </span>
+                        )}
                       </div>
                       <p className="text-gray-400 mt-0.5">
-                        {pago.metodo && <span className="capitalize">{pago.metodo}</span>}
-                        {pago.metodo && ' · '}
+                        {pago.metodo && !esPagoMixto && (
+                          <span className="capitalize">{pago.metodo} · </span>
+                        )}
                         {formatFechaHora(getFechaPago(pago))}
                       </p>
                     </div>

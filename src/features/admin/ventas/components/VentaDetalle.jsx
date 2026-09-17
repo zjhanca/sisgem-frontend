@@ -22,54 +22,19 @@ function diasRestantes(fechaVenta) {
 
 function BadgeEstado({ estado }) {
   const l = estado?.toLowerCase() || ''
-  const color = l.includes('anula')                       ? 'bg-gray-400'
-    : l.includes('sin recoger')                           ? 'bg-orange-500'
-    : l.includes('complet') || l.includes('paga')         ? 'bg-primary'
+  const color = l.includes('anula')                         ? 'bg-gray-400'
+    : l.includes('sin recoger')                             ? 'bg-orange-500'
+    : l.includes('complet') || l.includes('paga')           ? 'bg-primary'
     : 'bg-amber-500'
-  const label = l.includes('anula')                       ? 'Anulado'
-    : l.includes('sin recoger')                           ? 'Sin recoger'
-    : l.includes('complet') || l.includes('paga')         ? 'Completado'
+  const label = l.includes('anula')                         ? 'Anulado'
+    : l.includes('sin recoger')                             ? 'Sin recoger'
+    : l.includes('complet') || l.includes('paga')           ? 'Completado'
     : 'Pendiente'
   return (
     <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full
       text-white text-xs font-semibold ${color}`}>
       {label}
     </span>
-  )
-}
-
-// ── Muestra métodos de pago — simple o mixto ─────────────────────
-function MetodoPago({ detalle, venta }) {
-  const pagos = detalle?.pagos_detalle || []
-
-  // Pago mixto: más de un método distinto en pagos activos
-  const pagosActivos = pagos.filter(p =>
-    !(p.estado || '').toLowerCase().includes('anula'))
-  const metodos = [...new Set(pagosActivos.map(p => p.metodo))]
-  const esMixto = metodos.length > 1
-
-  if (esMixto) {
-    return (
-      <div>
-        <p className="campo-label">Método de pago</p>
-        <div className="flex flex-col gap-0.5">
-          {pagosActivos.map((p, i) => (
-            <p key={i} className="font-medium capitalize text-xs">
-              {p.metodo}: <span className="text-primary">{formatPrecio(p.monto)}</span>
-            </p>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      <p className="campo-label">Método de pago</p>
-      <p className="font-medium capitalize">
-        {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
-      </p>
-    </div>
   )
 }
 
@@ -87,6 +52,20 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
     queryFn:  () => ventasService.getDetalle(venta.id),
     enabled:  !!venta?.id && modalDetalle.abierto,
   })
+
+  // ── Cargar pagos del pedido para detectar pago mixto ──────────
+  const { data: todosPagos = [] } = useQuery({
+    queryKey: ['pagos'],
+    queryFn:  ventasService.getPagos,
+    enabled:  !!venta?.id && modalDetalle.abierto,
+  })
+
+  const pagosDeVenta = todosPagos.filter(p =>
+    p.pedido_id?.toString() === venta?.id?.toString() &&
+    !(p.estado || '').toLowerCase().includes('anula')
+  )
+  const metodos     = [...new Set(pagosDeVenta.map(p => p.metodo).filter(Boolean))]
+  const esPagoMixto = metodos.length > 1
 
   const clienteInfo = {
     nombre:           venta?.cliente,
@@ -175,8 +154,27 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
             </div>
 
             {/* Método de pago + Entrega */}
-            <div className="flex items-center justify-between px-1">
-              <MetodoPago detalle={detalle} venta={venta} />
+            <div className="flex items-start justify-between px-1">
+              <div>
+                <p className="campo-label">Método de pago</p>
+                {esPagoMixto ? (
+                  <div className="space-y-0.5">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full
+                      text-xs font-medium bg-blue-500/15 border border-blue-500/30 text-blue-500 mb-1">
+                      Pago mixto
+                    </span>
+                    {pagosDeVenta.map((p, i) => (
+                      <p key={i} className="font-medium capitalize">
+                        {p.metodo}: <span className="text-primary">{formatPrecio(p.monto)}</span>
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="font-medium capitalize">
+                    {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
+                  </p>
+                )}
+              </div>
               <div className="text-right">
                 <p className="campo-label">Entrega</p>
                 <p className="font-medium capitalize">
