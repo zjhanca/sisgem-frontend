@@ -14,7 +14,6 @@ export default function PagoForm({
   pagoCompleto, montoPendiente,
   handleSubmit, handleMontoChange,
   creando, tipoPagoActual,
-  // legacy props — no usados pero recibidos desde Ventas.jsx sin romper
   pedidos, pedidoSeleccionado, totalPedido, totalPagado, esFiado,
   pedidoBusqueda, setPedidoBusqueda, pedidoDropdown, setPedidoDropdown,
   handlePedidoChange,
@@ -36,6 +35,12 @@ export default function PagoForm({
     return deudaPorCliente[c.id]?.total_deuda || 0
   }
 
+  // ── Pago mixto ───────────────────────────────────────────────
+  const montoEf  = parseFloat(form.monto_efectivo || 0)
+  const montoTr  = parseFloat(form.monto_transferencia || 0)
+  const sumaMixta = montoEf + montoTr
+  const mixtoValido = !form.pago_mixto || (sumaMixta > 0 && sumaMixta <= totalDeuda + 1)
+
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Registrar Abono">
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -43,9 +48,9 @@ export default function PagoForm({
         {/* ── Buscar cliente ── */}
         <div>
           <label className="campo-label">Cliente *</label>
-
           {clienteSel && !clienteDropdown ? (
-            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-primary/40 bg-primary/5 text-xs">
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg
+              border border-primary/40 bg-primary/5 text-xs">
               <div className="flex items-center gap-2">
                 <User size={13} className="text-primary shrink-0" />
                 <div>
@@ -80,13 +85,14 @@ export default function PagoForm({
                 placeholder="Buscar por nombre o número de documento..."
                 autoComplete="off"
               />
-              {/* Dropdown clientes con deuda */}
               {clienteDropdown && clientesFiltradosModal.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-30 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-52 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 z-30 bg-white border
+                  border-gray-200 rounded-lg shadow-lg mt-1 max-h-52 overflow-y-auto">
                   {clientesFiltradosModal.map(c => (
                     <button key={c.id} type="button"
                       onMouseDown={e => { e.preventDefault(); seleccionarCliente(c) }}
-                      className="w-full text-left px-3 py-2.5 text-xs hover:bg-primary/10 flex items-center justify-between border-b border-gray-100 last:border-0">
+                      className="w-full text-left px-3 py-2.5 text-xs hover:bg-primary/10
+                        flex items-center justify-between border-b border-gray-100 last:border-0">
                       <div>
                         <span className="font-medium text-light-text">
                           {c.nombre} {c.apellido}
@@ -105,7 +111,8 @@ export default function PagoForm({
                 </div>
               )}
               {clienteDropdown && clienteBusqueda && clientesFiltradosModal.length === 0 && (
-                <div className="absolute top-full left-0 right-0 z-30 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 p-3 text-xs text-gray-400 text-center">
+                <div className="absolute top-full left-0 right-0 z-30 bg-white border
+                  border-gray-200 rounded-lg shadow-lg mt-1 p-3 text-xs text-gray-400 text-center">
                   Sin clientes con deuda pendiente
                 </div>
               )}
@@ -117,21 +124,19 @@ export default function PagoForm({
         {/* ── Resumen deuda ── */}
         {clienteSel && deudaCliente && (
           <div className="rounded-lg border border-red-100 overflow-hidden text-xs">
-            {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 bg-red-50">
               <span className="font-semibold text-red-600 flex items-center gap-1.5">
-                <CreditCard size={13} />
-                Deuda total
+                <CreditCard size={13} /> Deuda total
               </span>
               <span className="text-red-600 font-bold text-sm">
                 {formatPrecio(totalDeuda)}
               </span>
             </div>
-            {/* Desglose por pedido */}
             {pedidosCliente.length > 0 && (
               <div className="divide-y divide-red-50 bg-white">
                 {pedidosCliente.map(p => (
-                  <div key={p.id} className="flex justify-between items-center px-3 py-1.5 text-gray-500">
+                  <div key={p.id} className="flex justify-between items-center
+                    px-3 py-1.5 text-gray-500">
                     <span>Venta #{p.id}</span>
                     <span className="font-medium text-red-500">{formatPrecio(p.pendiente)}</span>
                   </div>
@@ -142,58 +147,144 @@ export default function PagoForm({
         )}
 
         {clienteSel && pagoCompleto && (
-          <div className="p-2.5 rounded-lg bg-green-50 border border-green-100 text-xs text-green-600 text-center font-medium">
+          <div className="p-2.5 rounded-lg bg-green-50 border border-green-100
+            text-xs text-green-600 text-center font-medium">
             ✓ Este cliente no tiene deuda pendiente
           </div>
         )}
 
         {/* ── Monto + método ── */}
         {clienteSel && !pagoCompleto && (
-          <div className="grid grid-cols-2 gap-3 items-start">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="campo-label mb-0">Monto a abonar *</label>
-                {tipoPagoActual && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'
-                  }`}>
-                    {tipoPagoActual === 'total' ? '✓ Cancela deuda' : '~ Abono parcial'}
-                  </span>
+          <div className="space-y-2">
+
+            {/* Toggle pago mixto */}
+            <div className="flex items-center justify-between">
+              <label className="campo-label mb-0">¿Pago dividido?</label>
+              <button type="button"
+                onClick={() => setForm(f => ({
+                  ...f,
+                  pago_mixto: !f.pago_mixto,
+                  monto: '',
+                  monto_efectivo: '',
+                  monto_transferencia: '',
+                }))}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full
+                  transition-colors ${form.pago_mixto ? 'bg-primary' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white
+                  transition-transform ${form.pago_mixto ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              </button>
+            </div>
+
+            {!form.pago_mixto ? (
+              /* Pago simple */
+              <div className="grid grid-cols-2 gap-3 items-start">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="campo-label mb-0">Monto a abonar *</label>
+                    {tipoPagoActual && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        tipoPagoActual === 'total' ? 'badge-activo' : 'badge-pendiente'
+                      }`}>
+                        {tipoPagoActual === 'total' ? '✓ Cancela deuda' : '~ Abono parcial'}
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="text" inputMode="numeric"
+                    value={form.monto}
+                    onChange={e => handleMontoChange(e.target.value.replace(/\D/g, ''))}
+                    className={`campo-input ${errores.monto ? 'border-red-400 focus:ring-red-400/30' : ''}`}
+                    placeholder="0"
+                  />
+                  {errores.monto && <p className="campo-error">{errores.monto}</p>}
+                  {totalDeuda > 0 && (
+                    <button type="button"
+                      onClick={() => handleMontoChange(String(Math.round(totalDeuda)))}
+                      className="text-xs text-primary mt-1 hover:underline">
+                      Usar deuda total ({formatPrecio(totalDeuda)})
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <label className="campo-label">Método de Pago</label>
+                  <select
+                    value={form.metodo}
+                    onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))}
+                    className="campo-input">
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                  </select>
+                </div>
+              </div>
+            ) : (
+              /* Pago mixto */
+              <div className="space-y-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                <p className="text-xs text-gray-500">
+                  Deuda: <strong className="text-primary">{formatPrecio(totalDeuda)}</strong>
+                </p>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="campo-label">Efectivo</label>
+                    <input
+                      type="text" inputMode="numeric"
+                      value={form.monto_efectivo}
+                      onChange={e => {
+                        const val   = e.target.value.replace(/\D/g, '')
+                        const resto = Math.max(0, totalDeuda - (parseFloat(val) || 0))
+                        setForm(f => ({
+                          ...f,
+                          monto_efectivo:      val,
+                          monto_transferencia: resto > 0 ? String(Math.round(resto)) : '',
+                        }))
+                      }}
+                      placeholder="0"
+                      className="campo-input text-xs"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="campo-label">Transferencia</label>
+                    <input
+                      type="text" inputMode="numeric"
+                      value={form.monto_transferencia}
+                      onChange={e => {
+                        const val   = e.target.value.replace(/\D/g, '')
+                        const resto = Math.max(0, totalDeuda - (parseFloat(val) || 0))
+                        setForm(f => ({
+                          ...f,
+                          monto_transferencia: val,
+                          monto_efectivo:      resto > 0 ? String(Math.round(resto)) : '',
+                        }))
+                      }}
+                      placeholder="0"
+                      className="campo-input text-xs"
+                    />
+                  </div>
+                </div>
+                {errores.monto && <p className="campo-error">{errores.monto}</p>}
+                {!errores.monto && sumaMixta > 0 && mixtoValido && (
+                  <p className="text-xs text-primary">✓ Total: {formatPrecio(sumaMixta)}</p>
+                )}
+                {totalDeuda > 0 && (
+                  <button type="button"
+                    onClick={() => setForm(f => ({
+                      ...f,
+                      monto_efectivo:      '',
+                      monto_transferencia: String(Math.round(totalDeuda)),
+                    }))}
+                    className="text-xs text-primary hover:underline">
+                    Usar deuda total en transferencia ({formatPrecio(totalDeuda)})
+                  </button>
                 )}
               </div>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={form.monto}
-                onChange={e => handleMontoChange(e.target.value.replace(/\D/g, ''))}
-                className={`campo-input ${errores.monto ? 'border-red-400 focus:ring-red-400/30' : ''}`}
-                placeholder="0"
-              />
-              {errores.monto && <p className="campo-error">{errores.monto}</p>}
-              {totalDeuda > 0 && (
-                <button type="button"
-                  onClick={() => handleMontoChange(String(Math.round(totalDeuda)))}
-                  className="text-xs text-primary mt-1 hover:underline">
-                  Usar deuda total ({formatPrecio(totalDeuda)})
-                </button>
-              )}
-            </div>
-            <div>
-              <label className="campo-label">Método de Pago</label>
-              <select
-                value={form.metodo}
-                onChange={e => setForm(p => ({ ...p, metodo: e.target.value }))}
-                className="campo-input">
-                <option value="efectivo">Efectivo</option>
-                <option value="transferencia">Transferencia</option>
-              </select>
-            </div>
+            )}
           </div>
         )}
 
         <div className="flex justify-end pt-2 border-t border-gray-100">
           <button type="submit"
-            disabled={creando || pagoCompleto || !!errores.monto || !form.cliente_id || !form.monto}
+            disabled={creando || pagoCompleto || !!errores.monto || !form.cliente_id ||
+              (!form.pago_mixto && !form.monto) ||
+              (form.pago_mixto && sumaMixta <= 0)}
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
           </button>

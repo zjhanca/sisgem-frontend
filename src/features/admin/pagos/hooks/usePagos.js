@@ -4,7 +4,10 @@ import { pagosService } from '../services/pagosService'
 import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
 import toast from 'react-hot-toast'
 
-const formVacio = { cliente_id: '', monto: '', metodo: 'efectivo' }
+const formVacio = {
+  cliente_id: '', monto: '', metodo: 'efectivo',
+  pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
+}
 const MONTO_MINIMO_ABONO = 10000
 
 function esPagado(n)  { return n && (n.toLowerCase().includes('paga') || n.toLowerCase().includes('activ') || n.toLowerCase().includes('complet')) }
@@ -18,13 +21,12 @@ export function usePagos() {
   const [modalAnular, setModalAnular]   = useState({ abierto: false, pago: null })
   const [form, setForm]       = useState(formVacio)
   const [errores, setErrores] = useState({})
-  const [filtroEstado, setFiltroEstado]     = useState('')
-  const [filtroDesde, setFiltroDesde]       = useState('')
-  const [filtroHasta, setFiltroHasta]       = useState('')
-  const [filtroBusqueda, setFiltroBusqueda] = useState('')
+  const [filtroEstado, setFiltroEstado]       = useState('')
+  const [filtroDesde, setFiltroDesde]         = useState('')
+  const [filtroHasta, setFiltroHasta]         = useState('')
+  const [filtroBusqueda, setFiltroBusqueda]   = useState('')
   const [clienteBusqueda, setClienteBusqueda] = useState('')
   const [clienteDropdown, setClienteDropdown] = useState(false)
-  // ID del pedido específico cuando se abre desde Ventas
   const [pedidoEspecifico, setPedidoEspecifico] = useState(null)
 
   const { data: pagos = [] }           = useQuery({ queryKey: ['pagos'],    queryFn: pagosService.getAll })
@@ -92,10 +94,12 @@ export function usePagos() {
       }
     }
     return Array.from(grupos.values()).map(g => {
-      const saldoPendiente = Math.max(0, g.total_pedido - g.total_pagado)
-      const completo = g.venta_anulada || (g.total_pedido > 0 && saldoPendiente === 0)
-      const pagosOrdenados = [...g.pagos].sort((a, b) => new Date(getFechaPago(b)) - new Date(getFechaPago(a)))
-      return { ...g, pagos: pagosOrdenados, saldo_pendiente: g.venta_anulada ? 0 : saldoPendiente, completo }
+      const saldoPendiente  = Math.max(0, g.total_pedido - g.total_pagado)
+      const completo        = g.venta_anulada || (g.total_pedido > 0 && saldoPendiente === 0)
+      const pagosOrdenados  = [...g.pagos].sort((a, b) =>
+        new Date(getFechaPago(b)) - new Date(getFechaPago(a)))
+      return { ...g, pagos: pagosOrdenados,
+        saldo_pendiente: g.venta_anulada ? 0 : saldoPendiente, completo }
     }).sort((a, b) => new Date(b.ultima_fecha) - new Date(a.ultima_fecha))
   }, [pagos])
 
@@ -109,7 +113,7 @@ export function usePagos() {
   }
 
   const puedeAnularPago = pedido_id => {
-    const grupo = pagosAgrupados.find(g => g.pedido_id === pedido_id)
+    const grupo  = pagosAgrupados.find(g => g.pedido_id === pedido_id)
     const limite = getLimiteAnulacionVenta(grupo)
     if (!limite) return true
     return new Date() <= limite
@@ -118,21 +122,16 @@ export function usePagos() {
   const clienteSel   = clientes.find(c => c.id === +form.cliente_id) || null
   const deudaCliente = deudaPorCliente[+form.cliente_id] || null
 
-  // Si hay pedido específico, solo muestra ese pedido — si no, todos los del cliente
   const pedidosCliente = useMemo(() => {
     if (!deudaCliente) return []
     const todos = [...deudaCliente.pedidos]
       .filter(p => p.pendiente > 0)
       .sort((a, b) => new Date(a.fecha_pedido) - new Date(b.fecha_pedido))
-    if (pedidoEspecifico) {
-      return todos.filter(p => p.id === pedidoEspecifico)
-    }
+    if (pedidoEspecifico) return todos.filter(p => p.id === pedidoEspecifico)
     return todos
   }, [deudaCliente, pedidoEspecifico])
 
-  // Total deuda — solo del pedido específico si aplica
-  const totalDeuda = pedidosCliente.reduce((s, p) => s + p.pendiente, 0)
-
+  const totalDeuda     = pedidosCliente.reduce((s, p) => s + p.pendiente, 0)
   const pagoCompleto   = !!form.cliente_id && totalDeuda === 0
   const montoPendiente = totalDeuda
 
@@ -153,18 +152,17 @@ export function usePagos() {
     setForm({ ...formVacio, cliente_id: String(cliente_id) })
     setClienteBusqueda('')
     setClienteDropdown(false)
-    setPedidoEspecifico(null) // sin filtro — muestra toda la deuda
+    setPedidoEspecifico(null)
     setModalNuevo(true)
   }
 
-  // Abre con pedido específico — solo muestra la deuda de ese pedido
   const abrirConPedido = pedido_id => {
     const pedido = todosLosPedidos.find(p => p.id === pedido_id)
     if (pedido?.cliente_id) {
       setForm({ ...formVacio, cliente_id: String(pedido.cliente_id) })
       setClienteBusqueda('')
       setClienteDropdown(false)
-      setPedidoEspecifico(pedido_id) // filtra solo este pedido
+      setPedidoEspecifico(pedido_id)
       setModalNuevo(true)
     } else {
       setForm(formVacio)
@@ -175,12 +173,30 @@ export function usePagos() {
 
   const crear = useMutation({
     mutationFn: async data => {
-      let montoRestante = +data.monto
-      for (const p of pedidosCliente) {
-        if (montoRestante <= 0) break
-        const abonar = Math.min(montoRestante, p.pendiente)
-        await pagosService.create({ pedido_id: p.id, monto: abonar, metodo: data.metodo })
-        montoRestante -= abonar
+      if (data.pago_mixto) {
+        // Pago mixto: distribuir efectivo y transferencia entre pedidos pendientes
+        const montos = [
+          { metodo: 'efectivo',      monto: parseFloat(data.monto_efectivo || 0) },
+          { metodo: 'transferencia', monto: parseFloat(data.monto_transferencia || 0) },
+        ].filter(m => m.monto > 0)
+
+        for (const { metodo, monto } of montos) {
+          let restante = monto
+          for (const p of pedidosCliente) {
+            if (restante <= 0) break
+            const abonar = Math.min(restante, p.pendiente)
+            await pagosService.create({ pedido_id: p.id, monto: abonar, metodo })
+            restante -= abonar
+          }
+        }
+      } else {
+        let montoRestante = +data.monto
+        for (const p of pedidosCliente) {
+          if (montoRestante <= 0) break
+          const abonar = Math.min(montoRestante, p.pendiente)
+          await pagosService.create({ pedido_id: p.id, monto: abonar, metodo: data.metodo })
+          montoRestante -= abonar
+        }
       }
     },
     onSuccess: () => {
@@ -231,15 +247,28 @@ export function usePagos() {
   const validar = () => {
     const e = {}
     if (!form.cliente_id) e.cliente_id = 'Selecciona un cliente'
-    if (!form.monto || +form.monto <= 0) {
-      e.monto = 'Monto inválido'
+    if (pagoCompleto) { e.monto = 'El cliente no tiene deuda pendiente'; return e }
+
+    if (form.pago_mixto) {
+      const ef = parseFloat(form.monto_efectivo || 0)
+      const tr = parseFloat(form.monto_transferencia || 0)
+      const suma = ef + tr
+      if (suma <= 0) e.monto = 'Ingresa los montos del pago mixto'
+      else if (suma > totalDeuda + 1) e.monto = `El total (${suma.toLocaleString('es-CO')}) supera la deuda`
+      else {
+        const cubre = suma >= totalDeuda
+        if (suma < MONTO_MINIMO_ABONO && !cubre)
+          e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
+      }
     } else {
-      const cubre = totalDeuda > 0 && +form.monto >= totalDeuda
-      if (+form.monto < MONTO_MINIMO_ABONO && !cubre) {
-        e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
+      if (!form.monto || +form.monto <= 0) {
+        e.monto = 'Monto inválido'
+      } else {
+        const cubre = totalDeuda > 0 && +form.monto >= totalDeuda
+        if (+form.monto < MONTO_MINIMO_ABONO && !cubre)
+          e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
       }
     }
-    if (pagoCompleto) e.monto = 'El cliente no tiene deuda pendiente'
     return e
   }
 
@@ -261,7 +290,8 @@ export function usePagos() {
     if (filtroEstado === 'pagado'  && !g.completo) return false
     if (filtroEstado === 'abono'   && (g.completo || g.saldo_pendiente <= 0)) return false
     if (filtroEstado === 'anulado' && !g.pagos.every(p => esAnulado(p.estado))) return false
-    if (filtroBusqueda && !`${g.pedido_id} ${g.cliente || ''}`.toLowerCase().includes(filtroBusqueda.toLowerCase())) return false
+    if (filtroBusqueda && !`${g.pedido_id} ${g.cliente || ''}`.toLowerCase()
+      .includes(filtroBusqueda.toLowerCase())) return false
     if (filtroDesde && g.ultima_fecha && new Date(g.ultima_fecha) < new Date(filtroDesde)) return false
     if (filtroHasta && g.ultima_fecha && new Date(g.ultima_fecha) > new Date(filtroHasta)) return false
     return true
@@ -275,15 +305,14 @@ export function usePagos() {
   const grupoDetalle = pagosAgrupados.find(g => g.pedido_id === modalDetalle.pedido_id) || null
 
   const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
-    const nombres = { normal: 'general', rango: 'personalizado' }
-    const ext = formato === 'excel' ? 'xlsx' : 'pdf'
+    const ext    = formato === 'excel' ? 'xlsx' : 'pdf'
     const params = new URLSearchParams({ formato })
     if (tipo === 'rango') {
       if (desde) params.set('desde', desde)
       if (hasta) params.set('hasta', hasta)
     }
-    const url = `/reportes/pagos?${params.toString()}`
-    const nombreArchivo = `reporte-pagos-${nombres[tipo] || tipo}.${ext}`
+    const url           = `/reportes/pagos?${params.toString()}`
+    const nombreArchivo = `reporte-pagos-${tipo || 'general'}.${ext}`
     if (formato === 'excel') await descargarExcel(url, nombreArchivo)
     else await descargarPDF(url, nombreArchivo)
   }
@@ -325,12 +354,12 @@ export function usePagos() {
     abrirConPedido,
     abrirConCliente,
     pedidoSeleccionado: null,
-    pedidoBusqueda: clienteBusqueda,
-    setPedidoBusqueda: setClienteBusqueda,
-    pedidoDropdown: clienteDropdown,
-    setPedidoDropdown: setClienteDropdown,
+    pedidoBusqueda:     clienteBusqueda,
+    setPedidoBusqueda:  setClienteBusqueda,
+    pedidoDropdown:     clienteDropdown,
+    setPedidoDropdown:  setClienteDropdown,
     descargarReporte,
-    creando: crear.isPending,
+    creando:  crear.isPending,
     anulando: anular.isPending,
   }
 }
