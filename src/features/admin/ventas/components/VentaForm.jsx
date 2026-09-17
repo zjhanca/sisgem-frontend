@@ -32,6 +32,7 @@ export default function VentaForm({
       tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '',
       productos: [], tipo_pago: 'total', metodo_pago: 'efectivo',
       metodo_pago_inmediato: 'efectivo',
+      pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
     })
   }
 
@@ -42,9 +43,13 @@ export default function VentaForm({
   const sinCupo            = form.tipo_pago === 'fiado' && permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
   const minimoInsuficiente = totalVenta < (MINIMO_FIADO || 10000)
 
-  const totalPorProducto = {}
-  for (const p of form.productos)
-    totalPorProducto[p.producto_id] = (totalPorProducto[p.producto_id] || 0) + (+p.cantidad || 0)
+  // ── Pago mixto: validar que la suma cuadre ──────────────────
+  const esPagoTotal    = form.tipo_pago === 'total'
+  const esPagoMixto    = esPagoTotal && form.pago_mixto
+  const montoEfectivo  = parseFloat(form.monto_efectivo || 0)
+  const montoTransf    = parseFloat(form.monto_transferencia || 0)
+  const sumaMixta      = montoEfectivo + montoTransf
+  const mixtoValido    = !esPagoMixto || Math.abs(sumaMixta - totalVenta) < 1
 
   return (
     <>
@@ -101,7 +106,6 @@ export default function VentaForm({
                   Toca para agregar productos
                 </button>
               ) : (
-                // Lista compacta — solo resumen, la edición es en el modal
                 <div className="space-y-1 max-h-36 overflow-y-auto">
                   {form.productos.map((p, idx) => (
                     <div key={`${p.producto_id}-${idx}`}
@@ -119,7 +123,6 @@ export default function VentaForm({
                       </div>
                     </div>
                   ))}
-                  {/* Editar cantidades */}
                   <button type="button" onClick={() => setModalBuscador(true)}
                     className="w-full text-xs text-primary/60 hover:text-primary py-1 transition-colors">
                     Editar cantidades →
@@ -153,23 +156,99 @@ export default function VentaForm({
               MINIMO_FIADO={MINIMO_FIADO}
             />
 
-            {/* Método de pago */}
-            {form.tipo_pago !== 'Crédito' && (
-              <div>
+            {/* Método de pago — solo si es pago total (no fiado) */}
+            {form.tipo_pago === 'total' && (
+              <div className="space-y-2">
                 <label className="campo-label">Método de Pago</label>
-                <div className="flex gap-2">
-                  {['efectivo', 'transferencia'].map(m => (
-                    <button key={m} type="button"
-                      onClick={() => setForm(f => ({ ...f, metodo_pago: m }))}
-                      className={`flex-1 py-2 text-xs rounded-lg border transition-all capitalize ${
-                        form.metodo_pago === m
-                          ? 'bg-primary text-white border-primary'
-                          : 'border-gray-200 text-gray-500 hover:border-primary/40'
-                      }`}>
-                      {m}
-                    </button>
-                  ))}
+
+                {/* Toggle pago mixto */}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-400">¿Pago dividido?</span>
+                  <button type="button"
+                    onClick={() => setForm(f => ({
+                      ...f,
+                      pago_mixto: !f.pago_mixto,
+                      monto_efectivo: '',
+                      monto_transferencia: '',
+                    }))}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      form.pago_mixto ? 'bg-primary' : 'bg-gray-200'
+                    }`}>
+                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                      form.pago_mixto ? 'translate-x-4' : 'translate-x-0.5'
+                    }`} />
+                  </button>
                 </div>
+
+                {!form.pago_mixto ? (
+                  /* Método simple */
+                  <div className="flex gap-2">
+                    {['efectivo', 'transferencia'].map(m => (
+                      <button key={m} type="button"
+                        onClick={() => setForm(f => ({ ...f, metodo_pago: m }))}
+                        className={`flex-1 py-2 text-xs rounded-lg border transition-all capitalize ${
+                          form.metodo_pago === m
+                            ? 'bg-primary text-white border-primary'
+                            : 'border-gray-200 text-gray-500 hover:border-primary/40'
+                        }`}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  /* Pago mixto */
+                  <div className="space-y-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                    <p className="text-xs text-gray-500">
+                      Total: <strong className="text-primary">{formatPrecio(totalVenta)}</strong>
+                    </p>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="campo-label">Efectivo</label>
+                        <input
+                          type="text" inputMode="numeric"
+                          value={form.monto_efectivo}
+                          onChange={e => {
+                            const val = e.target.value.replace(/\D/g, '')
+                            const resto = Math.max(0, totalVenta - (parseFloat(val) || 0))
+                            setForm(f => ({
+                              ...f,
+                              monto_efectivo: val,
+                              monto_transferencia: resto > 0 ? String(Math.round(resto)) : '',
+                            }))
+                          }}
+                          placeholder="0"
+                          className="campo-input text-xs"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="campo-label">Transferencia</label>
+                        <input
+                          type="text" inputMode="numeric"
+                          value={form.monto_transferencia}
+                          onChange={e => {
+                            const val = e.target.value.replace(/\D/g, '')
+                            const resto = Math.max(0, totalVenta - (parseFloat(val) || 0))
+                            setForm(f => ({
+                              ...f,
+                              monto_transferencia: val,
+                              monto_efectivo: resto > 0 ? String(Math.round(resto)) : '',
+                            }))
+                          }}
+                          placeholder="0"
+                          className="campo-input text-xs"
+                        />
+                      </div>
+                    </div>
+                    {!mixtoValido && sumaMixta > 0 && (
+                      <p className="text-xs text-red-400">
+                        La suma ({formatPrecio(sumaMixta)}) no coincide con el total ({formatPrecio(totalVenta)})
+                      </p>
+                    )}
+                    {mixtoValido && sumaMixta > 0 && (
+                      <p className="text-xs text-primary">✓ Montos correctos</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -185,14 +264,15 @@ export default function VentaForm({
                 creando ||
                 form.productos.length === 0 ||
                 form.productos.some(p => !p.cantidad || +p.cantidad < 1) ||
-                sinCupo
+                sinCupo ||
+                (esPagoMixto && !mixtoValido)
               }
               className={`w-full btn-primary justify-center disabled:opacity-50 ${
-                form.tipo_pago === 'Crédito' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''
+                form.tipo_pago === 'fiado' ? '!bg-amber-500 hover:!bg-amber-500/90' : ''
               }`}>
               {creando
                 ? 'Registrando...'
-                : form.tipo_pago === 'Crédito'
+                : form.tipo_pago === 'fiado'
                   ? (excedeCupoFiado ? 'Registrar Crédito Parcial' : 'Registrar Crédito')
                   : 'Aceptar'}
             </button>

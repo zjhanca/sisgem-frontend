@@ -13,6 +13,7 @@ const formInicial = {
   tipo_cliente: 'registrado', cliente_id: '', cliente_nombre: '',
   productos: [], tipo_pago: 'total', metodo_pago: 'efectivo',
   metodo_pago_inmediato: 'efectivo',
+  pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
 }
 
 export function useVentas() {
@@ -62,6 +63,12 @@ export function useVentas() {
             pedido_id, monto: data._monto_inmediato, metodo: data._metodo_pago_inmediato || 'efectivo',
           })
         }
+      } else if (data._pago_mixto) {
+        if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
+        if (data._monto_efectivo > 0)
+          await ventasService.registrarPago({ pedido_id, monto: data._monto_efectivo, metodo: 'efectivo' })
+        if (data._monto_transferencia > 0)
+          await ventasService.registrarPago({ pedido_id, monto: data._monto_transferencia, metodo: 'transferencia' })
       } else {
         if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
         await ventasService.registrarPago({ pedido_id, monto: data._total, metodo: data._metodo_pago || 'efectivo' })
@@ -80,7 +87,9 @@ export function useVentas() {
       toast.success(
         vars._tipo_pago === 'fiado'
           ? (vars._monto_inmediato > 0 ? 'Venta registrada — crédito parcial' : 'Venta registrada a crédito')
-          : 'Venta registrada ✓'
+          : vars._pago_mixto
+            ? 'Venta registrada — pago mixto'
+            : 'Venta registrada'
       )
     },
     onError: err => toast.error(err.response?.data?.mensaje || 'Error'),
@@ -148,6 +157,14 @@ export function useVentas() {
     if (form.tipo_pago === 'fiado' && form.cliente_id && fiado.cupoFiadoDisponible != null && fiado.cupoFiadoDisponible <= 0) {
       toast.error('Este cliente no tiene cupo de crédito disponible'); return
     }
+    if (form.pago_mixto) {
+      const ef = parseFloat(form.monto_efectivo || 0)
+      const tr = parseFloat(form.monto_transferencia || 0)
+      if (Math.abs(ef + tr - fiado.totalVenta) >= 1) {
+        toast.error('La suma del pago mixto no coincide con el total'); return
+      }
+    }
+
     crearVenta.mutate({
       cliente_id:             form.tipo_cliente === 'registrado' ? form.cliente_id : null,
       cliente_nombre:         form.tipo_cliente === 'manual' ? (form.cliente_nombre.trim() || 'Mostrador') : null,
@@ -159,6 +176,9 @@ export function useVentas() {
       _metodo_pago:           form.metodo_pago || 'efectivo',
       _monto_inmediato:       fiado.montoInmediato,
       _metodo_pago_inmediato: form.metodo_pago_inmediato || 'efectivo',
+      _pago_mixto:            !!form.pago_mixto,
+      _monto_efectivo:        parseFloat(form.monto_efectivo || 0),
+      _monto_transferencia:   parseFloat(form.monto_transferencia || 0),
     })
   }
 
@@ -179,49 +199,48 @@ export function useVentas() {
   }
 
   const descargarReporte = async ({ tipo, formato = 'pdf', desde, hasta } = {}) => {
-    const nombres = { normal: 'general', rango: 'personalizado' }
-    const ext     = formato === 'excel' ? 'xlsx' : 'pdf'
-    const params  = new URLSearchParams({ formato })
+    const ext    = formato === 'excel' ? 'xlsx' : 'pdf'
+    const params = new URLSearchParams({ formato })
     if (tipo === 'rango') {
       if (desde) params.set('desde', desde)
       if (hasta) params.set('hasta', hasta)
     }
-    const url           = `/reportes/ventas?${params.toString()}`
-    const nombreArchivo = `reporte-ventas-${nombres[tipo] || tipo}.${ext}`
-    if (formato === 'excel') await descargarExcel(url, nombreArchivo)
-    else await descargarPDF(url, nombreArchivo)
+    const url      = `/reportes/ventas?${params}`
+    const nombre   = `reporte-ventas-${tipo || 'general'}.${ext}`
+    if (formato === 'excel') await descargarExcel(url, nombre)
+    else await descargarPDF(url, nombre)
   }
 
   return {
-    ventasFiltradas, clientes, productos, estados,
-    form, setForm,
-    prodBusqueda:      carrito.prodBusqueda,
-    prodsFiltrados:    carrito.prodsFiltrados,
-    setProdBusqueda:   carrito.setProdBusqueda,
-    setProdsFiltrados: carrito.setProdsFiltrados,
-    buscarProducto, buscarPorCodigo, agregarProducto, cambiarCantidad, quitarProducto,
-    clientesFiltrados, clienteBusqueda, setClienteBusqueda,
-    totalVenta:          fiado.totalVenta,
-    clienteSeleccionado: fiado.clienteSeleccionado,
-    cupoFiadoDisponible: fiado.cupoFiadoDisponible,
-    excedeCupoFiado:     fiado.excedeCupoFiado,
-    montoFiado:          fiado.montoFiado,
-    montoInmediato:      fiado.montoInmediato,
+    ventas, ventasFiltradas, clientes, productos, estados,
+    form, setForm, clienteBusqueda, setClienteBusqueda,
+    clientesFiltrados,
     modalNuevo, setModalNuevo,
     modalDetalle, setModalDetalle,
     modalAnular, setModalAnular,
+    notaAnulacion, setNotaAnulacion,
     filtroEstado, setFiltroEstado,
     filtroBusqueda, setFiltroBusqueda,
     filtroDesde, setFiltroDesde,
     filtroHasta, setFiltroHasta,
-    ...anulacion,
-    anular: anularMutation,
-    cambiarEstado,
-    completarPedidoMovil,
-    marcarEntregado,
+    buscarProducto, buscarPorCodigo, agregarProducto, cambiarCantidad, quitarProducto,
+    prodBusqueda:   carrito.prodBusqueda,
+    prodsFiltrados: carrito.prodsFiltrados,
     handleCrear,
-    getBadge, descargarReporte,
-    notaAnulacion, setNotaAnulacion, MINIMO_FIADO,
-    creando: crearVenta.isPending, anulando: anularMutation.isPending,
+    crearVenta, creando: crearVenta.isPending,
+    anular: anularMutation.mutate, anulando: anularMutation.isPending,
+    cambiarEstado, completarPedidoMovil, marcarEntregado,
+    getBadge,
+    clienteSeleccionado:  fiado.clienteSeleccionado,
+    cupoFiadoDisponible:  fiado.cupoFiadoDisponible,
+    excedeCupoFiado:      fiado.excedeCupoFiado,
+    montoFiado:           fiado.montoFiado,
+    montoInmediato:       fiado.montoInmediato,
+    totalVenta:           fiado.totalVenta,
+    getFechaLimiteAnulacion: anulacion.getFechaLimiteAnulacion,
+    puedeAnular:             anulacion.puedeAnular,
+    horasRestantesAnulacion: anulacion.horasRestantesAnulacion,
+    descargarReporte,
+    MINIMO_FIADO,
   }
 }

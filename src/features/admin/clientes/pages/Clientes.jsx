@@ -79,7 +79,7 @@ export default function Clientes() {
         ? `${r.tipo_documento}: ${r.numero_documento}` : '—' },
     { key: 'email',    label: 'Correo',   render: r => r.email    || '—' },
     { key: 'telefono', label: 'Teléfono', render: r => r.telefono || '—' },
-    { key: 'permite_fiado', label: 'Fiado',
+    { key: 'permite_fiado', label: 'Crédito',
       render: r => (
         <span className="inline-block w-20 text-center">
           {r.permite_fiado
