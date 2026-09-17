@@ -35,10 +35,11 @@ export default function PagoForm({
     return deudaPorCliente[c.id]?.total_deuda || 0
   }
 
-  const montoEf   = parseFloat(form.monto_efectivo || 0)
-  const montoTr   = parseFloat(form.monto_transferencia || 0)
-  const sumaMixta = montoEf + montoTr
-  const mixtoValido = !form.pago_mixto || (sumaMixta > 0 && sumaMixta <= totalDeuda + 1)
+  const montoEf    = parseFloat(form.monto_efectivo || 0)
+  const montoTr    = parseFloat(form.monto_transferencia || 0)
+  const sumaMixta  = montoEf + montoTr
+  const mixtoValido = !form.pago_mixto ||
+    (sumaMixta > 0 && Math.abs(sumaMixta - totalDeuda) < 1)
 
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Registrar Abono">
@@ -170,7 +171,9 @@ export default function PagoForm({
                 className={`relative inline-flex h-5 w-9 items-center rounded-full
                   transition-colors ${form.pago_mixto ? 'bg-primary' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white
-                  transition-transform ${form.pago_mixto ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  transition-transform ${
+                    form.pago_mixto ? 'translate-x-4' : 'translate-x-0.5'
+                  }`} />
               </button>
             </div>
 
@@ -192,7 +195,8 @@ export default function PagoForm({
                     type="text" inputMode="numeric"
                     value={form.monto}
                     onChange={e => handleMontoChange(e.target.value.replace(/\D/g, ''))}
-                    className={`campo-input ${errores.monto ? 'border-red-400 focus:ring-red-400/30' : ''}`}
+                    className={`campo-input ${errores.monto
+                      ? 'border-red-400 focus:ring-red-400/30' : ''}`}
                     placeholder="0"
                   />
                   {errores.monto && <p className="campo-error">{errores.monto}</p>}
@@ -219,7 +223,8 @@ export default function PagoForm({
               /* Pago mixto */
               <div className="space-y-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
                 <p className="text-xs text-gray-500">
-                  Deuda: <strong className="text-primary">{formatPrecio(totalDeuda)}</strong>
+                  Total a pagar:{' '}
+                  <strong className="text-primary">{formatPrecio(totalDeuda)}</strong>
                 </p>
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -228,11 +233,12 @@ export default function PagoForm({
                       type="text" inputMode="numeric"
                       value={form.monto_efectivo}
                       onChange={e => {
-                        const val   = e.target.value.replace(/\D/g, '')
-                        const resto = Math.max(0, totalDeuda - (parseFloat(val) || 0))
+                        const val = e.target.value.replace(/\D/g, '')
+                        const num = Math.min(parseFloat(val) || 0, totalDeuda)
+                        const resto = Math.max(0, totalDeuda - num)
                         setForm(f => ({
                           ...f,
-                          monto_efectivo:      val,
+                          monto_efectivo:      num > 0 ? String(Math.round(num)) : val,
                           monto_transferencia: resto > 0 ? String(Math.round(resto)) : '',
                         }))
                       }}
@@ -246,11 +252,12 @@ export default function PagoForm({
                       type="text" inputMode="numeric"
                       value={form.monto_transferencia}
                       onChange={e => {
-                        const val   = e.target.value.replace(/\D/g, '')
-                        const resto = Math.max(0, totalDeuda - (parseFloat(val) || 0))
+                        const val = e.target.value.replace(/\D/g, '')
+                        const num = Math.min(parseFloat(val) || 0, totalDeuda)
+                        const resto = Math.max(0, totalDeuda - num)
                         setForm(f => ({
                           ...f,
-                          monto_transferencia: val,
+                          monto_transferencia: num > 0 ? String(Math.round(num)) : val,
                           monto_efectivo:      resto > 0 ? String(Math.round(resto)) : '',
                         }))
                       }}
@@ -259,10 +266,17 @@ export default function PagoForm({
                     />
                   </div>
                 </div>
-                {errores.monto && <p className="campo-error">{errores.monto}</p>}
-                {!errores.monto && sumaMixta > 0 && mixtoValido && (
-                  <p className="text-xs text-primary">✓ Total: {formatPrecio(sumaMixta)}</p>
+                {/* Validación visual */}
+                {sumaMixta > 0 && !mixtoValido && (
+                  <p className="text-xs text-red-400">
+                    La suma ({formatPrecio(sumaMixta)}) no coincide con el total (
+                    {formatPrecio(totalDeuda)})
+                  </p>
                 )}
+                {sumaMixta > 0 && mixtoValido && (
+                  <p className="text-xs text-primary">✓ Montos correctos</p>
+                )}
+                {errores.monto && <p className="campo-error">{errores.monto}</p>}
               </div>
             )}
           </div>
@@ -273,7 +287,7 @@ export default function PagoForm({
             disabled={
               creando || pagoCompleto || !!errores.monto || !form.cliente_id ||
               (!form.pago_mixto && !form.monto) ||
-              (form.pago_mixto && sumaMixta <= 0)
+              (form.pago_mixto && (!mixtoValido || sumaMixta <= 0))
             }
             className="btn-primary disabled:opacity-50">
             {creando ? 'Registrando...' : 'Aceptar'}
