@@ -22,19 +22,54 @@ function diasRestantes(fechaVenta) {
 
 function BadgeEstado({ estado }) {
   const l = estado?.toLowerCase() || ''
-  const color = l.includes('anula')                          ? 'bg-gray-400'
-    : l.includes('sin recoger')                              ? 'bg-orange-500'
-    : l.includes('complet') || l.includes('paga')            ? 'bg-primary'
+  const color = l.includes('anula')                       ? 'bg-gray-400'
+    : l.includes('sin recoger')                           ? 'bg-orange-500'
+    : l.includes('complet') || l.includes('paga')         ? 'bg-primary'
     : 'bg-amber-500'
-  const label = l.includes('anula')                          ? 'Anulado'
-    : l.includes('sin recoger')                              ? 'Sin recoger'
-    : l.includes('complet') || l.includes('paga')            ? 'Completado'
+  const label = l.includes('anula')                       ? 'Anulado'
+    : l.includes('sin recoger')                           ? 'Sin recoger'
+    : l.includes('complet') || l.includes('paga')         ? 'Completado'
     : 'Pendiente'
   return (
     <span className={`inline-flex items-center justify-center h-6 px-3 rounded-full
       text-white text-xs font-semibold ${color}`}>
       {label}
     </span>
+  )
+}
+
+// ── Muestra métodos de pago — simple o mixto ─────────────────────
+function MetodoPago({ detalle, venta }) {
+  const pagos = detalle?.pagos_detalle || []
+
+  // Pago mixto: más de un método distinto en pagos activos
+  const pagosActivos = pagos.filter(p =>
+    !(p.estado || '').toLowerCase().includes('anula'))
+  const metodos = [...new Set(pagosActivos.map(p => p.metodo))]
+  const esMixto = metodos.length > 1
+
+  if (esMixto) {
+    return (
+      <div>
+        <p className="campo-label">Método de pago</p>
+        <div className="flex flex-col gap-0.5">
+          {pagosActivos.map((p, i) => (
+            <p key={i} className="font-medium capitalize text-xs">
+              {p.metodo}: <span className="text-primary">{formatPrecio(p.monto)}</span>
+            </p>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <p className="campo-label">Método de pago</p>
+      <p className="font-medium capitalize">
+        {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
+      </p>
+    </div>
   )
 }
 
@@ -141,12 +176,7 @@ export default function VentaDetalle({ modalDetalle, setModalDetalle, setModalAn
 
             {/* Método de pago + Entrega */}
             <div className="flex items-center justify-between px-1">
-              <div>
-                <p className="campo-label">Método de pago</p>
-                <p className="font-medium capitalize">
-                  {detalle?.metodo_pago || venta.metodo_pago || 'Efectivo'}
-                </p>
-              </div>
+              <MetodoPago detalle={detalle} venta={venta} />
               <div className="text-right">
                 <p className="campo-label">Entrega</p>
                 <p className="font-medium capitalize">
