@@ -53,6 +53,7 @@ const estadoInicial = () => {
   return MENU.reduce((acc, g) => ({ ...acc, [g.id]: true }), {})
 }
 
+// ── Solo cuenta pendientes, sin recoger NO ──────────────────────
 function usePedidosBadge() {
   const { data: pedidos = [] } = useQuery({
     queryKey:        ['pedidos'],
@@ -63,9 +64,7 @@ function usePedidosBadge() {
   const pedidosMovil = pedidos.filter(p => p.origen === 'movil')
   const pendientes   = pedidosMovil.filter(p =>
     (p.estado || '').toLowerCase().includes('pendiente')).length
-  const sinRecoger   = pedidosMovil.filter(p =>
-    (p.estado || '').toLowerCase().includes('sin recoger')).length
-  return pendientes + sinRecoger
+  return pendientes
 }
 
 function SidebarContent({
@@ -171,7 +170,7 @@ function SidebarContent({
                     {item.badge && totalBadge > 0 && (
                       <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1
                         rounded-full bg-red-500 text-white text-[9px] font-bold
-                        flex items-center justify-center leading-none">
+                        flex items-center justify-content leading-none">
                         {totalBadge > 99 ? '99+' : totalBadge}
                       </span>
                     )}
@@ -335,7 +334,8 @@ export default function AdminLayout() {
           <button onClick={() => setMenuMovil(true)} className="text-gray-500">
             <Menu size={18} />
           </button>
-          <Link to="/"><span className="font-bold text-primary">Sisgem</span></Link>
+          <Link to="/"><img src="/logo-green.png" alt="Sisgem"
+            className="h-7 w-auto object-contain" /></Link>
         </div>
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-light-bg">
           <Outlet />

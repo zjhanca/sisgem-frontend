@@ -32,9 +32,17 @@ export function usePedidos() {
     const prevIds = new Set(prev.map(p => p.id))
 
     if (prev.length > 0) {
-      const nuevos = pedidosMovil.filter(
-        p => !prevIds.has(p.id) && (p.estado || '').toLowerCase().includes('pendiente')
-      )
+      const nuevos = pedidosMovil.filter(p => {
+        if (prevIds.has(p.id)) return false
+        const estado = (p.estado || '').toLowerCase()
+        if (!estado.includes('pendiente')) return false
+        // Solo si fue creado hace menos de 6 horas
+        try {
+          const fecha = new Date(p.fecha_pedido)
+          const horas = (Date.now() - fecha.getTime()) / (1000 * 60 * 60)
+          return horas < 6
+        } catch { return false }
+      })
       nuevos.forEach(p => {
         toast.success(
           `Nuevo pedido #${p.id} — ${p.cliente || 'Sin nombre'}`,
