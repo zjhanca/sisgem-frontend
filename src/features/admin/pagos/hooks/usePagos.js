@@ -9,6 +9,7 @@ const formVacio = {
   pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
 }
 const MONTO_MINIMO_ABONO = 10000
+const r50 = n => Math.round(n / 50) * 50
 
 function esPagado(n)  { return n && (n.toLowerCase().includes('paga') || n.toLowerCase().includes('activ') || n.toLowerCase().includes('complet')) }
 function esAbono(n)   { return n && n.toLowerCase().includes('abono') }
@@ -94,9 +95,9 @@ export function usePagos() {
       }
     }
     return Array.from(grupos.values()).map(g => {
-      const saldoPendiente  = Math.max(0, g.total_pedido - g.total_pagado)
-      const completo        = g.venta_anulada || (g.total_pedido > 0 && saldoPendiente === 0)
-      const pagosOrdenados  = [...g.pagos].sort((a, b) =>
+      const saldoPendiente = Math.max(0, g.total_pedido - g.total_pagado)
+      const completo       = g.venta_anulada || (g.total_pedido > 0 && saldoPendiente === 0)
+      const pagosOrdenados = [...g.pagos].sort((a, b) =>
         new Date(getFechaPago(b)) - new Date(getFechaPago(a)))
       return { ...g, pagos: pagosOrdenados,
         saldo_pendiente: g.venta_anulada ? 0 : saldoPendiente, completo }
@@ -174,12 +175,10 @@ export function usePagos() {
   const crear = useMutation({
     mutationFn: async data => {
       if (data.pago_mixto) {
-        // Pago mixto: distribuir efectivo y transferencia entre pedidos pendientes
         const montos = [
           { metodo: 'efectivo',      monto: parseFloat(data.monto_efectivo || 0) },
           { metodo: 'transferencia', monto: parseFloat(data.monto_transferencia || 0) },
         ].filter(m => m.monto > 0)
-
         for (const { metodo, monto } of montos) {
           let restante = monto
           for (const p of pedidosCliente) {
@@ -231,7 +230,8 @@ export function usePagos() {
     let num = +val
     if (isNaN(num)) return
     if (num < 0) num = 0
-    if (totalDeuda > 0 && num > totalDeuda) num = totalDeuda
+    num = r50(num)
+    if (totalDeuda > 0 && num > totalDeuda) num = r50(totalDeuda)
     setForm(f => ({ ...f, monto: String(num) }))
     const cubre = totalDeuda > 0 && num >= totalDeuda
     if (num > 0 && num < MONTO_MINIMO_ABONO && !cubre) {
@@ -248,13 +248,12 @@ export function usePagos() {
     const e = {}
     if (!form.cliente_id) e.cliente_id = 'Selecciona un cliente'
     if (pagoCompleto) { e.monto = 'El cliente no tiene deuda pendiente'; return e }
-
     if (form.pago_mixto) {
-      const ef = parseFloat(form.monto_efectivo || 0)
-      const tr = parseFloat(form.monto_transferencia || 0)
+      const ef   = parseFloat(form.monto_efectivo || 0)
+      const tr   = parseFloat(form.monto_transferencia || 0)
       const suma = ef + tr
       if (suma <= 0) e.monto = 'Ingresa los montos del pago mixto'
-      else if (suma > totalDeuda + 1) e.monto = `El total (${suma.toLocaleString('es-CO')}) supera la deuda`
+      else if (Math.abs(suma - totalDeuda) >= 1) e.monto = `La suma no coincide con la deuda`
       else {
         const cubre = suma >= totalDeuda
         if (suma < MONTO_MINIMO_ABONO && !cubre)

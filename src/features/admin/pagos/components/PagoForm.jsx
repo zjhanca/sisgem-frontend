@@ -2,6 +2,8 @@ import Modal from '@shared/components/Modal'
 import { Search, User, CreditCard } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
+const r50 = n => Math.round(n / 50) * 50
+
 export default function PagoForm({
   modalNuevo, setModalNuevo,
   form, setForm, errores,
@@ -202,7 +204,7 @@ export default function PagoForm({
                   {errores.monto && <p className="campo-error">{errores.monto}</p>}
                   {totalDeuda > 0 && (
                     <button type="button"
-                      onClick={() => handleMontoChange(String(Math.round(totalDeuda)))}
+                      onClick={() => handleMontoChange(String(r50(totalDeuda)))}
                       className="text-xs text-primary mt-1 hover:underline">
                       Usar deuda total ({formatPrecio(totalDeuda)})
                     </button>
@@ -233,13 +235,13 @@ export default function PagoForm({
                       type="text" inputMode="numeric"
                       value={form.monto_efectivo}
                       onChange={e => {
-                        const val = e.target.value.replace(/\D/g, '')
-                        const num = Math.min(parseFloat(val) || 0, totalDeuda)
-                        const resto = Math.max(0, totalDeuda - num)
+                        const val   = e.target.value.replace(/\D/g, '')
+                        const num   = r50(Math.min(parseFloat(val) || 0, totalDeuda))
+                        const resto = r50(Math.max(0, totalDeuda - num))
                         setForm(f => ({
                           ...f,
-                          monto_efectivo:      num > 0 ? String(Math.round(num)) : val,
-                          monto_transferencia: resto > 0 ? String(Math.round(resto)) : '',
+                          monto_efectivo:      num > 0 ? String(num) : val,
+                          monto_transferencia: resto > 0 ? String(resto) : '',
                         }))
                       }}
                       placeholder="0"
@@ -252,13 +254,13 @@ export default function PagoForm({
                       type="text" inputMode="numeric"
                       value={form.monto_transferencia}
                       onChange={e => {
-                        const val = e.target.value.replace(/\D/g, '')
-                        const num = Math.min(parseFloat(val) || 0, totalDeuda)
-                        const resto = Math.max(0, totalDeuda - num)
+                        const val   = e.target.value.replace(/\D/g, '')
+                        const num   = r50(Math.min(parseFloat(val) || 0, totalDeuda))
+                        const resto = r50(Math.max(0, totalDeuda - num))
                         setForm(f => ({
                           ...f,
-                          monto_transferencia: num > 0 ? String(Math.round(num)) : val,
-                          monto_efectivo:      resto > 0 ? String(Math.round(resto)) : '',
+                          monto_transferencia: num > 0 ? String(num) : val,
+                          monto_efectivo:      resto > 0 ? String(resto) : '',
                         }))
                       }}
                       placeholder="0"
@@ -266,7 +268,6 @@ export default function PagoForm({
                     />
                   </div>
                 </div>
-                {/* Validación visual */}
                 {sumaMixta > 0 && !mixtoValido && (
                   <p className="text-xs text-red-400">
                     La suma ({formatPrecio(sumaMixta)}) no coincide con el total (

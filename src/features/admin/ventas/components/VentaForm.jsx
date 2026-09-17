@@ -8,6 +8,8 @@ import SelectorCliente       from './SelectorCliente'
 import PanelFiado            from './PanelFiado'
 import ModalBuscadorProducto from './ModalBuscadorProducto'
 
+const r50 = n => Math.round(n / 50) * 50
+
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
   clientes, clientesFiltrados, clienteBusqueda, setClienteBusqueda,
@@ -40,16 +42,16 @@ export default function VentaForm({
   const cerrarNuevoCliente = () => { cerrarModalCliente(); setModalNuevoCliente(false) }
 
   const permitefiado       = clienteSeleccionado?.permite_fiado
-  const sinCupo            = form.tipo_pago === 'fiado' && permitefiado && cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
+  const sinCupo            = form.tipo_pago === 'fiado' && permitefiado &&
+    cupoFiadoDisponible != null && cupoFiadoDisponible <= 0
   const minimoInsuficiente = totalVenta < (MINIMO_FIADO || 10000)
 
-  // ── Pago mixto: validar que la suma cuadre ──────────────────
-  const esPagoTotal    = form.tipo_pago === 'total'
-  const esPagoMixto    = esPagoTotal && form.pago_mixto
-  const montoEfectivo  = parseFloat(form.monto_efectivo || 0)
-  const montoTransf    = parseFloat(form.monto_transferencia || 0)
-  const sumaMixta      = montoEfectivo + montoTransf
-  const mixtoValido    = !esPagoMixto || Math.abs(sumaMixta - totalVenta) < 1
+  const esPagoTotal  = form.tipo_pago === 'total'
+  const esPagoMixto  = esPagoTotal && form.pago_mixto
+  const montoEf      = parseFloat(form.monto_efectivo || 0)
+  const montoTr      = parseFloat(form.monto_transferencia || 0)
+  const sumaMixta    = montoEf + montoTr
+  const mixtoValido  = !esPagoMixto || Math.abs(sumaMixta - totalVenta) < 1
 
   return (
     <>
@@ -96,7 +98,6 @@ export default function VentaForm({
                   <PackagePlus size={13} /> Agregar
                 </button>
               </div>
-
               {form.productos.length === 0 ? (
                 <button type="button" onClick={() => setModalBuscador(true)}
                   className="w-full py-5 rounded-lg border-2 border-dashed border-gray-200
@@ -109,7 +110,8 @@ export default function VentaForm({
                 <div className="space-y-1 max-h-36 overflow-y-auto">
                   {form.productos.map((p, idx) => (
                     <div key={`${p.producto_id}-${idx}`}
-                      className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg bg-gray-50">
+                      className="flex items-center justify-between text-xs
+                        px-2 py-1.5 rounded-lg bg-gray-50">
                       <span className="flex-1 truncate font-medium">{p.nombre}</span>
                       <div className="flex items-center gap-2 shrink-0 ml-2">
                         <span className="text-gray-400">×{p.cantidad}</span>
@@ -124,7 +126,8 @@ export default function VentaForm({
                     </div>
                   ))}
                   <button type="button" onClick={() => setModalBuscador(true)}
-                    className="w-full text-xs text-primary/60 hover:text-primary py-1 transition-colors">
+                    className="w-full text-xs text-primary/60 hover:text-primary
+                      py-1 transition-colors">
                     Editar cantidades →
                   </button>
                 </div>
@@ -156,7 +159,7 @@ export default function VentaForm({
               MINIMO_FIADO={MINIMO_FIADO}
             />
 
-            {/* Método de pago — solo si es pago total (no fiado) */}
+            {/* Método de pago — solo si es pago total */}
             {form.tipo_pago === 'total' && (
               <div className="space-y-2">
                 <label className="campo-label">Método de Pago</label>
@@ -167,26 +170,26 @@ export default function VentaForm({
                   <button type="button"
                     onClick={() => setForm(f => ({
                       ...f,
-                      pago_mixto: !f.pago_mixto,
-                      monto_efectivo: '',
+                      pago_mixto:          !f.pago_mixto,
+                      monto_efectivo:      '',
                       monto_transferencia: '',
                     }))}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                      form.pago_mixto ? 'bg-primary' : 'bg-gray-200'
-                    }`}>
-                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                      form.pago_mixto ? 'translate-x-4' : 'translate-x-0.5'
-                    }`} />
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full
+                      transition-colors ${form.pago_mixto ? 'bg-primary' : 'bg-gray-200'}`}>
+                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full
+                      bg-white transition-transform ${
+                        form.pago_mixto ? 'translate-x-4' : 'translate-x-0.5'
+                      }`} />
                   </button>
                 </div>
 
                 {!form.pago_mixto ? (
-                  /* Método simple */
                   <div className="flex gap-2">
                     {['efectivo', 'transferencia'].map(m => (
                       <button key={m} type="button"
                         onClick={() => setForm(f => ({ ...f, metodo_pago: m }))}
-                        className={`flex-1 py-2 text-xs rounded-lg border transition-all capitalize ${
+                        className={`flex-1 py-2 text-xs rounded-lg border transition-all
+                          capitalize ${
                           form.metodo_pago === m
                             ? 'bg-primary text-white border-primary'
                             : 'border-gray-200 text-gray-500 hover:border-primary/40'
@@ -196,7 +199,6 @@ export default function VentaForm({
                     ))}
                   </div>
                 ) : (
-                  /* Pago mixto */
                   <div className="space-y-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
                     <p className="text-xs text-gray-500">
                       Total: <strong className="text-primary">{formatPrecio(totalVenta)}</strong>
@@ -208,12 +210,13 @@ export default function VentaForm({
                           type="text" inputMode="numeric"
                           value={form.monto_efectivo}
                           onChange={e => {
-                            const val = e.target.value.replace(/\D/g, '')
-                            const resto = Math.max(0, totalVenta - (parseFloat(val) || 0))
+                            const val   = e.target.value.replace(/\D/g, '')
+                            const num   = r50(Math.min(parseFloat(val) || 0, totalVenta))
+                            const resto = r50(Math.max(0, totalVenta - num))
                             setForm(f => ({
                               ...f,
-                              monto_efectivo: val,
-                              monto_transferencia: resto > 0 ? String(Math.round(resto)) : '',
+                              monto_efectivo:      num > 0 ? String(num) : val,
+                              monto_transferencia: resto > 0 ? String(resto) : '',
                             }))
                           }}
                           placeholder="0"
@@ -226,12 +229,13 @@ export default function VentaForm({
                           type="text" inputMode="numeric"
                           value={form.monto_transferencia}
                           onChange={e => {
-                            const val = e.target.value.replace(/\D/g, '')
-                            const resto = Math.max(0, totalVenta - (parseFloat(val) || 0))
+                            const val   = e.target.value.replace(/\D/g, '')
+                            const num   = r50(Math.min(parseFloat(val) || 0, totalVenta))
+                            const resto = r50(Math.max(0, totalVenta - num))
                             setForm(f => ({
                               ...f,
-                              monto_transferencia: val,
-                              monto_efectivo: resto > 0 ? String(Math.round(resto)) : '',
+                              monto_transferencia: num > 0 ? String(num) : val,
+                              monto_efectivo:      resto > 0 ? String(resto) : '',
                             }))
                           }}
                           placeholder="0"
@@ -241,7 +245,8 @@ export default function VentaForm({
                     </div>
                     {!mixtoValido && sumaMixta > 0 && (
                       <p className="text-xs text-red-400">
-                        La suma ({formatPrecio(sumaMixta)}) no coincide con el total ({formatPrecio(totalVenta)})
+                        La suma ({formatPrecio(sumaMixta)}) no coincide con el total (
+                        {formatPrecio(totalVenta)})
                       </p>
                     )}
                     {mixtoValido && sumaMixta > 0 && (
