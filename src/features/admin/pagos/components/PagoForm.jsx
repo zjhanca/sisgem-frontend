@@ -2,7 +2,7 @@ import Modal from '@shared/components/Modal'
 import { Search, User, CreditCard } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
-const r50 = n => Math.round(n / 50) * 50
+const r50 = n => Math.floor(n / 50) * 50
 
 export default function PagoForm({
   modalNuevo, setModalNuevo,
@@ -41,13 +41,12 @@ export default function PagoForm({
   const montoTr    = parseFloat(form.monto_transferencia || 0)
   const sumaMixta  = montoEf + montoTr
   const mixtoValido = !form.pago_mixto ||
-    (sumaMixta > 0 && Math.abs(sumaMixta - totalDeuda) < 1)
+    (sumaMixta > 0 && sumaMixta <= totalDeuda + 1)
 
   return (
     <Modal abierto={modalNuevo} onCerrar={cerrar} bloquearCierre titulo="Registrar Abono">
       <form onSubmit={handleSubmit} className="space-y-3">
 
-        {/* ── Buscar cliente ── */}
         <div>
           <label className="campo-label">Cliente *</label>
           {clienteSel && !clienteDropdown ? (
@@ -114,7 +113,8 @@ export default function PagoForm({
               )}
               {clienteDropdown && clienteBusqueda && clientesFiltradosModal.length === 0 && (
                 <div className="absolute top-full left-0 right-0 z-30 bg-white border
-                  border-gray-200 rounded-lg shadow-lg mt-1 p-3 text-xs text-gray-400 text-center">
+                  border-gray-200 rounded-lg shadow-lg mt-1 p-3 text-xs
+                  text-gray-400 text-center">
                   Sin clientes con deuda pendiente
                 </div>
               )}
@@ -123,7 +123,6 @@ export default function PagoForm({
           {errores.cliente_id && <p className="campo-error">{errores.cliente_id}</p>}
         </div>
 
-        {/* ── Resumen deuda ── */}
         {clienteSel && deudaCliente && (
           <div className="rounded-lg border border-red-100 overflow-hidden text-xs">
             <div className="flex items-center justify-between px-3 py-2 bg-red-50">
@@ -155,11 +154,8 @@ export default function PagoForm({
           </div>
         )}
 
-        {/* ── Monto + método ── */}
         {clienteSel && !pagoCompleto && (
           <div className="space-y-2">
-
-            {/* Toggle pago mixto */}
             <div className="flex items-center justify-between">
               <label className="campo-label mb-0">¿Pago dividido?</label>
               <button type="button"
@@ -180,7 +176,6 @@ export default function PagoForm({
             </div>
 
             {!form.pago_mixto ? (
-              /* Pago simple */
               <div className="grid grid-cols-2 gap-3 items-start">
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -222,7 +217,6 @@ export default function PagoForm({
                 </div>
               </div>
             ) : (
-              /* Pago mixto */
               <div className="space-y-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
                 <p className="text-xs text-gray-500">
                   Total a pagar:{' '}
@@ -270,7 +264,7 @@ export default function PagoForm({
                 </div>
                 {sumaMixta > 0 && !mixtoValido && (
                   <p className="text-xs text-red-400">
-                    La suma ({formatPrecio(sumaMixta)}) no coincide con el total (
+                    La suma ({formatPrecio(sumaMixta)}) supera la deuda (
                     {formatPrecio(totalDeuda)})
                   </p>
                 )}

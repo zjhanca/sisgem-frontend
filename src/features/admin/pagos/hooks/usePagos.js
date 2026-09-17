@@ -9,7 +9,7 @@ const formVacio = {
   pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
 }
 const MONTO_MINIMO_ABONO = 10000
-const r50 = n => Math.round(n / 50) * 50
+const r50 = n => Math.floor(n / 50) * 50
 
 function esPagado(n)  { return n && (n.toLowerCase().includes('paga') || n.toLowerCase().includes('activ') || n.toLowerCase().includes('complet')) }
 function esAbono(n)   { return n && n.toLowerCase().includes('abono') }
@@ -253,9 +253,9 @@ export function usePagos() {
       const tr   = parseFloat(form.monto_transferencia || 0)
       const suma = ef + tr
       if (suma <= 0) e.monto = 'Ingresa los montos del pago mixto'
-      else if (Math.abs(suma - totalDeuda) >= 1) e.monto = `La suma no coincide con la deuda`
+      else if (suma > totalDeuda + 1) e.monto = 'El total supera la deuda'
       else {
-        const cubre = suma >= totalDeuda
+        const cubre = suma >= totalDeuda - 1
         if (suma < MONTO_MINIMO_ABONO && !cubre)
           e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
       }

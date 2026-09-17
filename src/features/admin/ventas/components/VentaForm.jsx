@@ -8,7 +8,7 @@ import SelectorCliente       from './SelectorCliente'
 import PanelFiado            from './PanelFiado'
 import ModalBuscadorProducto from './ModalBuscadorProducto'
 
-const r50 = n => Math.round(n / 50) * 50
+const r50 = n => Math.floor(n / 50) * 50
 
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
@@ -51,7 +51,7 @@ export default function VentaForm({
   const montoEf      = parseFloat(form.monto_efectivo || 0)
   const montoTr      = parseFloat(form.monto_transferencia || 0)
   const sumaMixta    = montoEf + montoTr
-  const mixtoValido  = !esPagoMixto || Math.abs(sumaMixta - totalVenta) < 1
+  const mixtoValido  = !esPagoMixto || sumaMixta <= totalVenta + 1
 
   return (
     <>
@@ -60,7 +60,6 @@ export default function VentaForm({
         <form className="flex flex-col" style={{ maxHeight: '80vh' }}>
           <div className="overflow-y-auto flex-1 space-y-4 pr-1">
 
-            {/* Banner tipo pago */}
             <div className={`flex items-center gap-2 p-3 rounded-xl border ${
               form.tipo_pago === 'fiado'
                 ? 'bg-amber-500/10 border-amber-500/30'
@@ -83,7 +82,6 @@ export default function VentaForm({
               </div>
             </div>
 
-            {/* Productos */}
             <div className="p-3 rounded-xl border border-gray-200 space-y-2">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-gray-600">
@@ -134,7 +132,6 @@ export default function VentaForm({
               )}
             </div>
 
-            {/* Cliente */}
             <SelectorCliente
               form={form} setForm={setForm}
               clientesFiltrados={clientesFiltrados}
@@ -144,7 +141,6 @@ export default function VentaForm({
               abrirNuevoCliente={abrirNuevoCliente}
             />
 
-            {/* Fiado */}
             <PanelFiado
               form={form} setForm={setForm}
               clienteSeleccionado={clienteSeleccionado}
@@ -159,12 +155,9 @@ export default function VentaForm({
               MINIMO_FIADO={MINIMO_FIADO}
             />
 
-            {/* Método de pago — solo si es pago total */}
             {form.tipo_pago === 'total' && (
               <div className="space-y-2">
                 <label className="campo-label">Método de Pago</label>
-
-                {/* Toggle pago mixto */}
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-gray-400">¿Pago dividido?</span>
                   <button type="button"
@@ -245,7 +238,7 @@ export default function VentaForm({
                     </div>
                     {!mixtoValido && sumaMixta > 0 && (
                       <p className="text-xs text-red-400">
-                        La suma ({formatPrecio(sumaMixta)}) no coincide con el total (
+                        La suma ({formatPrecio(sumaMixta)}) supera el total (
                         {formatPrecio(totalVenta)})
                       </p>
                     )}
@@ -258,7 +251,6 @@ export default function VentaForm({
             )}
           </div>
 
-          {/* Total + Submit */}
           <div className="pt-3 mt-3 border-t border-gray-100 space-y-3 shrink-0">
             <div className="flex justify-between items-center px-1">
               <span className="text-sm font-semibold">Total</span>
