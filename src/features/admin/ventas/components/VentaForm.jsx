@@ -8,7 +8,7 @@ import SelectorCliente       from './SelectorCliente'
 import PanelFiado            from './PanelFiado'
 import ModalBuscadorProducto from './ModalBuscadorProducto'
 
-const r50 = n => Math.floor(n / 50) * 50
+const r50 = n => Math.round(n / 50) * 50
 
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,

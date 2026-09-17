@@ -9,7 +9,7 @@ const formVacio = {
   pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
 }
 const MONTO_MINIMO_ABONO = 10000
-const r50 = n => Math.floor(n / 50) * 50
+const r50 = n => Math.round(n / 50) * 50
 
 function esPagado(n)  { return n && (n.toLowerCase().includes('paga') || n.toLowerCase().includes('activ') || n.toLowerCase().includes('complet')) }
 function esAbono(n)   { return n && n.toLowerCase().includes('abono') }

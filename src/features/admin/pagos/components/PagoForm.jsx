@@ -2,7 +2,7 @@ import Modal from '@shared/components/Modal'
 import { Search, User, CreditCard } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
-const r50 = n => Math.floor(n / 50) * 50
+const r50 = n => Math.round(n / 50) * 50
 
 export default function PagoForm({
   modalNuevo, setModalNuevo,
