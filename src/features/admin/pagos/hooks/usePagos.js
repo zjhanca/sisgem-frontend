@@ -9,7 +9,6 @@ const formVacio = {
   pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
 }
 const MONTO_MINIMO_ABONO = 10000
-const r50 = n => Math.round(n / 50) * 50
 
 function esPagado(n)  { return n && (n.toLowerCase().includes('paga') || n.toLowerCase().includes('activ') || n.toLowerCase().includes('complet')) }
 function esAbono(n)   { return n && n.toLowerCase().includes('abono') }
@@ -230,8 +229,7 @@ export function usePagos() {
     let num = +val
     if (isNaN(num)) return
     if (num < 0) num = 0
-    num = r50(num)
-    if (totalDeuda > 0 && num > totalDeuda) num = r50(totalDeuda)
+    if (totalDeuda > 0 && num > totalDeuda) num = totalDeuda
     setForm(f => ({ ...f, monto: String(num) }))
     const cubre = totalDeuda > 0 && num >= totalDeuda
     if (num > 0 && num < MONTO_MINIMO_ABONO && !cubre) {

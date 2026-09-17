@@ -8,8 +8,6 @@ import SelectorCliente       from './SelectorCliente'
 import PanelFiado            from './PanelFiado'
 import ModalBuscadorProducto from './ModalBuscadorProducto'
 
-const r50 = n => Math.round(n / 50) * 50
-
 export default function VentaForm({
   modalNuevo, setModalNuevo, form, setForm,
   clientes, clientesFiltrados, clienteBusqueda, setClienteBusqueda,
@@ -204,11 +202,11 @@ export default function VentaForm({
                           value={form.monto_efectivo}
                           onChange={e => {
                             const val   = e.target.value.replace(/\D/g, '')
-                            const num   = r50(Math.min(parseFloat(val) || 0, totalVenta))
-                            const resto = r50(Math.max(0, totalVenta - num))
+                            const num   = Math.min(parseFloat(val) || 0, totalVenta)
+                            const resto = Math.max(0, totalVenta - num)
                             setForm(f => ({
                               ...f,
-                              monto_efectivo:      num > 0 ? String(num) : val,
+                              monto_efectivo:      String(num),
                               monto_transferencia: resto > 0 ? String(resto) : '',
                             }))
                           }}
@@ -223,11 +221,11 @@ export default function VentaForm({
                           value={form.monto_transferencia}
                           onChange={e => {
                             const val   = e.target.value.replace(/\D/g, '')
-                            const num   = r50(Math.min(parseFloat(val) || 0, totalVenta))
-                            const resto = r50(Math.max(0, totalVenta - num))
+                            const num   = Math.min(parseFloat(val) || 0, totalVenta)
+                            const resto = Math.max(0, totalVenta - num)
                             setForm(f => ({
                               ...f,
-                              monto_transferencia: num > 0 ? String(num) : val,
+                              monto_transferencia: String(num),
                               monto_efectivo:      resto > 0 ? String(resto) : '',
                             }))
                           }}
