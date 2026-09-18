@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { pagosService } from '../services/pagosService'
 import { descargarPDF, descargarExcel } from '@shared/utils/reportes'
@@ -135,6 +135,19 @@ export function usePagos() {
   const pagoCompleto   = !!form.cliente_id && totalDeuda === 0
   const montoPendiente = totalDeuda
 
+  // ── Autocompletar monto cuando deuda < mínimo ──────────────
+  useEffect(() => {
+    if (
+      modalNuevo &&
+      totalDeuda > 0 &&
+      totalDeuda < MONTO_MINIMO_ABONO &&
+      !form.monto
+    ) {
+      setForm(f => ({ ...f, monto: String(Math.round(totalDeuda)) }))
+      setErrores(prev => ({ ...prev, monto: undefined }))
+    }
+  }, [totalDeuda, modalNuevo])
+
   const clientesConDeuda = clientes.filter(c => {
     const d = deudaPorCliente[c.id]
     return d && d.total_deuda > 0
@@ -232,7 +245,8 @@ export function usePagos() {
     if (totalDeuda > 0 && num > totalDeuda) num = totalDeuda
     setForm(f => ({ ...f, monto: String(num) }))
     const cubre = totalDeuda > 0 && num >= totalDeuda
-    if (num > 0 && num < MONTO_MINIMO_ABONO && !cubre) {
+    // Si la deuda es menor al mínimo, no mostrar error — se permite pagar el exacto
+    if (num > 0 && num < MONTO_MINIMO_ABONO && !cubre && totalDeuda >= MONTO_MINIMO_ABONO) {
       setErrores(prev => ({
         ...prev,
         monto: `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
@@ -254,7 +268,8 @@ export function usePagos() {
       else if (suma > totalDeuda + 1) e.monto = 'El total supera la deuda'
       else {
         const cubre = suma >= totalDeuda - 1
-        if (suma < MONTO_MINIMO_ABONO && !cubre)
+        // Solo validar mínimo si la deuda es mayor o igual al mínimo
+        if (suma < MONTO_MINIMO_ABONO && !cubre && totalDeuda >= MONTO_MINIMO_ABONO)
           e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
       }
     } else {
@@ -262,7 +277,8 @@ export function usePagos() {
         e.monto = 'Monto inválido'
       } else {
         const cubre = totalDeuda > 0 && +form.monto >= totalDeuda
-        if (+form.monto < MONTO_MINIMO_ABONO && !cubre)
+        // Solo validar mínimo si la deuda es mayor o igual al mínimo
+        if (+form.monto < MONTO_MINIMO_ABONO && !cubre && totalDeuda >= MONTO_MINIMO_ABONO)
           e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
       }
     }
