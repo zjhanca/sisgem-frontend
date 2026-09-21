@@ -12,27 +12,27 @@ export function useFiadoCalculo({ clientes, form }) {
     && cupoFiadoDisponible != null
     && totalVenta > cupoFiadoDisponible
 
-  // Si el cliente definió un monto personalizado a crédito
-  const montoFiadoPersonalizado = form.monto_fiado_personalizado
+  // Monto personalizado a crédito — aplica tanto si excede como si no
+  const montoFiadoPersonalizado = form.monto_fiado_personalizado != null
     ? parseFloat(form.monto_fiado_personalizado) || 0
     : null
 
   let montoFiado, montoInmediato
 
-  if (excedeCupoFiado) {
-    // Excede cupo — automático
+  if (form.tipo_pago !== 'fiado') {
+    montoFiado     = 0
+    montoInmediato = 0
+  } else if (montoFiadoPersonalizado !== null) {
+    // Cliente eligió cuánto va a crédito — aplica siempre
+    montoFiado     = Math.min(montoFiadoPersonalizado, cupoFiadoDisponible ?? totalVenta, totalVenta)
+    montoInmediato = Math.max(0, totalVenta - montoFiado)
+  } else if (excedeCupoFiado) {
+    // Excede cupo y no ha personalizado — default: todo el cupo a crédito
     montoFiado     = cupoFiadoDisponible
     montoInmediato = totalVenta - cupoFiadoDisponible
-  } else if (
-    form.tipo_pago === 'fiado' &&
-    montoFiadoPersonalizado !== null &&
-    montoFiadoPersonalizado < totalVenta
-  ) {
-    // Cliente eligió poner solo una parte a crédito
-    montoFiado     = Math.min(montoFiadoPersonalizado, cupoFiadoDisponible ?? totalVenta)
-    montoInmediato = totalVenta - montoFiado
   } else {
-    montoFiado     = form.tipo_pago === 'fiado' ? totalVenta : 0
+    // Todo a crédito
+    montoFiado     = totalVenta
     montoInmediato = 0
   }
 

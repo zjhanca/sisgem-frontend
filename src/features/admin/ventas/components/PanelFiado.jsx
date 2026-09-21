@@ -8,11 +8,14 @@ export default function PanelFiado({
 }) {
   if (!clienteSeleccionado) return null
 
-  // Mostrar opción de crédito parcial cuando:
-  // 1. Tiene cupo suficiente (no excede) — elige cuánto va a crédito
-  // 2. Excede el cupo — el monto a crédito ya está fijo pero puede elegir método
-  const esFiado = form.tipo_pago === 'fiado'
-  const tieneCupo = cupoFiadoDisponible != null && cupoFiadoDisponible > 0
+  const esFiado    = form.tipo_pago === 'fiado'
+  const tieneCupo  = cupoFiadoDisponible != null && cupoFiadoDisponible > 0
+  const mcPersonal = form.monto_fiado_personalizado != null
+    ? parseFloat(form.monto_fiado_personalizado) || 0
+    : null
+  const inmediatoPersonal = mcPersonal !== null
+    ? Math.max(0, totalVenta - mcPersonal)
+    : montoInmediato
 
   return (
     <div className="space-y-2">
@@ -41,22 +44,44 @@ export default function PanelFiado({
         </div>
       )}
 
-      {/* Crédito parcial — cuando tiene cupo suficiente */}
-      {esFiado && tieneCupo && !excedeCupoFiado && !sinCupo && (
-        <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
+      {/* Opción crédito parcial — tanto si excede como si no */}
+      {esFiado && tieneCupo && !sinCupo && (
+        <div className={`p-3 rounded-lg border space-y-2 ${
+          excedeCupoFiado
+            ? 'bg-amber-50 border-amber-200'
+            : 'bg-primary/5 border-primary/20'
+        }`}>
+          {/* Aviso cuando excede */}
+          {excedeCupoFiado && form.monto_fiado_personalizado == null && (
+            <div className="flex items-start gap-2">
+              <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700 leading-relaxed">
+                Excede el cupo. Por defecto se asignan{' '}
+                <strong>${cupoFiadoDisponible.toLocaleString('es-CO')}</strong> a crédito
+                y se cobran <strong>${(totalVenta - cupoFiadoDisponible).toLocaleString('es-CO')}</strong> ahora.
+              </p>
+            </div>
+          )}
+
+          {/* Toggle personalizar */}
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-primary">
+            <p className={`text-xs font-semibold ${
+              excedeCupoFiado ? 'text-amber-600' : 'text-primary'
+            }`}>
               ¿Cuánto va a crédito?
             </p>
             <button type="button"
               onClick={() => setForm(f => ({
                 ...f,
-                monto_fiado_personalizado: f.monto_fiado_personalizado != null ? null : '',
+                monto_fiado_personalizado: f.monto_fiado_personalizado != null
+                  ? null
+                  : String(excedeCupoFiado ? cupoFiadoDisponible : totalVenta),
               }))}
               className={`relative inline-flex h-5 w-9 items-center rounded-full
                 transition-colors ${
                   form.monto_fiado_personalizado != null
-                    ? 'bg-primary' : 'bg-gray-200'
+                    ? excedeCupoFiado ? 'bg-amber-500' : 'bg-primary'
+                    : 'bg-gray-200'
                 }`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white
                 transition-transform ${
@@ -76,24 +101,31 @@ export default function PanelFiado({
                     value={form.monto_fiado_personalizado}
                     onChange={e => {
                       const val = e.target.value.replace(/\D/g, '')
-                      const num = Math.min(parseFloat(val) || 0, totalVenta)
+                      // No puede superar el cupo disponible ni el total
+                      const max = Math.min(cupoFiadoDisponible ?? totalVenta, totalVenta)
+                      const num = Math.min(parseFloat(val) || 0, max)
                       setForm(f => ({ ...f, monto_fiado_personalizado: String(num) }))
                     }}
                     placeholder="0"
                     className="campo-input text-xs"
                   />
+                  {cupoFiadoDisponible != null && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Máx: {formatPrecio(Math.min(cupoFiadoDisponible, totalVenta))}
+                    </p>
+                  )}
                 </div>
                 <div className="flex-1">
                   <label className="campo-label">Cobrar ahora</label>
                   <div className="campo-input text-xs bg-gray-50 text-gray-500
                     flex items-center">
-                    {formatPrecio(Math.max(0,
-                      totalVenta - (parseFloat(form.monto_fiado_personalizado) || 0)))}
+                    {formatPrecio(inmediatoPersonal)}
                   </div>
                 </div>
               </div>
 
-              {(parseFloat(form.monto_fiado_personalizado) || 0) < totalVenta && (
+              {/* Método para el cobro inmediato */}
+              {inmediatoPersonal > 0 && (
                 <div>
                   <label className="campo-label">Método para cobrar ahora</label>
                   <div className="flex gap-2">
@@ -103,10 +135,12 @@ export default function PanelFiado({
                         className={`flex-1 py-1.5 text-xs rounded-lg border transition-all
                           capitalize ${
                           form.metodo_pago_inmediato === m
-                            ? 'bg-primary text-white border-primary'
+                            ? excedeCupoFiado
+                              ? 'bg-amber-500 text-white border-amber-500'
+                              : 'bg-primary text-white border-primary'
                             : 'border-gray-200 text-gray-500 hover:border-primary/40'
                         }`}>
-                        {m}
+                        {m} ({formatPrecio(inmediatoPersonal)})
                       </button>
                     ))}
                   </div>
@@ -114,36 +148,23 @@ export default function PanelFiado({
               )}
             </>
           )}
-        </div>
-      )}
 
-      {/* Aviso pago mixto — cuando excede cupo */}
-      {esFiado && excedeCupoFiado && !sinCupo && (
-        <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
-          <div className="flex items-start gap-2">
-            <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-700 leading-relaxed">
-              Solo tiene <strong>${cupoFiadoDisponible.toLocaleString('es-CO')}</strong> de cupo.
-              Se darán a crédito <strong>${montoFiado.toLocaleString('es-CO')}</strong> y debes cobrar
-              <strong> ${montoInmediato.toLocaleString('es-CO')}</strong> ahora.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {[
-              { val: 'efectivo',      label: 'Efectivo' },
-              { val: 'transferencia', label: 'Transferencia' },
-            ].map(m => (
-              <button key={m.val} type="button"
-                onClick={() => setForm(f => ({ ...f, metodo_pago_inmediato: m.val }))}
-                className={`flex-1 py-1.5 text-xs rounded-lg border transition-all ${
-                  form.metodo_pago_inmediato === m.val
-                    ? 'bg-amber-500 text-white border-amber-500'
-                    : 'border-amber-200 text-amber-600 hover:border-amber-400'
-                }`}>
-                {m.label} (${montoInmediato.toLocaleString('es-CO')})
-              </button>
-            ))}
-          </div>
+          {/* Cuando no personaliza pero excede — botones método por defecto */}
+          {excedeCupoFiado && form.monto_fiado_personalizado == null && (
+            <div className="flex gap-2">
+              {['efectivo', 'transferencia'].map(m => (
+                <button key={m} type="button"
+                  onClick={() => setForm(f => ({ ...f, metodo_pago_inmediato: m }))}
+                  className={`flex-1 py-1.5 text-xs rounded-lg border transition-all ${
+                    form.metodo_pago_inmediato === m
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'border-amber-200 text-amber-600 hover:border-amber-400'
+                  }`}>
+                  {m} (${(totalVenta - cupoFiadoDisponible).toLocaleString('es-CO')})
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
