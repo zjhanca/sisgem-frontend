@@ -1,4 +1,4 @@
-import { AlertTriangle, CreditCard, Clock } from 'lucide-react'
+import { AlertTriangle, CreditCard, Clock, CheckCircle } from 'lucide-react'
 import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function PanelFiado({
@@ -17,16 +17,55 @@ export default function PanelFiado({
     ? Math.max(0, totalVenta - mcPersonal)
     : montoInmediato
 
-  // ── Pago mixto en el cobro inmediato ─────────────────────
-  const inmEf         = parseFloat(form.inmediato_efectivo || 0)
-  const inmTr         = parseFloat(form.inmediato_transferencia || 0)
-  const sumaInmediato = inmEf + inmTr
-  const inmMixtoValido = !form.inmediato_mixto ||
-    (sumaInmediato > 0 && Math.abs(sumaInmediato - inmediatoPersonal) < 1)
+  // ── Validaciones en tiempo real del monto a crédito ──────
+  const minFiado = MINIMO_FIADO || 10000
+  const maxCredito = Math.min(cupoFiadoDisponible ?? totalVenta, totalVenta)
 
-  const cobrarAhora = form.monto_fiado_personalizado != null
-    ? inmediatoPersonal
-    : excedeCupoFiado ? totalVenta - cupoFiadoDisponible : montoInmediato
+  const errorCredito = (() => {
+    if (mcPersonal === null) return null
+    if (mcPersonal <= 0) return 'Ingresa el monto a crédito'
+    if (mcPersonal < minFiado)
+      return `Mínimo ${formatPrecio(minFiado)} a crédito`
+    if (cupoFiadoDisponible != null && mcPersonal > cupoFiadoDisponible)
+      return `Supera el cupo disponible (${formatPrecio(cupoFiadoDisponible)})`
+    if (mcPersonal > totalVenta)
+      return 'No puede superar el total de la venta'
+    return null
+  })()
+
+  const creditoOk = mcPersonal !== null && !errorCredito && mcPersonal > 0
+
+  // ── Validaciones cobro inmediato mixto ───────────────────
+  const inmEf  = parseFloat(form.inmediato_efectivo || 0)
+  const inmTr  = parseFloat(form.inmediato_transferencia || 0)
+  const sumaInm = inmEf + inmTr
+  const cobrarAhora = mcPersonal !== null ? inmediatoPersonal : montoInmediato
+
+  const errorInmMixto = (() => {
+    if (!form.inmediato_mixto || cobrarAhora <= 0) return null
+    if (sumaInm <= 0) return 'Ingresa los montos'
+    if (sumaInm > cobrarAhora + 1)
+      return `Supera el cobro (${formatPrecio(cobrarAhora)})`
+    if (Math.abs(sumaInm - cobrarAhora) >= 1)
+      return `Falta ${formatPrecio(cobrarAhora - sumaInm)}`
+    return null
+  })()
+
+  const inmMixtoOk = form.inmediato_mixto && !errorInmMixto && sumaInm > 0
+
+  // ── Mismo para excede cupo sin personalizar ───────────────
+  const excedente     = excedeCupoFiado ? totalVenta - (cupoFiadoDisponible || 0) : 0
+  const excEf         = parseFloat(form.inmediato_efectivo || 0)
+  const excTr         = parseFloat(form.inmediato_transferencia || 0)
+  const sumaExc       = excEf + excTr
+  const errorExcMixto = (() => {
+    if (!form.inmediato_mixto || excedente <= 0) return null
+    if (sumaExc <= 0) return 'Ingresa los montos'
+    if (sumaExc > excedente + 1) return `Supera el cobro (${formatPrecio(excedente)})`
+    if (Math.abs(sumaExc - excedente) >= 1) return `Falta ${formatPrecio(excedente - sumaExc)}`
+    return null
+  })()
+  const excMixtoOk = form.inmediato_mixto && !errorExcMixto && sumaExc > 0
 
   return (
     <div className="space-y-2">
@@ -39,7 +78,7 @@ export default function PanelFiado({
             <span className={excedeCupoFiado
               ? 'text-amber-600 font-semibold'
               : 'text-primary font-semibold'}>
-              ${totalVenta.toLocaleString('es-CO')} / ${cupoFiadoDisponible.toLocaleString('es-CO')}
+              {formatPrecio(totalVenta)} / {formatPrecio(cupoFiadoDisponible)}
             </span>
           </div>
           <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
@@ -62,14 +101,15 @@ export default function PanelFiado({
             ? 'bg-amber-50 border-amber-200'
             : 'bg-primary/5 border-primary/20'
         }`}>
-          {/* Aviso cuando excede */}
+
+          {/* Aviso cuando excede sin personalizar */}
           {excedeCupoFiado && form.monto_fiado_personalizado == null && (
             <div className="flex items-start gap-2">
               <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700 leading-relaxed">
-                Excede el cupo. Por defecto se asignan{' '}
-                <strong>${cupoFiadoDisponible.toLocaleString('es-CO')}</strong> a crédito
-                y se cobran <strong>${(totalVenta - cupoFiadoDisponible).toLocaleString('es-CO')}</strong> ahora.
+                Excede el cupo. Por defecto{' '}
+                <strong>{formatPrecio(cupoFiadoDisponible)}</strong> a crédito
+                y se cobran <strong>{formatPrecio(excedente)}</strong> ahora.
               </p>
             </div>
           )}
@@ -105,6 +145,7 @@ export default function PanelFiado({
             </button>
           </div>
 
+          {/* Campos crédito personalizado */}
           {form.monto_fiado_personalizado != null && (
             <>
               <div className="flex gap-2">
@@ -115,36 +156,52 @@ export default function PanelFiado({
                     value={form.monto_fiado_personalizado}
                     onChange={e => {
                       const val = e.target.value.replace(/\D/g, '')
-                      const max = Math.min(cupoFiadoDisponible ?? totalVenta, totalVenta)
-                      const num = Math.min(parseFloat(val) || 0, max)
+                      const num = Math.min(parseFloat(val) || 0, maxCredito)
                       setForm(f => ({
                         ...f,
-                        monto_fiado_personalizado: String(num),
+                        monto_fiado_personalizado: val === '' ? '' : String(num),
                         inmediato_mixto:           false,
                         inmediato_efectivo:        '',
                         inmediato_transferencia:   '',
                       }))
                     }}
                     placeholder="0"
-                    className="campo-input text-xs"
+                    className={`campo-input text-xs ${
+                      errorCredito ? 'border-red-400 focus:ring-red-400/30' : ''
+                    }`}
                   />
+                  {/* Validación tiempo real */}
+                  {errorCredito && (
+                    <p className="text-xs text-red-400 mt-0.5 flex items-center gap-1">
+                      <AlertTriangle size={10} /> {errorCredito}
+                    </p>
+                  )}
+                  {creditoOk && (
+                    <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
+                      <CheckCircle size={10} /> Monto válido
+                    </p>
+                  )}
                   {cupoFiadoDisponible != null && (
                     <p className="text-xs text-gray-400 mt-0.5">
-                      Máx: {formatPrecio(Math.min(cupoFiadoDisponible, totalVenta))}
+                      Máx: {formatPrecio(maxCredito)} · Mín: {formatPrecio(minFiado)}
                     </p>
                   )}
                 </div>
                 <div className="flex-1">
                   <label className="campo-label">Cobrar ahora</label>
-                  <div className="campo-input text-xs bg-gray-50 text-gray-500
-                    flex items-center">
+                  <div className={`campo-input text-xs flex items-center ${
+                    creditoOk ? 'bg-primary/5 text-primary font-semibold' : 'bg-gray-50 text-gray-500'
+                  }`}>
                     {formatPrecio(inmediatoPersonal)}
                   </div>
+                  {inmediatoPersonal > 0 && creditoOk && (
+                    <p className="text-xs text-gray-400 mt-0.5">A cobrar de inmediato</p>
+                  )}
                 </div>
               </div>
 
               {/* Cobro inmediato — simple o mixto */}
-              {inmediatoPersonal > 0 && (
+              {inmediatoPersonal > 0 && creditoOk && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="campo-label mb-0">
@@ -232,13 +289,14 @@ export default function PanelFiado({
                           />
                         </div>
                       </div>
-                      {sumaInmediato > 0 && inmMixtoValido && (
-                        <p className="text-xs text-primary">✓ Montos correctos</p>
+                      {errorInmMixto && (
+                        <p className="text-xs text-red-400 flex items-center gap-1">
+                          <AlertTriangle size={10} /> {errorInmMixto}
+                        </p>
                       )}
-                      {sumaInmediato > 0 && !inmMixtoValido && (
-                        <p className="text-xs text-red-400">
-                          La suma ({formatPrecio(sumaInmediato)}) no coincide con
-                          el cobro ({formatPrecio(inmediatoPersonal)})
+                      {inmMixtoOk && (
+                        <p className="text-xs text-primary flex items-center gap-1">
+                          <CheckCircle size={10} /> Montos correctos
                         </p>
                       )}
                     </div>
@@ -248,12 +306,12 @@ export default function PanelFiado({
             </>
           )}
 
-          {/* Cuando no personaliza pero excede — botones método por defecto */}
+          {/* Excede cupo sin personalizar — cobro del excedente */}
           {excedeCupoFiado && form.monto_fiado_personalizado == null && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="campo-label mb-0">
-                  Método para {formatPrecio(totalVenta - cupoFiadoDisponible)}
+                  Método para {formatPrecio(excedente)}
                 </label>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-gray-400">¿Dividir?</span>
@@ -287,7 +345,7 @@ export default function PanelFiado({
                           ? 'bg-amber-500 text-white border-amber-500'
                           : 'border-amber-200 text-amber-600 hover:border-amber-400'
                       }`}>
-                      {m} (${(totalVenta - cupoFiadoDisponible).toLocaleString('es-CO')})
+                      {m} ({formatPrecio(excedente)})
                     </button>
                   ))}
                 </div>
@@ -301,10 +359,9 @@ export default function PanelFiado({
                         type="text" inputMode="numeric"
                         value={form.inmediato_efectivo}
                         onChange={e => {
-                          const max  = totalVenta - cupoFiadoDisponible
                           const val  = e.target.value.replace(/\D/g, '')
-                          const num  = Math.min(parseFloat(val) || 0, max)
-                          const diff = Math.max(0, max - num)
+                          const num  = Math.min(parseFloat(val) || 0, excedente)
+                          const diff = Math.max(0, excedente - num)
                           setForm(f => ({
                             ...f,
                             inmediato_efectivo:      String(num),
@@ -321,10 +378,9 @@ export default function PanelFiado({
                         type="text" inputMode="numeric"
                         value={form.inmediato_transferencia}
                         onChange={e => {
-                          const max  = totalVenta - cupoFiadoDisponible
                           const val  = e.target.value.replace(/\D/g, '')
-                          const num  = Math.min(parseFloat(val) || 0, max)
-                          const diff = Math.max(0, max - num)
+                          const num  = Math.min(parseFloat(val) || 0, excedente)
+                          const diff = Math.max(0, excedente - num)
                           setForm(f => ({
                             ...f,
                             inmediato_transferencia: String(num),
@@ -336,19 +392,16 @@ export default function PanelFiado({
                       />
                     </div>
                   </div>
-                  {(() => {
-                    const max  = totalVenta - cupoFiadoDisponible
-                    const suma = parseFloat(form.inmediato_efectivo || 0) +
-                                 parseFloat(form.inmediato_transferencia || 0)
-                    if (suma > 0 && Math.abs(suma - max) < 1)
-                      return <p className="text-xs text-primary">✓ Montos correctos</p>
-                    if (suma > 0)
-                      return <p className="text-xs text-red-400">
-                        La suma ({formatPrecio(suma)}) no coincide (
-                        {formatPrecio(max)})
-                      </p>
-                    return null
-                  })()}
+                  {errorExcMixto && (
+                    <p className="text-xs text-red-400 flex items-center gap-1">
+                      <AlertTriangle size={10} /> {errorExcMixto}
+                    </p>
+                  )}
+                  {excMixtoOk && (
+                    <p className="text-xs text-primary flex items-center gap-1">
+                      <CheckCircle size={10} /> Montos correctos
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -398,7 +451,7 @@ export default function PanelFiado({
         </div>
         {permitefiado && minimoInsuficiente && (
           <p className="text-xs text-gray-400 text-center">
-            Mínimo <strong>${(MINIMO_FIADO || 10000).toLocaleString('es-CO')}</strong> para ventas a crédito
+            Mínimo <strong>{formatPrecio(minFiado)}</strong> para ventas a crédito
           </p>
         )}
       </div>
