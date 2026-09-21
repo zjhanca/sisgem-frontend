@@ -15,6 +15,7 @@ const formInicial = {
   metodo_pago_inmediato: 'efectivo',
   pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
   monto_fiado_personalizado: null,
+  inmediato_mixto: false, inmediato_efectivo: '', inmediato_transferencia: '',
 }
 
 export function useVentas() {
@@ -57,22 +58,38 @@ export function useVentas() {
     mutationFn: async data => {
       const res       = await ventasService.create({ ...data, tipo_venta: 'mostrador' })
       const pedido_id = res.data.pedido_id
+
       if (data._tipo_pago === 'fiado') {
-        if (estadoPendiente) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPendiente.id })
+        if (estadoPendiente)
+          await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPendiente.id })
+
         if (data._monto_inmediato > 0) {
-          await ventasService.registrarPago({
-            pedido_id, monto: data._monto_inmediato, metodo: data._metodo_pago_inmediato || 'efectivo',
-          })
+          if (data._inmediato_mixto) {
+            // Cobro inmediato mixto
+            if (data._inmediato_efectivo > 0)
+              await ventasService.registrarPago({
+                pedido_id, monto: data._inmediato_efectivo, metodo: 'efectivo' })
+            if (data._inmediato_transferencia > 0)
+              await ventasService.registrarPago({
+                pedido_id, monto: data._inmediato_transferencia, metodo: 'transferencia' })
+          } else {
+            await ventasService.registrarPago({
+              pedido_id, monto: data._monto_inmediato,
+              metodo: data._metodo_pago_inmediato || 'efectivo' })
+          }
         }
       } else if (data._pago_mixto) {
-        if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
+        if (estadoPagado)
+          await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
         if (data._monto_efectivo > 0)
           await ventasService.registrarPago({ pedido_id, monto: data._monto_efectivo, metodo: 'efectivo' })
         if (data._monto_transferencia > 0)
           await ventasService.registrarPago({ pedido_id, monto: data._monto_transferencia, metodo: 'transferencia' })
       } else {
-        if (estadoPagado) await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
-        await ventasService.registrarPago({ pedido_id, monto: data._total, metodo: data._metodo_pago || 'efectivo' })
+        if (estadoPagado)
+          await ventasService.cambiarEstado(pedido_id, { estado_id: estadoPagado.id })
+        await ventasService.registrarPago({
+          pedido_id, monto: data._total, metodo: data._metodo_pago || 'efectivo' })
       }
       return res.data
     },
@@ -87,7 +104,9 @@ export function useVentas() {
       setClienteBusqueda('')
       toast.success(
         vars._tipo_pago === 'fiado'
-          ? (vars._monto_inmediato > 0 ? 'Venta registrada — crédito parcial' : 'Venta registrada a crédito')
+          ? (vars._monto_inmediato > 0
+              ? 'Venta registrada — crédito parcial'
+              : 'Venta registrada a crédito')
           : vars._pago_mixto
             ? 'Venta registrada — pago mixto'
             : 'Venta registrada'
@@ -157,13 +176,11 @@ export function useVentas() {
     // ── Validaciones crédito ────────────────────────────────
     if (form.tipo_pago === 'fiado') {
 
-      // Total mínimo para crédito
       if (fiado.totalVenta < MINIMO_FIADO) {
         toast.error(`El mínimo para ventas a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}`)
         return
       }
 
-      // Sin cupo
       if (form.cliente_id && fiado.cupoFiadoDisponible != null && fiado.cupoFiadoDisponible <= 0) {
         toast.error('Este cliente no tiene cupo de crédito disponible'); return
       }
@@ -172,38 +189,60 @@ export function useVentas() {
       if (form.monto_fiado_personalizado != null) {
         const mc = parseFloat(form.monto_fiado_personalizado || 0)
 
-        // Monto a crédito vacío
         if (mc <= 0) {
           toast.error('Ingresa el monto que va a crédito'); return
         }
-
-        // Monto a crédito menor al mínimo — cambiar a pago total automáticamente
         if (mc < MINIMO_FIADO) {
           toast.error(`El monto mínimo a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}. Se cambió a pago total.`)
           setForm(f => ({ ...f, tipo_pago: 'total', monto_fiado_personalizado: null }))
           return
         }
-
-        // Monto a crédito mayor al cupo
         if (fiado.cupoFiadoDisponible != null && mc > fiado.cupoFiadoDisponible) {
           toast.error(`El monto a crédito supera el cupo disponible ($${fiado.cupoFiadoDisponible.toLocaleString('es-CO')})`)
           return
         }
-
-        // Monto a crédito mayor al total
         if (mc > fiado.totalVenta) {
           toast.error('El monto a crédito no puede superar el total de la venta'); return
         }
 
-        // Hay cobro inmediato pero no se eligió método
         const inmediato = fiado.totalVenta - mc
-        if (inmediato > 0 && !form.metodo_pago_inmediato) {
+        if (inmediato > 0) {
+          if (form.inmediato_mixto) {
+            // Validar pago mixto inmediato
+            const ief = parseFloat(form.inmediato_efectivo || 0)
+            const itr = parseFloat(form.inmediato_transferencia || 0)
+            if (ief <= 0 && itr <= 0) {
+              toast.error('Ingresa los montos del pago mixto para el cobro inmediato'); return
+            }
+            if (Math.abs(ief + itr - inmediato) >= 1) {
+              toast.error('La suma del pago mixto no coincide con el cobro inmediato'); return
+            }
+            if (ief > 0 && ief < MINIMO_FIADO && itr > 0) {
+              // Permitir montos menores si la suma cubre el total
+            }
+          } else if (!form.metodo_pago_inmediato) {
+            toast.error('Selecciona el método de pago para el cobro inmediato'); return
+          }
+        }
+      } else if (fiado.excedeCupoFiado) {
+        // Excede cupo sin personalizar — validar cobro del excedente
+        const excedente = fiado.totalVenta - fiado.cupoFiadoDisponible
+        if (form.inmediato_mixto) {
+          const ief = parseFloat(form.inmediato_efectivo || 0)
+          const itr = parseFloat(form.inmediato_transferencia || 0)
+          if (ief <= 0 && itr <= 0) {
+            toast.error('Ingresa los montos del pago mixto para el cobro inmediato'); return
+          }
+          if (Math.abs(ief + itr - excedente) >= 1) {
+            toast.error('La suma del pago mixto no coincide con el cobro inmediato'); return
+          }
+        } else if (!form.metodo_pago_inmediato) {
           toast.error('Selecciona el método de pago para el cobro inmediato'); return
         }
       }
     }
 
-    // ── Validación pago mixto ───────────────────────────────
+    // ── Validación pago mixto total ─────────────────────────
     if (form.pago_mixto) {
       const ef = parseFloat(form.monto_efectivo || 0)
       const tr = parseFloat(form.monto_transferencia || 0)
@@ -216,19 +255,22 @@ export function useVentas() {
     }
 
     crearVenta.mutate({
-      cliente_id:             form.tipo_cliente === 'registrado' ? form.cliente_id : null,
-      cliente_nombre:         form.tipo_cliente === 'manual' ? (form.cliente_nombre.trim() || 'Mostrador') : null,
-      productos:              form.productos,
-      es_fiado:               form.tipo_pago === 'fiado',
-      monto_fiado:            form.tipo_pago === 'fiado' ? fiado.montoFiado : 0,
-      _total:                 fiado.totalVenta,
-      _tipo_pago:             form.tipo_pago,
-      _metodo_pago:           form.metodo_pago || 'efectivo',
-      _monto_inmediato:       fiado.montoInmediato,
-      _metodo_pago_inmediato: form.metodo_pago_inmediato || 'efectivo',
-      _pago_mixto:            !!form.pago_mixto,
-      _monto_efectivo:        parseFloat(form.monto_efectivo || 0),
-      _monto_transferencia:   parseFloat(form.monto_transferencia || 0),
+      cliente_id:               form.tipo_cliente === 'registrado' ? form.cliente_id : null,
+      cliente_nombre:           form.tipo_cliente === 'manual' ? (form.cliente_nombre.trim() || 'Mostrador') : null,
+      productos:                form.productos,
+      es_fiado:                 form.tipo_pago === 'fiado',
+      monto_fiado:              form.tipo_pago === 'fiado' ? fiado.montoFiado : 0,
+      _total:                   fiado.totalVenta,
+      _tipo_pago:               form.tipo_pago,
+      _metodo_pago:             form.metodo_pago || 'efectivo',
+      _monto_inmediato:         fiado.montoInmediato,
+      _metodo_pago_inmediato:   form.metodo_pago_inmediato || 'efectivo',
+      _pago_mixto:              !!form.pago_mixto,
+      _monto_efectivo:          parseFloat(form.monto_efectivo || 0),
+      _monto_transferencia:     parseFloat(form.monto_transferencia || 0),
+      _inmediato_mixto:         !!form.inmediato_mixto,
+      _inmediato_efectivo:      parseFloat(form.inmediato_efectivo || 0),
+      _inmediato_transferencia: parseFloat(form.inmediato_transferencia || 0),
     })
   }
 
