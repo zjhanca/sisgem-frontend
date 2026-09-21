@@ -8,15 +8,17 @@ export default function PanelFiado({
 }) {
   if (!clienteSeleccionado) return null
 
-  const usaMontoPersonalizado = form.tipo_pago === 'fiado' &&
-    !excedeCupoFiado && cupoFiadoDisponible != null &&
-    cupoFiadoDisponible >= totalVenta
+  // Mostrar opción de crédito parcial cuando:
+  // 1. Tiene cupo suficiente (no excede) — elige cuánto va a crédito
+  // 2. Excede el cupo — el monto a crédito ya está fijo pero puede elegir método
+  const esFiado = form.tipo_pago === 'fiado'
+  const tieneCupo = cupoFiadoDisponible != null && cupoFiadoDisponible > 0
 
   return (
     <div className="space-y-2">
 
       {/* Barra cupo crédito */}
-      {form.tipo_pago === 'fiado' && cupoFiadoDisponible != null && (
+      {esFiado && cupoFiadoDisponible != null && (
         <div className="space-y-1">
           <div className="flex justify-between text-xs">
             <span className="text-gray-400">Cupo de crédito disponible</span>
@@ -39,8 +41,8 @@ export default function PanelFiado({
         </div>
       )}
 
-      {/* Opción de crédito parcial — cuando tiene cupo suficiente */}
-      {usaMontoPersonalizado && (
+      {/* Crédito parcial — cuando tiene cupo suficiente */}
+      {esFiado && tieneCupo && !excedeCupoFiado && !sinCupo && (
         <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-primary">
@@ -91,7 +93,6 @@ export default function PanelFiado({
                 </div>
               </div>
 
-              {/* Método para el cobro inmediato */}
               {(parseFloat(form.monto_fiado_personalizado) || 0) < totalVenta && (
                 <div>
                   <label className="campo-label">Método para cobrar ahora</label>
@@ -117,7 +118,7 @@ export default function PanelFiado({
       )}
 
       {/* Aviso pago mixto — cuando excede cupo */}
-      {form.tipo_pago === 'fiado' && excedeCupoFiado && !sinCupo && (
+      {esFiado && excedeCupoFiado && !sinCupo && (
         <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
           <div className="flex items-start gap-2">
             <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
@@ -128,7 +129,10 @@ export default function PanelFiado({
             </p>
           </div>
           <div className="flex gap-2">
-            {[{ val: 'efectivo', label: 'Efectivo' }, { val: 'transferencia', label: 'Transferencia' }].map(m => (
+            {[
+              { val: 'efectivo',      label: 'Efectivo' },
+              { val: 'transferencia', label: 'Transferencia' },
+            ].map(m => (
               <button key={m.val} type="button"
                 onClick={() => setForm(f => ({ ...f, metodo_pago_inmediato: m.val }))}
                 className={`flex-1 py-1.5 text-xs rounded-lg border transition-all ${
@@ -144,7 +148,7 @@ export default function PanelFiado({
       )}
 
       {/* Sin cupo */}
-      {sinCupo && form.tipo_pago === 'fiado' && (
+      {sinCupo && esFiado && (
         <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
           <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
           <p className="text-xs text-red-600">
@@ -167,7 +171,7 @@ export default function PanelFiado({
               disabled={t.disabled}
               onClick={() => !t.disabled && setForm(f => ({
                 ...f,
-                tipo_pago: t.val,
+                tipo_pago:                t.val,
                 monto_fiado_personalizado: null,
               }))}
               className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2
