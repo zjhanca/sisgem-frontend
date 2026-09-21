@@ -7,7 +7,6 @@ import toast from 'react-hot-toast'
 const formVacio = {
   cliente_id: '', monto: '', metodo: 'efectivo',
   pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
-  usa_credito: false, monto_credito: '', metodo_resto: 'efectivo',
 }
 const MONTO_MINIMO_ABONO = 10000
 
@@ -122,7 +121,6 @@ export function usePagos() {
 
   const clienteSel   = clientes.find(c => c.id === +form.cliente_id) || null
   const deudaCliente = deudaPorCliente[+form.cliente_id] || null
-  const tieneCredito = clienteSel?.permite_fiado === true || clienteSel?.permite_fiado === 'true'
 
   const pedidosCliente = useMemo(() => {
     if (!deudaCliente) return []
@@ -149,10 +147,6 @@ export function usePagos() {
       setErrores(prev => ({ ...prev, monto: undefined }))
     }
   }, [totalDeuda, modalNuevo])
-
-  // ── Calcular resto cuando usa crédito parcial ───────────────
-  const montoCredito = parseFloat(form.monto_credito || 0)
-  const restoCredito = Math.max(0, totalDeuda - montoCredito)
 
   const clientesConDeuda = clientes.filter(c => {
     const d = deudaPorCliente[c.id]
@@ -192,28 +186,7 @@ export function usePagos() {
 
   const crear = useMutation({
     mutationFn: async data => {
-      if (data.usa_credito && parseFloat(data.monto_credito || 0) > 0) {
-        // Pago con crédito parcial + otro método
-        const mc = parseFloat(data.monto_credito)
-        const mr = parseFloat(data.monto_resto || 0)
-        let restante = mc + mr
-        for (const p of pedidosCliente) {
-          if (restante <= 0) break
-          const abonar = Math.min(restante, p.pendiente)
-          // Primero el crédito
-          if (mc > 0) {
-            const abornarCredito = Math.min(mc, abonar)
-            await pagosService.create({ pedido_id: p.id, monto: abornarCredito, metodo: 'credito' })
-            restante -= abornarCredito
-          }
-          // Luego el resto en efectivo/transferencia
-          if (mr > 0 && restante > 0) {
-            const abonarResto = Math.min(mr, restante)
-            await pagosService.create({ pedido_id: p.id, monto: abonarResto, metodo: data.metodo_resto || 'efectivo' })
-            restante -= abonarResto
-          }
-        }
-      } else if (data.pago_mixto) {
+      if (data.pago_mixto) {
         const montos = [
           { metodo: 'efectivo',      monto: parseFloat(data.monto_efectivo || 0) },
           { metodo: 'transferencia', monto: parseFloat(data.monto_transferencia || 0) },
@@ -272,6 +245,7 @@ export function usePagos() {
     if (totalDeuda > 0 && num > totalDeuda) num = totalDeuda
     setForm(f => ({ ...f, monto: String(num) }))
     const cubre = totalDeuda > 0 && num >= totalDeuda
+    // Si la deuda es menor al mínimo, no mostrar error — se permite pagar el exacto
     if (num > 0 && num < MONTO_MINIMO_ABONO && !cubre && totalDeuda >= MONTO_MINIMO_ABONO) {
       setErrores(prev => ({
         ...prev,
@@ -286,16 +260,7 @@ export function usePagos() {
     const e = {}
     if (!form.cliente_id) e.cliente_id = 'Selecciona un cliente'
     if (pagoCompleto) { e.monto = 'El cliente no tiene deuda pendiente'; return e }
-
-    if (form.usa_credito) {
-      const mc   = parseFloat(form.monto_credito || 0)
-      const mr   = parseFloat(form.monto_resto || 0)
-      const suma = mc + mr
-      if (mc <= 0) e.monto = 'Ingresa el monto a usar de crédito'
-      else if (suma > totalDeuda + 1) e.monto = 'El total supera la deuda'
-      else if (suma < MONTO_MINIMO_ABONO && suma < totalDeuda && totalDeuda >= MONTO_MINIMO_ABONO)
-        e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
-    } else if (form.pago_mixto) {
+    if (form.pago_mixto) {
       const ef   = parseFloat(form.monto_efectivo || 0)
       const tr   = parseFloat(form.monto_transferencia || 0)
       const suma = ef + tr
@@ -303,6 +268,7 @@ export function usePagos() {
       else if (suma > totalDeuda + 1) e.monto = 'El total supera la deuda'
       else {
         const cubre = suma >= totalDeuda - 1
+        // Solo validar mínimo si la deuda es mayor o igual al mínimo
         if (suma < MONTO_MINIMO_ABONO && !cubre && totalDeuda >= MONTO_MINIMO_ABONO)
           e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
       }
@@ -311,6 +277,7 @@ export function usePagos() {
         e.monto = 'Monto inválido'
       } else {
         const cubre = totalDeuda > 0 && +form.monto >= totalDeuda
+        // Solo validar mínimo si la deuda es mayor o igual al mínimo
         if (+form.monto < MONTO_MINIMO_ABONO && !cubre && totalDeuda >= MONTO_MINIMO_ABONO)
           e.monto = `El abono mínimo es de $${MONTO_MINIMO_ABONO.toLocaleString('es-CO')}`
       }
@@ -376,9 +343,6 @@ export function usePagos() {
     totalDeuda,
     pedidosCliente,
     pedidoEspecifico,
-    tieneCredito,
-    montoCredito,
-    restoCredito,
     form, setForm, errores,
     modalNuevo, setModalNuevo,
     modalDetalle, setModalDetalle,

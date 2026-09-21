@@ -1,4 +1,5 @@
 import { AlertTriangle, CreditCard, Clock } from 'lucide-react'
+import { formatPrecio } from '@shared/utils/validaciones'
 
 export default function PanelFiado({
   form, setForm, clienteSeleccionado,
@@ -6,6 +7,10 @@ export default function PanelFiado({
   totalVenta, permitefiado, sinCupo, minimoInsuficiente, MINIMO_FIADO,
 }) {
   if (!clienteSeleccionado) return null
+
+  const usaMontoPersonalizado = form.tipo_pago === 'fiado' &&
+    !excedeCupoFiado && cupoFiadoDisponible != null &&
+    cupoFiadoDisponible >= totalVenta
 
   return (
     <div className="space-y-2">
@@ -15,20 +20,103 @@ export default function PanelFiado({
         <div className="space-y-1">
           <div className="flex justify-between text-xs">
             <span className="text-gray-400">Cupo de crédito disponible</span>
-            <span className={excedeCupoFiado ? 'text-amber-600 font-semibold' : 'text-primary font-semibold'}>
+            <span className={excedeCupoFiado
+              ? 'text-amber-600 font-semibold'
+              : 'text-primary font-semibold'}>
               ${totalVenta.toLocaleString('es-CO')} / ${cupoFiadoDisponible.toLocaleString('es-CO')}
             </span>
           </div>
           <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${excedeCupoFiado ? 'bg-amber-400' : 'bg-primary'}`}
-              style={{ width: `${cupoFiadoDisponible > 0 ? Math.min(100, (totalVenta / cupoFiadoDisponible) * 100) : 100}%` }}
+              className={`h-full rounded-full transition-all ${
+                excedeCupoFiado ? 'bg-amber-400' : 'bg-primary'
+              }`}
+              style={{ width: `${cupoFiadoDisponible > 0
+                ? Math.min(100, (totalVenta / cupoFiadoDisponible) * 100)
+                : 100}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* Aviso pago mixto */}
+      {/* Opción de crédito parcial — cuando tiene cupo suficiente */}
+      {usaMontoPersonalizado && (
+        <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-primary">
+              ¿Cuánto va a crédito?
+            </p>
+            <button type="button"
+              onClick={() => setForm(f => ({
+                ...f,
+                monto_fiado_personalizado: f.monto_fiado_personalizado != null ? null : '',
+              }))}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full
+                transition-colors ${
+                  form.monto_fiado_personalizado != null
+                    ? 'bg-primary' : 'bg-gray-200'
+                }`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white
+                transition-transform ${
+                  form.monto_fiado_personalizado != null
+                    ? 'translate-x-4' : 'translate-x-0.5'
+                }`} />
+            </button>
+          </div>
+
+          {form.monto_fiado_personalizado != null && (
+            <>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="campo-label">Monto a crédito</label>
+                  <input
+                    type="text" inputMode="numeric"
+                    value={form.monto_fiado_personalizado}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '')
+                      const num = Math.min(parseFloat(val) || 0, totalVenta)
+                      setForm(f => ({ ...f, monto_fiado_personalizado: String(num) }))
+                    }}
+                    placeholder="0"
+                    className="campo-input text-xs"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="campo-label">Cobrar ahora</label>
+                  <div className="campo-input text-xs bg-gray-50 text-gray-500
+                    flex items-center">
+                    {formatPrecio(Math.max(0,
+                      totalVenta - (parseFloat(form.monto_fiado_personalizado) || 0)))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Método para el cobro inmediato */}
+              {(parseFloat(form.monto_fiado_personalizado) || 0) < totalVenta && (
+                <div>
+                  <label className="campo-label">Método para cobrar ahora</label>
+                  <div className="flex gap-2">
+                    {['efectivo', 'transferencia'].map(m => (
+                      <button key={m} type="button"
+                        onClick={() => setForm(f => ({ ...f, metodo_pago_inmediato: m }))}
+                        className={`flex-1 py-1.5 text-xs rounded-lg border transition-all
+                          capitalize ${
+                          form.metodo_pago_inmediato === m
+                            ? 'bg-primary text-white border-primary'
+                            : 'border-gray-200 text-gray-500 hover:border-primary/40'
+                        }`}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Aviso pago mixto — cuando excede cupo */}
       {form.tipo_pago === 'fiado' && excedeCupoFiado && !sinCupo && (
         <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
           <div className="flex items-start gap-2">
@@ -59,7 +147,9 @@ export default function PanelFiado({
       {sinCupo && form.tipo_pago === 'fiado' && (
         <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
           <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-red-600">Este cliente no tiene cupo de crédito disponible. Elige "Pago Total".</p>
+          <p className="text-xs text-red-600">
+            Este cliente no tiene cupo de crédito disponible. Elige "Pago Total".
+          </p>
         </div>
       )}
 
@@ -67,17 +157,21 @@ export default function PanelFiado({
       <div className="flex flex-col gap-1">
         <div className="flex gap-2 pt-1">
           {[
-            { val: 'total', label: 'Pago Total',  icon: CreditCard, active: 'bg-primary text-white border-primary' },
-            {
-              val: 'fiado', label: 'Crédito', icon: Clock,
+            { val: 'total', label: 'Pago Total', icon: CreditCard,
+              active: 'bg-primary text-white border-primary' },
+            { val: 'fiado', label: 'Crédito', icon: Clock,
               active: 'bg-amber-500 text-white border-amber-500',
-              disabled: !permitefiado || sinCupo || minimoInsuficiente,
-            },
+              disabled: !permitefiado || sinCupo || minimoInsuficiente },
           ].map(t => (
             <button key={t.val} type="button"
               disabled={t.disabled}
-              onClick={() => !t.disabled && setForm(f => ({ ...f, tipo_pago: t.val }))}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs rounded-lg border transition-all ${
+              onClick={() => !t.disabled && setForm(f => ({
+                ...f,
+                tipo_pago: t.val,
+                monto_fiado_personalizado: null,
+              }))}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2
+                text-xs rounded-lg border transition-all ${
                 form.tipo_pago === t.val ? t.active : t.disabled
                   ? 'border-gray-200 text-gray-300 cursor-not-allowed opacity-50'
                   : 'border-gray-200 text-gray-500 hover:border-primary/40'
