@@ -14,6 +14,7 @@ const formInicial = {
   productos: [], tipo_pago: 'total', metodo_pago: 'efectivo',
   metodo_pago_inmediato: 'efectivo',
   pago_mixto: false, monto_efectivo: '', monto_transferencia: '',
+  monto_fiado_personalizado: null,
 }
 
 export function useVentas() {
@@ -136,6 +137,7 @@ export function useVentas() {
 
   const handleCrear = e => {
     if (e?.preventDefault) e.preventDefault()
+
     if (form.tipo_cliente === 'registrado' && !form.cliente_id) {
       toast.error('Selecciona un cliente'); return
     }
@@ -151,15 +153,63 @@ export function useVentas() {
         toast.error(`${p.nombre}: solo hay ${stock} unidades en stock`); return
       }
     }
-    if (form.tipo_pago === 'fiado' && fiado.totalVenta < MINIMO_FIADO) {
-      toast.error(`El mínimo para ventas a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}`); return
+
+    // ── Validaciones crédito ────────────────────────────────
+    if (form.tipo_pago === 'fiado') {
+
+      // Total mínimo para crédito
+      if (fiado.totalVenta < MINIMO_FIADO) {
+        toast.error(`El mínimo para ventas a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}`)
+        return
+      }
+
+      // Sin cupo
+      if (form.cliente_id && fiado.cupoFiadoDisponible != null && fiado.cupoFiadoDisponible <= 0) {
+        toast.error('Este cliente no tiene cupo de crédito disponible'); return
+      }
+
+      // Crédito personalizado
+      if (form.monto_fiado_personalizado != null) {
+        const mc = parseFloat(form.monto_fiado_personalizado || 0)
+
+        // Monto a crédito vacío
+        if (mc <= 0) {
+          toast.error('Ingresa el monto que va a crédito'); return
+        }
+
+        // Monto a crédito menor al mínimo — cambiar a pago total automáticamente
+        if (mc < MINIMO_FIADO) {
+          toast.error(`El monto mínimo a crédito es de $${MINIMO_FIADO.toLocaleString('es-CO')}. Se cambió a pago total.`)
+          setForm(f => ({ ...f, tipo_pago: 'total', monto_fiado_personalizado: null }))
+          return
+        }
+
+        // Monto a crédito mayor al cupo
+        if (fiado.cupoFiadoDisponible != null && mc > fiado.cupoFiadoDisponible) {
+          toast.error(`El monto a crédito supera el cupo disponible ($${fiado.cupoFiadoDisponible.toLocaleString('es-CO')})`)
+          return
+        }
+
+        // Monto a crédito mayor al total
+        if (mc > fiado.totalVenta) {
+          toast.error('El monto a crédito no puede superar el total de la venta'); return
+        }
+
+        // Hay cobro inmediato pero no se eligió método
+        const inmediato = fiado.totalVenta - mc
+        if (inmediato > 0 && !form.metodo_pago_inmediato) {
+          toast.error('Selecciona el método de pago para el cobro inmediato'); return
+        }
+      }
     }
-    if (form.tipo_pago === 'fiado' && form.cliente_id && fiado.cupoFiadoDisponible != null && fiado.cupoFiadoDisponible <= 0) {
-      toast.error('Este cliente no tiene cupo de crédito disponible'); return
-    }
+
+    // ── Validación pago mixto ───────────────────────────────
     if (form.pago_mixto) {
       const ef = parseFloat(form.monto_efectivo || 0)
       const tr = parseFloat(form.monto_transferencia || 0)
+      if (ef <= 0 && tr <= 0) {
+        toast.error('Ingresa los montos del pago mixto'); return
+      }
       if (Math.abs(ef + tr - fiado.totalVenta) >= 1) {
         toast.error('La suma del pago mixto no coincide con el total'); return
       }
@@ -205,8 +255,8 @@ export function useVentas() {
       if (desde) params.set('desde', desde)
       if (hasta) params.set('hasta', hasta)
     }
-    const url      = `/reportes/ventas?${params}`
-    const nombre   = `reporte-ventas-${tipo || 'general'}.${ext}`
+    const url    = `/reportes/ventas?${params}`
+    const nombre = `reporte-ventas-${tipo || 'general'}.${ext}`
     if (formato === 'excel') await descargarExcel(url, nombre)
     else await descargarPDF(url, nombre)
   }
