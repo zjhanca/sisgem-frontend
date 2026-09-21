@@ -36,7 +36,6 @@ export function usePedidos() {
         if (prevIds.has(p.id)) return false
         const estado = (p.estado || '').toLowerCase()
         if (!estado.includes('pendiente')) return false
-        // Solo si fue creado hace menos de 6 horas
         try {
           const fecha = new Date(p.fecha_pedido)
           const horas = (Date.now() - fecha.getTime()) / (1000 * 60 * 60)
@@ -62,14 +61,21 @@ export function usePedidos() {
     mutationFn: async ({ pedido }) => {
       await pedidosService.cambiarEstado(pedido.id, { estado_id: estadoEntregado?.id })
       await pedidosService.marcarEntregado(pedido.id)
-      await pedidosService.crearPago({
-        pedido_id: pedido.id,
-        monto:     pedido.total,
-        metodo:    pedido.metodo_pago || 'efectivo',
-      })
+
+      // Solo registrar pago si NO es a crédito (fiado)
+      // Si es fiado, el pago se gestiona desde cartera
+      const esCredito = pedido.es_fiado === true || pedido.es_fiado === 'true'
+      if (!esCredito) {
+        await pedidosService.crearPago({
+          pedido_id: pedido.id,
+          monto:     pedido.total,
+          metodo:    pedido.metodo_pago || 'efectivo',
+        })
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries(['pedidos'])
+      qc.invalidateQueries(['pagos'])
       setModalConfirmarEntrega({ abierto: false, pedido: null })
       setModalDetalle({ abierto: false, pedido: null })
       toast.success('Pedido marcado como entregado')
