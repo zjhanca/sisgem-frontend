@@ -1,3 +1,4 @@
+// BrandCarousel.jsx
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -7,7 +8,9 @@ export default function BrandCarousel({ marcas = [] }) {
   if (!marcas.length) return null
 
   const scroll = dir => {
-    if (ref.current) ref.current.scrollLeft += dir * 220
+    if (ref.current) {
+      ref.current.scrollBy({ left: dir * 220, behavior: 'smooth' })
+    }
   }
 
   return (
@@ -37,7 +40,7 @@ export default function BrandCarousel({ marcas = [] }) {
           </button>
 
           <div ref={ref}
-            className="flex gap-4 overflow-x-auto scrollbar-hide px-12
+            className="flex gap-4 overflow-x-auto scrollbar-hide px-12 w-full
               scroll-smooth snap-x snap-mandatory">
             {marcas.map(m => (
               <Link key={m.id} to={`/productos?marca=${m.id}`}
